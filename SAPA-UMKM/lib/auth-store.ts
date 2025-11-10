@@ -8,11 +8,17 @@ export type AccountProfile = {
   businessName?: string;
   ownerAddress?: string;
   businessAddress?: string;
+  city?: string;
   kbli?: string;
   sector?: string;
   scale?: string;
   capital?: string;
   npwp?: string;
+  employees?: string;
+  phone?: string;
+  contactEmail?: string;
+  businessDescription?: string;
+  supportNeeds?: string;
 };
 
 export type StoredAccount = {

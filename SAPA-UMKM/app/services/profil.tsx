@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
@@ -16,6 +16,8 @@ import {
   View,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
+
+import { useAuth } from '@/hooks/use-auth';
 
 const palette = {
   light: {
@@ -70,15 +72,41 @@ export default function ProfileUpdateScreen() {
   const scheme = useColorScheme();
   const colors = scheme === 'dark' ? palette.dark : palette.light;
   const router = useRouter();
+  const { user, loading, updateUserAccount } = useAuth();
 
   const [form, setForm] = useState<ProfileForm>(defaultForm);
   const [submitting, setSubmitting] = useState(false);
 
+  const accountEmail = useMemo(() => user?.email ?? '', [user]);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace('/login');
+    }
+  }, [loading, user, router]);
+
+  useEffect(() => {
+    if (user) {
+      const profile = user.profile ?? {};
+      setForm({
+        businessName: profile.businessName ?? '',
+        ownerName: profile.ownerName ?? '',
+        sector: profile.sector ?? '',
+        kbli: profile.kbli ?? '',
+        employees: profile.employees ?? '',
+        address: profile.businessAddress ?? profile.ownerAddress ?? '',
+        city: profile.city ?? '',
+        phone: profile.phone ?? '',
+        email: profile.contactEmail ?? user.email ?? '',
+        description: profile.businessDescription ?? '',
+        supportNeeds: profile.supportNeeds ?? '',
+      });
+    }
+  }, [user]);
+
   const handleChange = <K extends keyof ProfileForm>(key: K, value: ProfileForm[K]) => {
     setForm(prev => ({ ...prev, [key]: value }));
   };
-
-  const resetForm = () => setForm(defaultForm);
 
   const validateForm = () => {
     const requiredFields: Array<keyof ProfileForm> = ['businessName', 'ownerName', 'sector', 'address', 'city', 'phone'];
@@ -91,6 +119,11 @@ export default function ProfileUpdateScreen() {
   };
 
   const handleSubmit = async () => {
+    if (!user) {
+      Alert.alert('Tidak ada akun', 'Silakan masuk sebelum memperbarui profil.');
+      return;
+    }
+
     if (!validateForm()) {
       Alert.alert('Data belum lengkap', 'Lengkapi nama usaha, pemilik, sektor, alamat, kota, dan kontak.');
       return;
@@ -98,9 +131,27 @@ export default function ProfileUpdateScreen() {
 
     setSubmitting(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 700));
+      await updateUserAccount({
+        id: user.id,
+        email: accountEmail,
+        displayName: form.businessName || form.ownerName || user.displayName || accountEmail,
+        profile: {
+          ...user.profile,
+          businessName: form.businessName.trim(),
+          ownerName: form.ownerName.trim(),
+          sector: form.sector.trim(),
+          kbli: form.kbli.trim(),
+          employees: form.employees.trim(),
+          businessAddress: form.address.trim(),
+          city: form.city.trim(),
+          phone: form.phone.trim(),
+          contactEmail: form.email.trim(),
+          businessDescription: form.description.trim(),
+          supportNeeds: form.supportNeeds.trim(),
+        },
+      });
+
       Alert.alert('Profil diperbarui', 'Data profil UMKM Anda telah disimpan dan siap diverifikasi.');
-      resetForm();
     } catch (error) {
       Alert.alert('Gagal menyimpan', 'Terjadi kendala saat memperbarui profil. Coba ulang beberapa saat lagi.');
     } finally {
@@ -233,7 +284,7 @@ export default function ProfileUpdateScreen() {
               />
               <LabeledInput
                 label="Email (opsional)"
-                placeholder="contoh: kontak@umkm.id"
+                placeholder={accountEmail || 'contoh: kontak@umkm.id'}
                 keyboardType="email-address"
                 value={form.email}
                 onChangeText={value => handleChange('email', value)}

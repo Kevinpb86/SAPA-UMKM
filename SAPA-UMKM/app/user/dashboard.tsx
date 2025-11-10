@@ -234,6 +234,25 @@ export default function UserDashboardScreen() {
     { label: 'Diskusi Terbaru', value: '8', icon: 'message-circle' as FeatherIconName, accent: '#A855F7' },
   ];
 
+  const profileDetails = [
+    { label: 'Email Akun', value: user.email },
+    { label: 'Nama Pemilik', value: user.profile?.ownerName },
+    { label: 'Nama Usaha', value: user.profile?.businessName },
+    { label: 'Sektor Usaha', value: user.profile?.sector },
+    { label: 'Kode KBLI', value: user.profile?.kbli },
+    {
+      label: 'Alamat Usaha',
+      value: [user.profile?.businessAddress, user.profile?.city].filter(Boolean).join(', '),
+    },
+    { label: 'Kontak Telepon', value: user.profile?.phone },
+    { label: 'Kontak Email', value: user.profile?.contactEmail },
+    { label: 'Skala Usaha', value: user.profile?.scale },
+    { label: 'Estimasi Modal', value: user.profile?.capital },
+    { label: 'Jumlah Tenaga Kerja', value: user.profile?.employees },
+    { label: 'Deskripsi Usaha', value: user.profile?.businessDescription },
+    { label: 'Kebutuhan Dukungan', value: user.profile?.supportNeeds },
+  ].filter(detail => detail.value && detail.value.toString().trim().length > 0);
+
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
@@ -299,6 +318,30 @@ export default function UserDashboardScreen() {
             ))}
           </View>
         </LinearGradient>
+
+        <View style={[styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Profil Akun & Usaha</Text>
+          <Text style={[styles.sectionSubtitle, { color: colors.subtle }]}>
+            Data berikut diambil dari proses registrasi dan pembaruan profil terbaru.
+          </Text>
+          {profileDetails.length > 0 ? (
+            <View style={styles.detailGrid}>
+              {profileDetails.map(detail => (
+                <View key={detail.label} style={[styles.detailItem, { borderColor: colors.border }]}>
+                  <Text style={[styles.detailLabel, { color: colors.subtle }]}>{detail.label}</Text>
+                  <Text style={[styles.detailValue, { color: colors.text }]}>{detail.value}</Text>
+                </View>
+              ))}
+            </View>
+          ) : (
+            <View style={styles.detailEmpty}>
+              <Feather name="info" size={16} color={colors.subtle} />
+              <Text style={[styles.detailEmptyText, { color: colors.subtle }]}>
+                Belum ada data profil. Perbarui profil usaha Anda pada menu layanan.
+              </Text>
+            </View>
+          )}
+        </View>
 
         <View style={styles.tabContainer}>
           {[
@@ -598,6 +641,44 @@ const styles = StyleSheet.create({
   },
   sectionSubtitle: {
     fontSize: 14,
+    lineHeight: 20,
+  },
+  detailGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+  },
+  detailItem: {
+    flexBasis: '48%',
+    borderWidth: 1,
+    borderRadius: 18,
+    padding: 16,
+    gap: 6,
+    backgroundColor: 'rgba(27,92,196,0.04)',
+  },
+  detailLabel: {
+    fontSize: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    fontWeight: '700',
+  },
+  detailValue: {
+    fontSize: 15,
+    fontWeight: '600',
+    lineHeight: 20,
+  },
+  detailEmpty: {
+    flexDirection: 'row',
+    gap: 10,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 18,
+    padding: 16,
+    backgroundColor: 'rgba(27,92,196,0.04)',
+  },
+  detailEmptyText: {
+    fontSize: 14,
+    flex: 1,
     lineHeight: 20,
   },
   quickGrid: {

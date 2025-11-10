@@ -1,13 +1,11 @@
-import { useState } from 'react';
+import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { useMemo, useState } from 'react';
 import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
+  FlatList,
   SafeAreaView,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -15,7 +13,13 @@ import {
   useColorScheme,
   View,
 } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+
+import {
+  ProgramInfo,
+  programInfos,
+  ProgramStatus,
+  ProgramType,
+} from '../../constants/programDistribution';
 
 const palette = {
   light: {
@@ -38,311 +42,413 @@ const palette = {
   },
 };
 
-const programOptions = ['KUR', 'UMi', 'Banpres Produktif', 'LPDB', 'Pelatihan & Pendampingan'];
+const typeFilters: Array<ProgramType | 'Semua'> = ['Semua', 'KUR', 'UMi', 'LPDB', 'Banpres', 'Pelatihan'];
+const statusFilters: Array<ProgramStatus | 'Semua'> = [
+  'Semua',
+  'Pendaftaran dibuka',
+  'Segera dibuka',
+  'Sedang seleksi',
+  'Selesai',
+];
 
-type ProgramSubscriptionForm = {
-  name: string;
-  email: string;
-  phone: string;
-  businessName: string;
-  city: string;
-  interestedPrograms: string[];
-  notes: string;
-};
-
-const defaultForm: ProgramSubscriptionForm = {
-  name: '',
-  email: '',
-  phone: '',
-  businessName: '',
-  city: '',
-  interestedPrograms: ['KUR'],
-  notes: '',
-};
-
-export default function ProgramUpdatesScreen() {
+export default function ProgramDistributionScreen() {
   const scheme = useColorScheme();
   const colors = scheme === 'dark' ? palette.dark : palette.light;
   const router = useRouter();
 
-  const [form, setForm] = useState<ProgramSubscriptionForm>(defaultForm);
-  const [submitting, setSubmitting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedType, setSelectedType] = useState<ProgramType | 'Semua'>('Semua');
+  const [selectedStatus, setSelectedStatus] = useState<ProgramStatus | 'Semua'>('Semua');
+  const [expandedProgramId, setExpandedProgramId] = useState<string | null>(null);
 
-  const toggleProgram = (program: string) => {
-    setForm(prev => {
-      const hasProgram = prev.interestedPrograms.includes(program);
-      return {
-        ...prev,
-        interestedPrograms: hasProgram
-          ? prev.interestedPrograms.filter(item => item !== program)
-          : [...prev.interestedPrograms, program],
-      };
+  const filteredPrograms = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+
+    return programInfos.filter(program => {
+      const meetType = selectedType === 'Semua' || program.type === selectedType;
+      const meetStatus = selectedStatus === 'Semua' || program.status === selectedStatus;
+      const meetQuery =
+        normalizedQuery.length === 0 ||
+        program.name.toLowerCase().includes(normalizedQuery) ||
+        program.summary.toLowerCase().includes(normalizedQuery) ||
+        program.provider.toLowerCase().includes(normalizedQuery);
+
+      return meetType && meetStatus && meetQuery;
     });
+  }, [searchQuery, selectedType, selectedStatus]);
+
+  const upcomingDeadlines = useMemo(() => {
+    return programInfos
+      .filter(program => program.nextDeadline)
+      .map(program => ({
+        id: program.id,
+        name: program.name,
+        deadline: program.nextDeadline ?? '',
+        status: program.status,
+      }));
+  }, []);
+
+  const handleExpandProgram = (programId: string) => {
+    setExpandedProgramId(prev => (prev === programId ? null : programId));
   };
 
-  const handleChange = <K extends keyof ProgramSubscriptionForm>(key: K, value: ProgramSubscriptionForm[K]) => {
-    setForm(prev => ({ ...prev, [key]: value }));
-  };
+  const renderProgramCard = ({ item }: { item: ProgramInfo }) => {
+    const isExpanded = expandedProgramId === item.id;
 
-  const resetForm = () => setForm(defaultForm);
+    return (
+      <TouchableOpacity
+        accessibilityRole="button"
+        onPress={() => handleExpandProgram(item.id)}
+        style={[
+          styles.programCard,
+          {
+            borderColor: isExpanded ? colors.accent : colors.border,
+            backgroundColor: isExpanded ? `${colors.accent}0F` : colors.card,
+          },
+        ]}
+        activeOpacity={0.92}
+      >
+        <View style={styles.programHeader}>
+          <View style={styles.programHeaderLeft}>
+            <View style={[styles.programBadge, { backgroundColor: `${colors.accent}16` }]}> 
+              <Feather name="layers" size={16} color={colors.accent} />
+              <Text style={[styles.programBadgeText, { color: colors.accent }]}>{item.type}</Text>
+            </View>
+            <View style={styles.programHeading}>
+              <Text style={[styles.programName, { color: colors.text }]}>{item.name}</Text>
+              <Text style={[styles.programProvider, { color: colors.subtle }]}>{item.provider}</Text>
+            </View>
+          </View>
+          <Feather
+            name={isExpanded ? 'chevron-up' : 'chevron-down'}
+            size={18}
+            color={colors.subtle}
+          />
+        </View>
 
-  const validateForm = () => {
-    const requiredFields: Array<keyof ProgramSubscriptionForm> = ['name', 'email', 'businessName', 'city'];
-    for (const field of requiredFields) {
-      if (!form[field].trim()) {
-        return false;
-      }
-    }
-    return form.interestedPrograms.length > 0;
-  };
+        <Text style={[styles.programSummary, { color: colors.text }]} numberOfLines={isExpanded ? undefined : 3}>
+          {item.summary}
+        </Text>
 
-  const handleSubmit = async () => {
-    if (!validateForm()) {
-      Alert.alert('Data belum lengkap', 'Isi nama, email, nama usaha, kota, dan pilih minimal satu program.');
-      return;
-    }
+        <View style={styles.programMetaRow}>
+          <ProgramStatusPill status={item.status} colors={colors} />
+          {item.financingRange && <MetaInfo colors={colors} icon="briefcase" text={item.financingRange} />}
+          {item.rateInfo && <MetaInfo colors={colors} icon="percent" text={item.rateInfo} />}
+        </View>
 
-    setSubmitting(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 700));
-      Alert.alert(
-        'Langganan berhasil',
-        'Kami akan mengirim informasi terkini penyaluran program melalui email yang Anda daftarkan.',
-      );
-      resetForm();
-    } catch (error) {
-      Alert.alert('Gagal mengirim', 'Terjadi kendala saat menyimpan data. Silakan coba kembali.');
-    } finally {
-      setSubmitting(false);
-    }
+        <View style={styles.programMetaRow}>
+          <MetaInfo colors={colors} icon="pie-chart" text={item.quotaInfo} />
+          {item.nextDeadline && (
+            <MetaInfo colors={colors} icon="calendar" text={`Deadline: ${item.nextDeadline}`} />
+          )}
+        </View>
+
+        {isExpanded && (
+          <View style={styles.programDetail}>
+            <SectionTitle colors={colors} icon="gift" title="Keunggulan Program" />
+            <View style={styles.benefitGrid}>
+              {item.benefits.map(benefit => (
+                <View key={benefit.id} style={[styles.benefitCard, { borderColor: colors.border }]}> 
+                  <View style={[styles.benefitIcon, { backgroundColor: `${colors.accent}16` }]}> 
+                    <Feather name={benefit.icon} size={16} color={colors.accent} />
+                  </View>
+                  <Text style={[styles.benefitTitle, { color: colors.text }]}>{benefit.title}</Text>
+                  <Text style={[styles.benefitDescription, { color: colors.subtle }]}>
+                    {benefit.description}
+                  </Text>
+                </View>
+              ))}
+            </View>
+
+            <SectionTitle colors={colors} icon="check-circle" title="Persyaratan Inti" />
+            <View style={styles.requirementsList}>
+              {item.requirements.map(requirement => (
+                <View key={requirement} style={styles.requirementRow}> 
+                  <Feather name="check" size={14} color={colors.accent} />
+                  <Text style={[styles.requirementText, { color: colors.text }]}>{requirement}</Text>
+                </View>
+              ))}
+            </View>
+
+            <SectionTitle colors={colors} icon="calendar" title="Tahapan Penyaluran" />
+            <View style={styles.timelineList}>
+              {item.timeline.map(step => (
+                <TimelineItemRow key={step.id} step={step} colors={colors} />
+              ))}
+            </View>
+
+            <SectionTitle colors={colors} icon="file-text" title="Referensi & Formulir" />
+            <View style={styles.resourceList}>
+              {item.resources.map(resource => (
+                <TouchableOpacity
+                  key={resource.id}
+                  accessibilityRole="button"
+                  style={[styles.resourceCard, { borderColor: colors.border }]}
+                  onPress={() => router.push('/services/penyaluran/resources')}
+                >
+                  <View style={[styles.resourceIcon, { backgroundColor: `${colors.accent}16` }]}> 
+                    <Feather name="download" size={16} color={colors.accent} />
+                  </View>
+                  <View style={styles.resourceTextWrapper}>
+                    <Text style={[styles.resourceLabel, { color: colors.text }]}>{resource.label}</Text>
+                    <Text style={[styles.resourceType, { color: colors.subtle }]}>{resource.type}</Text>
+                  </View>
+                  <Feather name="external-link" size={14} color={colors.accent} />
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <SectionTitle colors={colors} icon="life-buoy" title="Kontak & Pendampingan" />
+            <View style={[styles.contactCard, { borderColor: colors.border }]}> 
+              <View style={styles.contactRow}> 
+                <Feather name="mail" size={16} color={colors.accent} />
+                <Text style={[styles.contactText, { color: colors.text }]}>{item.contact.email}</Text>
+              </View>
+              <View style={styles.contactRow}> 
+                <Feather name="phone" size={16} color={colors.accent} />
+                <Text style={[styles.contactText, { color: colors.text }]}>{item.contact.phone}</Text>
+              </View>
+              {item.contact.notes && (
+                <View style={styles.contactRow}> 
+                  <Feather name="info" size={16} color={colors.accent} />
+                  <Text style={[styles.contactNotes, { color: colors.subtle }]}>{item.contact.notes}</Text>
+                </View>
+              )}
+            </View>
+          </View>
+        )}
+      </TouchableOpacity>
+    );
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}> 
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.flexOne}
-      >
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <LinearGradient
-            colors={colors.hero}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.hero}
-          >
-            <TouchableOpacity
-              accessibilityRole="button"
-              onPress={() => router.back()}
-              style={styles.backButton}
+      <FlatList
+        keyExtractor={program => program.id}
+        data={filteredPrograms}
+        renderItem={renderProgramCard}
+        contentContainerStyle={styles.listContent}
+        ListHeaderComponent={
+          <>
+            <LinearGradient
+              colors={colors.hero}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.hero}
             >
-              <Feather name="arrow-left" size={18} color="#FFFFFF" />
-              <Text style={styles.backText}>Kembali</Text>
-            </TouchableOpacity>
-            <Text style={styles.heroKicker}>Informasi Penyaluran Program KemenKopUKM</Text>
-            <Text style={styles.heroTitle}>Tetap Terhubung dengan Program Terbaru</Text>
-            <Text style={styles.heroSubtitle}>
-              Dapatkan notifikasi pembukaan program pembiayaan, pelatihan, dan pendampingan resmi Kementerian Koperasi
-              & UKM sesuai kebutuhan usaha Anda.
+              <TouchableOpacity
+                accessibilityRole="button"
+                onPress={() => router.back()}
+                style={styles.backButton}
+              >
+                <Feather name="arrow-left" size={18} color="#FFFFFF" />
+                <Text style={styles.backText}>Kembali</Text>
+              </TouchableOpacity>
+              <Text style={styles.heroKicker}>Informasi Penyaluran Program KemenKopUKM</Text>
+              <Text style={styles.heroTitle}>Akses Dana & Dukungan Resmi untuk UMKM</Text>
+              <Text style={styles.heroSubtitle}>
+                Pantau status penyaluran pembiayaan, bantuan usaha, dan program pendampingan yang disediakan pemerintah.
+              </Text>
+            </LinearGradient>
+
+            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}> 
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Filter & Pencarian</Text>
+              <Text style={[styles.sectionSubtitle, { color: colors.subtle }]}> 
+                Temukan informasi penyaluran yang paling relevan dengan kebutuhan usaha Anda.
+              </Text>
+              <View style={[styles.searchBar, { borderColor: colors.border, backgroundColor: colors.card }]}> 
+                <Feather name="search" size={16} color={colors.subtle} />
+                <TextInput
+                  style={[styles.searchInput, { color: colors.text }]}
+                  placeholder="Cari nama program, lembaga penyalur, atau kata kunci..."
+                  placeholderTextColor={`${colors.subtle}80`}
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                />
+              </View>
+              <FilterRow
+                colors={colors}
+                label="Jenis Program"
+                options={typeFilters}
+                active={selectedType}
+                onSelect={value => setSelectedType(value)}
+              />
+              <FilterRow
+                colors={colors}
+                label="Status Penyaluran"
+                options={statusFilters}
+                active={selectedStatus}
+                onSelect={value => setSelectedStatus(value)}
+              />
+            </View>
+
+            {upcomingDeadlines.length > 0 && (
+              <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}> 
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>Agenda & Tenggat Terdekat</Text>
+                <Text style={[styles.sectionSubtitle, { color: colors.subtle }]}> 
+                  Pastikan Anda menyiapkan dokumen sebelum batas waktu pendaftaran.
+                </Text>
+                <View style={styles.deadlineList}>
+                  {upcomingDeadlines.map(deadline => (
+                    <View key={deadline.id} style={[styles.deadlineItem, { borderColor: colors.border }]}> 
+                      <View style={[styles.deadlineIcon, { backgroundColor: `${colors.accent}16` }]}> 
+                        <Feather name="calendar" size={16} color={colors.accent} />
+                      </View>
+                      <View style={styles.deadlineContent}> 
+                        <Text style={[styles.deadlineTitle, { color: colors.text }]}>{deadline.name}</Text>
+                        <Text style={[styles.deadlineDate, { color: colors.subtle }]}>{deadline.deadline}</Text>
+                      </View>
+                      <ProgramStatusPill status={deadline.status} colors={colors} />
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+          </>
+        }
+        ListEmptyComponent={
+          <View style={[styles.emptyState, { backgroundColor: colors.card, borderColor: colors.border }]}> 
+            <Feather name="inbox" size={20} color={colors.subtle} />
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>Program tidak ditemukan</Text>
+            <Text style={[styles.emptySubtitle, { color: colors.subtle }]}> 
+              Coba ubah filter atau kata kunci pencarian untuk menampilkan program penyaluran lainnya.
             </Text>
-          </LinearGradient>
-
-          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={styles.sectionHeader}>
-              <View style={[styles.iconWrapper, { backgroundColor: `${colors.accent}12` }]}>
-                <Feather name="send" size={18} color={colors.accent} />
-              </View>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Ringkasan Program</Text>
-            </View>
-            <View style={styles.sectionBody}>
-              <InfoRow
-                colors={colors}
-                icon="credit-card"
-                text="Penyaluran pembiayaan dari KUR, UMi, LPDB, hingga Banpres produktif."
-              />
-              <InfoRow
-                colors={colors}
-                icon="book"
-                text="Undangan pelatihan dan pendampingan resmi yang membuka pendaftaran."
-              />
-              <InfoRow
-                colors={colors}
-                icon="bell"
-                text="Pengumuman batas waktu pendaftaran serta syarat dokumen yang harus disiapkan."
-              />
-            </View>
           </View>
-
-          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={styles.sectionHeader}>
-              <View style={[styles.iconWrapper, { backgroundColor: `${colors.accent}12` }]}>
-                <Feather name="edit-3" size={18} color={colors.accent} />
-              </View>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Form Langganan Informasi</Text>
-            </View>
-
-            <View style={styles.fieldGroup}>
-              <LabeledInput
-                label="Nama Lengkap"
-                placeholder="Nama pemilik / PIC usaha"
-                value={form.name}
-                onChangeText={value => handleChange('name', value)}
-                colors={colors}
-              />
-              <LabeledInput
-                label="Email"
-                placeholder="contoh: pemilik@umkm.id"
-                keyboardType="email-address"
-                value={form.email}
-                onChangeText={value => handleChange('email', value)}
-                colors={colors}
-              />
-              <LabeledInput
-                label="Nomor Telepon / WhatsApp (opsional)"
-                placeholder="08xxxxxxxxxx"
-                keyboardType="phone-pad"
-                value={form.phone}
-                onChangeText={value => handleChange('phone', value)}
-                colors={colors}
-              />
-              <LabeledInput
-                label="Nama Usaha"
-                placeholder="Nama brand atau perusahaan"
-                value={form.businessName}
-                onChangeText={value => handleChange('businessName', value)}
-                colors={colors}
-              />
-              <LabeledInput
-                label="Kota / Kabupaten"
-                placeholder="Contoh: Kota Surabaya"
-                value={form.city}
-                onChangeText={value => handleChange('city', value)}
-                colors={colors}
-              />
-            </View>
-
-            <View style={styles.inputWrapper}>
-              <Text style={[styles.inputLabel, { color: colors.subtle }]}>Program yang Diminati</Text>
-              <View style={styles.pillGroup}>
-                {programOptions.map(option => {
-                  const active = form.interestedPrograms.includes(option);
-                  return (
-                    <TouchableOpacity
-                      key={option}
-                      accessibilityRole="button"
-                      onPress={() => toggleProgram(option)}
-                      style={[
-                        styles.pill,
-                        {
-                          borderColor: active ? colors.accent : colors.border,
-                          backgroundColor: active ? `${colors.accent}1A` : colors.card,
-                        },
-                      ]}
-                    >
-                      <Feather
-                        name={active ? 'check' : 'plus'}
-                        size={14}
-                        color={active ? colors.accent : colors.subtle}
-                      />
-                      <Text
-                        style={[
-                          styles.pillText,
-                          { color: active ? colors.accent : colors.subtle },
-                        ]}
-                      >
-                        {option}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </View>
-
-            <View style={styles.fieldGroup}>
-              <LabeledInput
-                label="Catatan (opsional)"
-                placeholder="Kebutuhan akses dana, jenis pendampingan, dukungan lainnya"
-                value={form.notes}
-                onChangeText={value => handleChange('notes', value)}
-                colors={colors}
-                multiline
-              />
-            </View>
-
-            <TouchableOpacity
-              accessibilityRole="button"
-              onPress={handleSubmit}
-              disabled={submitting}
-              style={[
-                styles.submitButton,
-                { backgroundColor: colors.accent, opacity: submitting ? 0.6 : 1 },
-              ]}
-            >
-              <Text style={styles.submitText}>{submitting ? 'Mengirim...' : 'Lihat Program'}</Text>
-              <Feather name="send" size={16} color="#FFFFFF" />
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+        }
+      />
     </SafeAreaView>
   );
 }
 
-type LabeledInputProps = {
-  label: string;
-  placeholder: string;
-  value: string;
-  onChangeText: (value: string) => void;
+type FilterRowProps<T extends string> = {
   colors: typeof palette.light;
-  multiline?: boolean;
-  keyboardType?: 'default' | 'email-address' | 'number-pad' | 'phone-pad';
+  label: string;
+  options: T[];
+  active: T;
+  onSelect: (value: T) => void;
 };
 
-function LabeledInput({
-  label,
-  placeholder,
-  value,
-  onChangeText,
-  colors,
-  multiline,
-  keyboardType = 'default',
-}: LabeledInputProps) {
+function FilterRow<T extends string>({ colors, label, options, active, onSelect }: FilterRowProps<T>) {
   return (
-    <View style={styles.inputWrapper}>
-      <Text style={[styles.inputLabel, { color: colors.subtle }]}>{label}</Text>
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor={`${colors.subtle}80`}
-        multiline={multiline}
-        keyboardType={keyboardType}
-        style={[
-          styles.input,
-          {
-            borderColor: colors.border,
-            backgroundColor: colors.card,
-            color: colors.text,
-            minHeight: multiline ? 96 : 48,
-            textAlignVertical: multiline ? 'top' : 'center',
-          },
-        ]}
-      />
+    <View style={styles.filterGroup}> 
+      <Text style={[styles.filterLabel, { color: colors.subtle }]}>{label}</Text>
+      <View style={styles.filterList}>
+        {options.map(option => {
+          const isActive = option === active;
+          return (
+            <TouchableOpacity
+              key={option}
+              accessibilityRole="button"
+              onPress={() => onSelect(option)}
+              style={[
+                styles.filterChip,
+                {
+                  borderColor: isActive ? colors.accent : colors.border,
+                  backgroundColor: isActive ? `${colors.accent}14` : colors.card,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.filterChipText,
+                  { color: isActive ? colors.accent : colors.subtle },
+                ]}
+              >
+                {option}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
     </View>
   );
 }
 
-type InfoRowProps = {
+type ProgramStatusPillProps = {
+  status: ProgramStatus;
+  colors: typeof palette.light;
+};
+
+function ProgramStatusPill({ status, colors }: ProgramStatusPillProps) {
+  const statusConfig: Record<ProgramStatus, { icon: React.ComponentProps<typeof Feather>['name']; color: string }> = {
+    'Pendaftaran dibuka': { icon: 'zap', color: '#16A34A' },
+    'Segera dibuka': { icon: 'clock', color: '#EAB308' },
+    'Sedang seleksi': { icon: 'refresh-ccw', color: '#0EA5E9' },
+    Selesai: { icon: 'check-circle', color: '#6B7280' },
+  };
+
+  const config = statusConfig[status];
+
+  return (
+    <View style={[styles.statusBadge, { backgroundColor: `${config.color}22` }]}> 
+      <Feather name={config.icon} size={12} color={config.color} />
+      <Text style={[styles.statusBadgeText, { color: config.color }]}>{status}</Text>
+    </View>
+  );
+}
+
+type MetaInfoProps = {
   colors: typeof palette.light;
   icon: React.ComponentProps<typeof Feather>['name'];
   text: string;
 };
 
-function InfoRow({ colors, icon, text }: InfoRowProps) {
+function MetaInfo({ colors, icon, text }: MetaInfoProps) {
   return (
-    <View style={styles.infoRow}>
-      <Feather name={icon} size={16} color={colors.accent} />
-      <Text style={[styles.infoText, { color: colors.subtle }]}>{text}</Text>
+    <View style={styles.metaInfo}> 
+      <Feather name={icon} size={14} color={colors.accent} />
+      <Text style={[styles.metaInfoText, { color: colors.subtle }]} numberOfLines={2}>
+        {text}
+      </Text>
+    </View>
+  );
+}
+
+type SectionTitleProps = {
+  colors: typeof palette.light;
+  icon: React.ComponentProps<typeof Feather>['name'];
+  title: string;
+};
+
+function SectionTitle({ colors, icon, title }: SectionTitleProps) {
+  return (
+    <View style={styles.sectionTitleRow}> 
+      <View style={[styles.sectionTitleIcon, { backgroundColor: `${colors.accent}16` }]}> 
+        <Feather name={icon} size={14} color={colors.accent} />
+      </View>
+      <Text style={[styles.sectionTitleText, { color: colors.text }]}>{title}</Text>
+    </View>
+  );
+}
+
+type TimelineItemRowProps = {
+  step: ProgramInfo['timeline'][number];
+  colors: typeof palette.light;
+};
+
+function TimelineItemRow({ step, colors }: TimelineItemRowProps) {
+  const statusColors: Record<
+    ProgramInfo['timeline'][number]['status'],
+    { background: string; icon: React.ComponentProps<typeof Feather>['name']; iconColor: string }
+  > = {
+    completed: { background: '#DCFCE7', icon: 'check', iconColor: '#16A34A' },
+    current: { background: '#DBEAFE', icon: 'activity', iconColor: '#2563EB' },
+    upcoming: { background: '#F5F3FF', icon: 'clock', iconColor: '#7C3AED' },
+  };
+
+  const statusConfig = statusColors[step.status];
+
+  return (
+    <View style={[styles.timelineItem, { borderColor: colors.border }]}> 
+      <View style={[styles.timelineIcon, { backgroundColor: statusConfig.background }]}> 
+        <Feather name={statusConfig.icon} size={14} color={statusConfig.iconColor} />
+      </View>
+      <View style={styles.timelineContent}> 
+        <Text style={[styles.timelineLabel, { color: colors.text }]}>{step.label}</Text>
+        <Text style={[styles.timelinePeriod, { color: colors.accent }]}>{step.period}</Text>
+        <Text style={[styles.timelineDescription, { color: colors.subtle }]}>{step.description}</Text>
+      </View>
     </View>
   );
 }
@@ -351,17 +457,16 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  flexOne: {
-    flex: 1,
-  },
-  scrollContent: {
+  listContent: {
     padding: 24,
     gap: 20,
+    paddingBottom: 48,
   },
   hero: {
     borderRadius: 28,
     padding: 24,
     gap: 16,
+    marginBottom: 16,
   },
   backButton: {
     alignSelf: 'flex-start',
@@ -402,83 +507,313 @@ const styles = StyleSheet.create({
     padding: 22,
     gap: 18,
   },
-  sectionHeader: {
-    flexDirection: 'row',
-    gap: 12,
-    alignItems: 'center',
-  },
-  iconWrapper: {
-    width: 44,
-    height: 44,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
   },
-  sectionBody: {
-    gap: 12,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    gap: 10,
-    alignItems: 'flex-start',
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 14,
+  sectionSubtitle: {
+    fontSize: 13,
     lineHeight: 20,
   },
-  fieldGroup: {
-    gap: 16,
-  },
-  inputWrapper: {
-    gap: 8,
-  },
-  inputLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  input: {
-    borderRadius: 14,
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderRadius: 16,
     borderWidth: 1,
     paddingHorizontal: 16,
-    paddingVertical: Platform.OS === 'ios' ? 14 : 12,
-    fontSize: 15,
+    paddingVertical: 12,
   },
-  pillGroup: {
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    paddingVertical: 0,
+  },
+  filterGroup: {
+    gap: 12,
+  },
+  filterLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  filterList: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
   },
-  pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+  filterChip: {
     borderRadius: 999,
     borderWidth: 1,
     paddingHorizontal: 14,
     paddingVertical: 8,
   },
-  pillText: {
+  filterChipText: {
     fontSize: 13,
     fontWeight: '600',
   },
-  submitButton: {
-    alignSelf: 'flex-start',
+  deadlineList: {
+    gap: 12,
+  },
+  deadlineItem: {
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    borderRadius: 999,
-    paddingHorizontal: 20,
-    paddingVertical: 13,
+    gap: 12,
   },
-  submitText: {
-    color: '#FFFFFF',
+  deadlineIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deadlineContent: {
+    flex: 1,
+    gap: 4,
+  },
+  deadlineTitle: {
     fontSize: 14,
     fontWeight: '700',
+  },
+  deadlineDate: {
+    fontSize: 12,
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  statusBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  programCard: {
+    borderRadius: 22,
+    borderWidth: 1,
+    padding: 20,
+    gap: 16,
+  },
+  programHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  programHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  programBadge: {
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  programBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.4,
+  },
+  programHeading: {
+    flex: 1,
+    gap: 4,
+  },
+  programName: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  programProvider: {
+    fontSize: 12,
+  },
+  programSummary: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  programMetaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  metaInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: 'rgba(37, 99, 235, 0.08)',
+    maxWidth: '100%',
+  },
+  metaInfoText: {
+    fontSize: 12,
+    fontWeight: '600',
+    flexShrink: 1,
+  },
+  programDetail: {
+    gap: 18,
+    paddingTop: 8,
+  },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  sectionTitleIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sectionTitleText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  benefitGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  benefitCard: {
+    width: '48%',
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 14,
+    gap: 8,
+  },
+  benefitIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  benefitTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  benefitDescription: {
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  requirementsList: {
+    gap: 10,
+  },
+  requirementRow: {
+    flexDirection: 'row',
+    gap: 10,
+    alignItems: 'flex-start',
+  },
+  requirementText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  timelineList: {
+    gap: 12,
+  },
+  timelineItem: {
+    flexDirection: 'row',
+    gap: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 14,
+  },
+  timelineIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  timelineContent: {
+    flex: 1,
+    gap: 4,
+  },
+  timelineLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  timelinePeriod: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  timelineDescription: {
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  resourceList: {
+    gap: 12,
+  },
+  resourceCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  resourceIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  resourceTextWrapper: {
+    flex: 1,
+    gap: 4,
+  },
+  resourceLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  resourceType: {
+    fontSize: 12,
+  },
+  contactCard: {
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 14,
+    gap: 10,
+  },
+  contactRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  contactText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  contactNotes: {
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  emptyState: {
+    borderRadius: 22,
+    borderWidth: 1,
+    padding: 24,
+    alignItems: 'center',
+    gap: 12,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  emptySubtitle: {
+    fontSize: 13,
+    lineHeight: 20,
+    textAlign: 'center',
   },
 });
 
