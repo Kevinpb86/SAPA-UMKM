@@ -1,6 +1,9 @@
-import { useState } from 'react';
-import { StatusBar } from 'expo-status-bar';
+import { useAuth } from '@/hooks/use-auth';
+import { createSubmission } from '@/lib/api';
+import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -14,7 +17,6 @@ import {
   useColorScheme,
   View,
 } from 'react-native';
-import { Feather } from '@expo/vector-icons';
 
 const palette = {
   light: {
@@ -57,6 +59,7 @@ export default function OtherCertificateFormScreen() {
   const scheme = useColorScheme();
   const colors = scheme === 'dark' ? palette.dark : palette.light;
   const router = useRouter();
+  const { user } = useAuth();
 
   const [form, setForm] = useState<FormState>(defaultForm);
   const [submitting, setSubmitting] = useState(false);
@@ -80,16 +83,24 @@ export default function OtherCertificateFormScreen() {
       return;
     }
 
+    if (!user?.token) {
+      Alert.alert('Error', 'Anda harus login terlebih dahulu.');
+      return;
+    }
+
     setSubmitting(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 700));
+      await createSubmission(user.token, {
+        type: 'lainnya',
+        data: form
+      });
       Alert.alert(
         'Permintaan terkirim',
         'Data sertifikasi telah kami terima. Tim akan membantu verifikasi untuk standar khusus yang Anda pilih.',
       );
       resetForm();
     } catch (error) {
-      Alert.alert('Gagal mengirim', 'Terjadi kesalahan saat mengirim permintaan. Silakan coba kembali.');
+      Alert.alert('Gagal mengirim', error instanceof Error ? error.message : 'Terjadi kesalahan saat mengirim permintaan.');
     } finally {
       setSubmitting(false);
     }

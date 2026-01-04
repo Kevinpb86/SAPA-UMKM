@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { useAuth } from '@/hooks/use-auth';
+import { createSubmission } from '@/lib/api';
+import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -15,7 +18,6 @@ import {
   useColorScheme,
   View,
 } from 'react-native';
-import { Feather } from '@expo/vector-icons';
 
 const palette = {
   light: {
@@ -71,6 +73,7 @@ export default function BusinessReportScreen() {
   const scheme = useColorScheme();
   const colors = scheme === 'dark' ? palette.dark : palette.light;
   const router = useRouter();
+  const { user } = useAuth();
 
   const [form, setForm] = useState<ReportForm>(defaultForm);
   const [submitting, setSubmitting] = useState(false);
@@ -97,16 +100,24 @@ export default function BusinessReportScreen() {
       return;
     }
 
+    if (!user?.token) {
+      Alert.alert('Error', 'Anda harus login terlebih dahulu.');
+      return;
+    }
+
     setSubmitting(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 700));
+      await createSubmission(user.token, {
+        type: 'laporan',
+        data: form
+      });
       Alert.alert(
         'Laporan tersimpan',
         'Laporan perkembangan usaha Anda telah tercatat. Terima kasih atas partisipasinya.',
       );
       resetForm();
     } catch (error) {
-      Alert.alert('Gagal mengirim', 'Terjadi kendala saat menyimpan laporan. Silakan coba kembali.');
+      Alert.alert('Gagal mengirim', error instanceof Error ? error.message : 'Terjadi kendala saat menyimpan laporan.');
     } finally {
       setSubmitting(false);
     }

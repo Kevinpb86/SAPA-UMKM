@@ -1,14 +1,14 @@
 import { createContext, type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 
+import { deleteUser as deleteUserAPI, fetchUsers, loginUser as loginUserAPI, registerUser as registerUserAPI, updateUser as updateUserAPI } from '@/lib/api';
 import {
   type AccountProfile,
   deleteAccountById,
-  findAccountByEmail,
   findAccountById,
   listAccounts,
   seedAdminAccount,
   type StoredAccount,
-  upsertAccount,
+  upsertAccount
 } from '@/lib/auth-store';
 
 export type RegisterPayload = {
@@ -61,9 +61,39 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [accounts, setAccounts] = useState<StoredAccount[]>([]);
 
   const refreshAccounts = useCallback(async () => {
+    if (user?.role === 'admin') {
+      const response = await fetchUsers();
+      if (response.success && Array.isArray(response.data)) {
+        const mappedAccounts: StoredAccount[] = response.data.map((u: any) => ({
+          id: u.id.toString(),
+          role: u.role,
+          email: u.email,
+          password: '', // Password is not exposed by API
+          displayName: u.display_name || u.displayName || u.email,
+          profile: {
+            ownerName: u.owner_name,
+            businessName: u.business_name,
+            nik: u.nik,
+            sector: u.sector,
+            scale: u.scale,
+            capital: u.capital,
+            kbli: u.kbli,
+            ownerAddress: u.owner_address,
+            businessAddress: u.business_address,
+          },
+        }));
+        // Ensure admin is in the list (if not returned by API)
+        const hasAdmin = mappedAccounts.some(a => a.email === ADMIN_ACCOUNT.email);
+        if (!hasAdmin) {
+          mappedAccounts.unshift(ADMIN_ACCOUNT);
+        }
+        setAccounts(mappedAccounts);
+        return;
+      }
+    }
     const list = await listAccounts();
     setAccounts(list);
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     (async () => {
@@ -74,35 +104,62 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [refreshAccounts]);
 
   const register = useCallback(async (payload: RegisterPayload) => {
-    const normalizedEmail = payload.email.trim().toLowerCase();
-    if (normalizedEmail === ADMIN_ACCOUNT.email) {
-      throw new Error('EMAIL_RESERVED_FOR_ADMIN');
-    }
-    await upsertAccount({
-      id: `user-${normalizedEmail}`,
-      role: 'user',
-      email: normalizedEmail,
-      password: payload.password,
-      displayName: payload.ownerName || payload.businessName || normalizedEmail,
-      profile: {
+    try {
+      // Panggil API backend untuk registrasi
+      const response = await registerUserAPI({
+        email: payload.email,
+        password: payload.password,
         ownerName: payload.ownerName,
         nik: payload.nik,
         businessName: payload.businessName,
-        ...payload.profile,
-      },
-    });
-    setUser(null);
-    await refreshAccounts();
+        profile: payload.profile,
+      });
+
+      if (!response.success) {
+        throw new Error(response.message || 'Registrasi gagal');
+      }
+
+      // Setelah registrasi berhasil, refresh accounts dari local storage
+      // (untuk kompatibilitas dengan fitur lain yang masih menggunakan local storage)
+      setUser(null);
+      await refreshAccounts();
+    } catch (error) {
+      // Re-throw error untuk ditangani di component
+      throw error;
+    }
   }, [refreshAccounts]);
 
   const login = useCallback(async (email: string, password: string) => {
-    const account = await findAccountByEmail(email);
-    if (account && account.password === password) {
-      setUser(account);
-      return account;
-    }
+    try {
+      const response = await loginUserAPI({ email, password });
 
-    return null;
+      if (response.success && response.data) {
+        const { user: apiUser, token } = response.data;
+
+        // Map backend snake_case to frontend camelCase
+        const account: StoredAccount = {
+          id: apiUser.id.toString(),
+          role: apiUser.role,
+          email: apiUser.email,
+          displayName: apiUser.display_name || apiUser.displayName || apiUser.email,
+          token: token,
+          profile: {
+            ownerName: apiUser.owner_name || apiUser.ownerName,
+            businessName: apiUser.business_name || apiUser.businessName,
+            nik: apiUser.nik,
+            // Add other profile fields mapping if necessary
+          }
+        };
+
+        setUser(account);
+        return account;
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Login error:', error);
+      return null;
+    }
   }, []);
 
   const logout = useCallback(async () => {
@@ -119,6 +176,34 @@ export function AuthProvider({ children }: AuthProviderProps) {
         throw new Error('PASSWORD_REQUIRED');
       }
 
+      if (user?.role === 'admin') {
+        const response = await registerUserAPI({
+          email: normalizedEmail,
+          password: payload.password,
+          ownerName: payload.displayName,
+          // Assuming displayName is ownerName, we also need businessName. 
+          // If profile.businessName exists use it, else usage displayName.
+          businessName: payload.profile?.businessName || payload.displayName,
+          nik: payload.profile?.nik || '',
+          profile: payload.profile,
+        });
+
+        if (response.success && response.data) {
+          await refreshAccounts();
+          // We return a mock object just to satisfy the return type, 
+          // actual data is in the DB.
+          return {
+            id: response.data.id.toString(),
+            email: response.data.email,
+            role: 'user',
+            displayName: response.data.displayName,
+            password: '',
+            profile: payload.profile
+          } as StoredAccount;
+        }
+        throw new Error(response.message || 'Gagal membuat user');
+      }
+
       const account: StoredAccount = {
         id: payload.id ?? `user-${Date.now()}`,
         role: 'user',
@@ -132,7 +217,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       await refreshAccounts();
       return account;
     },
-    [refreshAccounts],
+    [refreshAccounts, user],
   );
 
   const updateUserAccount = useCallback(
@@ -140,6 +225,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (!payload.id) {
         throw new Error('ACCOUNT_ID_REQUIRED');
       }
+
+      if (user?.role === 'admin') {
+        // Call API
+        const response = await updateUserAPI(payload.id, payload);
+        if (response.success) {
+          await refreshAccounts();
+          return {
+            ...payload,
+            role: 'user',
+            // return payload fields mixed with response if needed, 
+            // for now just returning payload as updated account
+            id: payload.id,
+            password: '',
+            displayName: payload.displayName,
+            profile: payload.profile
+          } as StoredAccount;
+        }
+        throw new Error(response.message || 'Gagal update user');
+      }
+
       const existing = await findAccountById(payload.id);
       if (!existing) {
         throw new Error('ACCOUNT_NOT_FOUND');
@@ -178,6 +283,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const deleteUserAccount = useCallback(
     async (id: string) => {
+      if (user?.role === 'admin') {
+        const response = await deleteUserAPI(id);
+        if (response.success) {
+          await refreshAccounts();
+          return;
+        }
+        throw new Error(response.message || 'Gagal menghapus user');
+      }
+
       const target = await findAccountById(id);
       if (!target) {
         throw new Error('ACCOUNT_NOT_FOUND');

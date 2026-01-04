@@ -1,5 +1,4 @@
 import { Feather } from '@expo/vector-icons';
-import * as DocumentPicker from 'expo-document-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -25,12 +24,14 @@ const palette = {
   light: {
     background: '#F5F7FB',
     card: '#FFFFFF',
-    text: '#0F1B3A',
-    subtle: '#66728F',
-    primary: '#1B5CC4',
-    border: '#DEE4F2',
+    text: '#0F172A',
+    subtle: '#64748B',
+    primary: '#2563EB',
+    border: '#E2E8F0',
     input: '#FFFFFF',
-    accent: '#2563EB',
+    accent: '#3B82F6',
+    focus: '#2563EB',
+    success: '#10B981',
   },
   dark: {
     background: '#0F172A',
@@ -38,9 +39,11 @@ const palette = {
     text: '#F8FAFC',
     subtle: '#94A3B8',
     primary: '#3B82F6',
-    border: '#273449',
+    border: '#334155',
     input: '#0F172A',
     accent: '#60A5FA',
+    focus: '#3B82F6',
+    success: '#34D399',
   },
 };
 
@@ -83,8 +86,93 @@ type RegisterForm = {
   capital: string;
 };
 
+type FormInputProps = {
+  label: string;
+  icon: keyof typeof Feather.glyphMap;
+  placeholder: string;
+  value: string;
+  onChangeText: (text: string) => void;
+  required?: boolean;
+  keyboardType?: 'default' | 'email-address' | 'numeric' | 'number-pad';
+  secureTextEntry?: boolean;
+  multiline?: boolean;
+  onIconPress?: () => void;
+  rightIcon?: keyof typeof Feather.glyphMap;
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+};
+
+function FormInput({
+  label,
+  icon,
+  placeholder,
+  value,
+  onChangeText,
+  required,
+  keyboardType = 'default',
+  secureTextEntry,
+  multiline,
+  onIconPress,
+  rightIcon,
+  autoCapitalize,
+}: FormInputProps) {
+  const scheme = useColorScheme();
+  const colors = scheme === 'dark' ? palette.dark : palette.light;
+  const [isFocused, setIsFocused] = useState(false);
+
+  return (
+    <View style={styles.formField}>
+      <Text style={[styles.label, { color: colors.text }]}>
+        {label}
+        {required && <Text style={styles.required}> *</Text>}
+      </Text>
+      <View
+        style={[
+          styles.inputWrapper,
+          {
+            borderColor: isFocused ? colors.focus : colors.border,
+            backgroundColor: colors.input,
+            minHeight: multiline ? 100 : 54,
+            alignItems: multiline ? 'flex-start' : 'center',
+            paddingTop: multiline ? 12 : 0,
+          },
+        ]}>
+        <Feather
+          name={icon}
+          size={18}
+          color={isFocused ? colors.focus : colors.subtle}
+          style={[styles.inputIcon, multiline && { marginTop: 4 }]}
+        />
+        <TextInput
+          placeholder={placeholder}
+          placeholderTextColor={`${colors.subtle}80`}
+          value={value}
+          onChangeText={onChangeText}
+          keyboardType={keyboardType}
+          secureTextEntry={secureTextEntry}
+          multiline={multiline}
+          autoCapitalize={autoCapitalize}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          style={[
+            styles.input,
+            { color: colors.text },
+            multiline && { textAlignVertical: 'top', paddingTop: 0 },
+            Platform.OS === 'web' && ({ outlineStyle: 'none' } as any),
+          ]}
+        />
+        {rightIcon && (
+          <TouchableOpacity onPress={onIconPress} style={styles.passwordToggle}>
+            <Feather name={rightIcon} size={18} color={colors.subtle} />
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+}
+
 type SelectFieldProps = {
   label: string;
+  icon: keyof typeof Feather.glyphMap;
   placeholder: string;
   options: string[];
   value: string;
@@ -92,32 +180,37 @@ type SelectFieldProps = {
   required?: boolean;
 };
 
-function SelectField({ label, placeholder, options, value, onChange, required }: SelectFieldProps) {
+function SelectField({ label, icon, placeholder, options, value, onChange, required }: SelectFieldProps) {
   const [visible, setVisible] = useState(false);
+  const scheme = useColorScheme();
+  const colors = scheme === 'dark' ? palette.dark : palette.light;
 
   return (
     <View style={styles.formField}>
-      <Text style={styles.label}>
+      <Text style={[styles.label, { color: colors.text }]}>
         {label}
         {required && <Text style={styles.required}> *</Text>}
       </Text>
       <TouchableOpacity
         accessibilityRole="button"
         onPress={() => setVisible(true)}
-        style={styles.selectButton}>
-        <Text style={value ? styles.selectValue : styles.placeholder}>
-          {value || placeholder}
-        </Text>
-        <Feather name="chevron-down" size={18} color="#5E6B85" />
+        style={[styles.selectButton, { borderColor: colors.border, backgroundColor: colors.input }]}>
+        <View style={styles.selectContent}>
+          <Feather name={icon} size={18} color={colors.subtle} style={styles.inputIcon} />
+          <Text style={value ? [styles.selectValue, { color: colors.text }] : [styles.placeholder, { color: `${colors.subtle}80` }]}>
+            {value || placeholder}
+          </Text>
+        </View>
+        <Feather name="chevron-down" size={18} color={colors.subtle} />
       </TouchableOpacity>
 
       <Modal visible={visible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{label}</Text>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>{label}</Text>
               <TouchableOpacity accessibilityRole="button" onPress={() => setVisible(false)}>
-                <Feather name="x" size={20} color="#5E6B85" />
+                <Feather name="x" size={20} color={colors.subtle} />
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.modalList}>
@@ -129,8 +222,9 @@ function SelectField({ label, placeholder, options, value, onChange, required }:
                     onChange(option);
                     setVisible(false);
                   }}
-                  style={styles.optionItem}>
-                  <Text style={styles.modalOptionText}>{option}</Text>
+                  style={[styles.optionItem, { borderBottomColor: colors.border }]}>
+                  <Text style={[styles.modalOptionText, { color: colors.text }]}>{option}</Text>
+                  {value === option && <Feather name="check" size={16} color={colors.primary} />}
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -160,60 +254,12 @@ export default function RegisterScreen() {
     scale: '',
     capital: '',
   });
-  const [documents, setDocuments] = useState<{
-    idCard: DocumentPicker.DocumentPickerAsset | null;
-    domicileLetter: DocumentPicker.DocumentPickerAsset | null;
-  }>({
-    idCard: null,
-    domicileLetter: null,
-  });
   const [passwordVisible, setPasswordVisible] = useState(false);
 
   const handleChange = (key: keyof RegisterForm, value: string) => {
     setForm(prev => ({ ...prev, [key]: value }));
   };
 
-  const formatDocumentLabel = (
-    asset: DocumentPicker.DocumentPickerAsset | null,
-    defaultLabel: string
-  ) => {
-    if (!asset) {
-      return defaultLabel;
-    }
-    const sizeInKb = asset.size ? `${(asset.size / 1024).toFixed(1)} KB` : undefined;
-    return sizeInKb ? `${asset.name ?? 'Dokumen'} • ${sizeInKb}` : asset.name ?? 'Dokumen';
-  };
-
-  const handleDocumentPick = async (key: 'idCard' | 'domicileLetter') => {
-    try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: [
-          'application/pdf',
-          'image/jpeg',
-          'image/png',
-          'image/jpg',
-          'application/msword',
-          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        ],
-        copyToCacheDirectory: true,
-        multiple: false,
-      });
-
-      if ('canceled' in result && result.canceled) {
-        return;
-      }
-
-      const asset = result.assets?.[0];
-      if (!asset) {
-        Alert.alert('Unggah Dokumen', 'Tidak ada berkas yang dipilih.');
-        return;
-      }
-
-      setDocuments(prev => ({ ...prev, [key]: asset }));
-    } catch (error) {
-      Alert.alert('Unggah Dokumen', 'Terjadi kesalahan saat memilih dokumen. Coba lagi.');
-    }
-  };
 
   const handleSubmit = async () => {
     if (!form.email) {
@@ -227,10 +273,6 @@ export default function RegisterScreen() {
     }
     if (!form.password || form.password.length < 6) {
       Alert.alert('Data belum lengkap', 'Kata sandi minimal 6 karakter.');
-      return;
-    }
-    if (!documents.idCard) {
-      Alert.alert('Data belum lengkap', 'Mohon unggah foto e-KTP sebelum melanjutkan.');
       return;
     }
 
@@ -268,14 +310,14 @@ export default function RegisterScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}> 
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <StatusBar style="dark" />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.flexOne}>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <LinearGradient
-            colors={['#1D4ED8', '#2563EB']}
+            colors={['#1E3A8A', '#2563EB', '#3B82F6']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.hero}
@@ -294,7 +336,7 @@ export default function RegisterScreen() {
 
             <View style={styles.heroHeader}>
               <View style={styles.heroTag}>
-                <Feather name="shield" size={16} color={colors.accent} />
+                <Feather name="shield" size={16} color="#FFFFFF" />
                 <Text style={styles.heroTagText}>Portal Registrasi UMKM</Text>
               </View>
               <Text style={styles.heroTitle}>Registrasi Pelaku UMKM</Text>
@@ -305,25 +347,31 @@ export default function RegisterScreen() {
 
             <View style={styles.heroChecklist}>
               <View style={styles.heroChecklistItem}>
-                <Feather name="user-check" size={16} color="#FFFFFF" />
-                <Text style={styles.heroChecklistText}>NIK & NPWP pemilik tersedia.</Text>
+                <View style={styles.checkInnerIcon}>
+                  <Feather name="user-check" size={14} color="#FFFFFF" />
+                </View>
+                <Text style={styles.heroChecklistText}>NIK & NPWP pemilik</Text>
               </View>
               <View style={styles.heroChecklistItem}>
-                <Feather name="briefcase" size={16} color="#FFFFFF" />
-                <Text style={styles.heroChecklistText}>Detail usaha lengkap beserta kode KBLI.</Text>
+                <View style={styles.checkInnerIcon}>
+                  <Feather name="briefcase" size={14} color="#FFFFFF" />
+                </View>
+                <Text style={styles.heroChecklistText}>Detail usaha & KBLI</Text>
               </View>
               <View style={styles.heroChecklistItem}>
-                <Feather name="file-text" size={16} color="#FFFFFF" />
-                <Text style={styles.heroChecklistText}>E-KTP wajib, SKD opsional sesuai daerah.</Text>
+                <View style={styles.checkInnerIcon}>
+                  <Feather name="file-text" size={14} color="#FFFFFF" />
+                </View>
+                <Text style={styles.heroChecklistText}>E-KTP & Dokumen</Text>
               </View>
             </View>
           </LinearGradient>
 
-          <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}> 
+          <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.sectionHeaderRow}>
-              <View style={[styles.sectionIcon, { backgroundColor: 'rgba(37,99,235,0.12)' }]}
+              <View style={[styles.sectionIcon, { backgroundColor: `${colors.primary}15` }]}
               >
-                <Feather name="user" size={18} color={colors.primary} />
+                <Feather name="user" size={20} color={colors.primary} />
               </View>
               <View style={styles.sectionHeaderCopy}>
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>Data Pemilik</Text>
@@ -333,94 +381,70 @@ export default function RegisterScreen() {
               </View>
             </View>
             <View style={styles.formGroup}>
-              {/* owner fields remain unchanged */}
-              <View style={styles.formField}>
-                <Text style={styles.label}>NIK (Nomor Induk Kependudukan) *</Text>
-                <TextInput
-                  keyboardType="number-pad"
-                  placeholder="Masukkan 16 digit NIK"
-                  placeholderTextColor={scheme === 'dark' ? '#64748B' : '#9DA8C3'}
-                  value={form.nik}
-                  onChangeText={value => handleChange('nik', value)}
-                  style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.input }]}
-                />
-              </View>
-              <View style={styles.formField}>
-                <Text style={styles.label}>Nama Lengkap Pemilik *</Text>
-                <TextInput
-                  placeholder="Sesuai e-KTP"
-                  placeholderTextColor={scheme === 'dark' ? '#64748B' : '#9DA8C3'}
-                  value={form.ownerName}
-                  onChangeText={value => handleChange('ownerName', value)}
-                  style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.input }]}
-                />
-              </View>
-              <View style={styles.formField}>
-                <Text style={styles.label}>Email Aktif *</Text>
-                <TextInput
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  placeholder="contoh: pelaku@umkm.id"
-                  placeholderTextColor={scheme === 'dark' ? '#64748B' : '#9DA8C3'}
-                  value={form.email}
-                  onChangeText={value => handleChange('email', value.trim())}
-                  style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.input }]}
-                />
-              </View>
-              <View style={styles.formField}>
-                <Text style={styles.label}>Kata Sandi *</Text>
-                <View style={[styles.passwordField, { borderColor: colors.border, backgroundColor: colors.input }]}> 
-                  <TextInput
-                    placeholder="Minimal 6 karakter"
-                    placeholderTextColor={scheme === 'dark' ? '#64748B' : '#9DA8C3'}
-                    secureTextEntry={!passwordVisible}
-                    value={form.password}
-                    onChangeText={value => handleChange('password', value)}
-                    style={[styles.passwordInput, { color: colors.text }]}
-                  />
-                  <TouchableOpacity
-                    accessibilityRole="button"
-                    onPress={() => setPasswordVisible(!passwordVisible)}
-                    style={styles.passwordToggle}>
-                    <Feather
-                      name={passwordVisible ? 'eye-off' : 'eye'}
-                      size={18}
-                      color={colors.subtle}
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-              <View style={styles.formField}>
-                <Text style={styles.label}>NPWP Pribadi *</Text>
-                <TextInput
-                  keyboardType="number-pad"
-                  placeholder="Nomor Pokok Wajib Pajak"
-                  placeholderTextColor={scheme === 'dark' ? '#64748B' : '#9DA8C3'}
-                  value={form.npwp}
-                  onChangeText={value => handleChange('npwp', value)}
-                  style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.input }]}
-                />
-              </View>
-              <View style={styles.formField}>
-                <Text style={styles.label}>Alamat Pemilik *</Text>
-                <TextInput
-                  placeholder="Sesuai domisili pribadi"
-                  placeholderTextColor={scheme === 'dark' ? '#64748B' : '#9DA8C3'}
-                  multiline
-                  value={form.ownerAddress}
-                  onChangeText={value => handleChange('ownerAddress', value)}
-                  style={[styles.textArea, { borderColor: colors.border, color: colors.text, backgroundColor: colors.input }]}
-                />
-              </View>
+              <FormInput
+                label="NIK (Nomor Induk Kependudukan)"
+                icon="credit-card"
+                placeholder="Masukkan 16 digit NIK"
+                value={form.nik}
+                onChangeText={value => handleChange('nik', value)}
+                keyboardType="number-pad"
+                required
+              />
+              <FormInput
+                label="Nama Lengkap Pemilik"
+                icon="user"
+                placeholder="Sesuai e-KTP"
+                value={form.ownerName}
+                onChangeText={value => handleChange('ownerName', value)}
+                required
+              />
+              <FormInput
+                label="Email Aktif"
+                icon="mail"
+                placeholder="contoh: pelaku@umkm.id"
+                value={form.email}
+                onChangeText={value => handleChange('email', value.trim())}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                required
+              />
+              <FormInput
+                label="Kata Sandi"
+                icon="lock"
+                placeholder="Minimal 6 karakter"
+                value={form.password}
+                onChangeText={value => handleChange('password', value)}
+                secureTextEntry={!passwordVisible}
+                rightIcon={passwordVisible ? 'eye-off' : 'eye'}
+                onIconPress={() => setPasswordVisible(!passwordVisible)}
+                required
+              />
+              <FormInput
+                label="NPWP Pribadi"
+                icon="file-text"
+                placeholder="Nomor Pokok Wajib Pajak"
+                value={form.npwp}
+                onChangeText={value => handleChange('npwp', value)}
+                keyboardType="number-pad"
+                required
+              />
+              <FormInput
+                label="Alamat Pemilik"
+                icon="map-pin"
+                placeholder="Sesuai domisili pribadi"
+                value={form.ownerAddress}
+                onChangeText={value => handleChange('ownerAddress', value)}
+                multiline
+                required
+              />
             </View>
           </View>
 
-          <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}> 
+          <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.sectionHeaderRow}>
-              <View style={[styles.sectionIcon, { backgroundColor: 'rgba(16,185,129,0.12)' }]}
+              <View style={[styles.sectionIcon, { backgroundColor: `${colors.success}15` }]}
               >
-                <Feather name="briefcase" size={18} color={colors.primary} />
+                <Feather name="briefcase" size={20} color={colors.success} />
               </View>
               <View style={styles.sectionHeaderCopy}>
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>Data Usaha</Text>
@@ -430,30 +454,26 @@ export default function RegisterScreen() {
               </View>
             </View>
             <View style={styles.formGroup}>
-              {/* business fields unchanged */}
-              <View style={styles.formField}>
-                <Text style={styles.label}>Nama Usaha *</Text>
-                <TextInput
-                  placeholder="Nama brand atau toko"
-                  placeholderTextColor={scheme === 'dark' ? '#64748B' : '#9DA8C3'}
-                  value={form.businessName}
-                  onChangeText={value => handleChange('businessName', value)}
-                  style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.input }]}
-                />
-              </View>
-              <View style={styles.formField}>
-                <Text style={styles.label}>Alamat Lokasi Usaha *</Text>
-                <TextInput
-                  placeholder="Alamat tempat usaha beroperasi"
-                  placeholderTextColor={scheme === 'dark' ? '#64748B' : '#9DA8C3'}
-                  multiline
-                  value={form.businessAddress}
-                  onChangeText={value => handleChange('businessAddress', value)}
-                  style={[styles.textArea, { borderColor: colors.border, color: colors.text, backgroundColor: colors.input }]}
-                />
-              </View>
+              <FormInput
+                label="Nama Usaha"
+                icon="shopping-bag"
+                placeholder="Nama brand atau toko"
+                value={form.businessName}
+                onChangeText={value => handleChange('businessName', value)}
+                required
+              />
+              <FormInput
+                label="Alamat Lokasi Usaha"
+                icon="map"
+                placeholder="Alamat tempat usaha beroperasi"
+                value={form.businessAddress}
+                onChangeText={value => handleChange('businessAddress', value)}
+                multiline
+                required
+              />
               <SelectField
                 label="Kode KBLI"
+                icon="hash"
                 placeholder="Pilih kode KBLI"
                 options={kbliOptions}
                 value={form.kbli}
@@ -462,6 +482,7 @@ export default function RegisterScreen() {
               />
               <SelectField
                 label="Sektor Usaha"
+                icon="grid"
                 placeholder="Pilih sektor usaha"
                 options={sectorOptions}
                 value={form.sector}
@@ -470,92 +491,40 @@ export default function RegisterScreen() {
               />
               <SelectField
                 label="Skala Usaha"
+                icon="trending-up"
                 placeholder="Pilih skala usaha"
                 options={scaleOptions}
                 value={form.scale}
                 onChange={value => handleChange('scale', value)}
                 required
               />
-              <View style={styles.formField}>
-                <Text style={styles.label}>Estimasi Modal Usaha *</Text>
-                <TextInput
-                  keyboardType="number-pad"
-                  placeholder="Nominal investasi yang dikeluarkan"
-                  placeholderTextColor={scheme === 'dark' ? '#64748B' : '#9DA8C3'}
-                  value={form.capital}
-                  onChangeText={value => handleChange('capital', value)}
-                  style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.input }]}
-                />
-              </View>
+              <FormInput
+                label="Estimasi Modal Usaha"
+                icon="dollar-sign"
+                placeholder="Nominal investasi"
+                value={form.capital}
+                onChangeText={value => handleChange('capital', value)}
+                keyboardType="number-pad"
+                required
+              />
             </View>
           </View>
 
-          <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}> 
-            <View style={styles.sectionHeaderRow}>
-              <View style={[styles.sectionIcon, { backgroundColor: 'rgba(59,130,246,0.12)' }]}
-              >
-                <Feather name="file" size={18} color={colors.primary} />
-              </View>
-              <View style={styles.sectionHeaderCopy}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>Dokumen Pendukung</Text>
-                <Text style={[styles.sectionSubtitle, { color: colors.subtle }]}>
-                  Unggah dokumen untuk mempercepat verifikasi legalitas.
-                </Text>
-              </View>
-            </View>
-            <View style={styles.formGroup}>
-              <View style={styles.formField}>
-                <Text style={styles.label}>Foto E-KTP *</Text>
-                <TouchableOpacity
-                  accessibilityRole="button"
-                  onPress={() => handleDocumentPick('idCard')}
-                  style={styles.uploadField}>
-                  <Feather name="upload" size={18} color={colors.primary} />
-                  <Text
-                    style={[
-                      styles.uploadText,
-                      documents.idCard ? styles.uploadTextSelected : undefined,
-                    ]}
-                  >
-                    {formatDocumentLabel(
-                      documents.idCard,
-                      'Unggah foto e-KTP (PDF/JPG/PNG/DOCX)'
-                    )}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.formField}>
-                <Text style={styles.label}>Surat Keterangan Domisili (SKD)</Text>
-                <TouchableOpacity
-                  accessibilityRole="button"
-                  onPress={() => handleDocumentPick('domicileLetter')}
-                  style={styles.uploadField}>
-                  <Feather name="upload" size={18} color={colors.primary} />
-                  <Text
-                    style={[
-                      styles.uploadText,
-                      documents.domicileLetter ? styles.uploadTextSelected : undefined,
-                    ]}
-                  >
-                    {formatDocumentLabel(
-                      documents.domicileLetter,
-                      'Unggah dokumen (opsional)'
-                    )}
-                  </Text>
-                </TouchableOpacity>
-                <Text style={styles.optionalNote}>
-                  Opsional, tergantung persyaratan daerah. Format didukung: PDF, JPG, PNG, DOC, DOCX.
-                </Text>
-              </View>
-            </View>
-          </View>
 
           <TouchableOpacity
             accessibilityRole="button"
             onPress={handleSubmit}
-            style={[styles.submitButton, { backgroundColor: colors.primary }]}>
+            style={[styles.submitButton, { backgroundColor: colors.focus, shadowColor: colors.focus }]}>
             <Text style={styles.submitButtonText}>Daftar Sekarang</Text>
-            <Feather name="arrow-right" size={16} color="#FFFFFF" />
+            <Feather name="arrow-right" size={18} color="#FFFFFF" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => router.replace('/login')}
+            style={styles.footerLink}>
+            <Text style={[styles.footerText, { color: colors.subtle }]}>
+              Sudah memiliki akun? <Text style={{ color: colors.primary, fontWeight: '700' }}>Masuk di sini</Text>
+            </Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -573,49 +542,54 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 24,
     gap: 24,
+    paddingBottom: 40,
   },
   hero: {
-    borderRadius: 28,
-    padding: 24,
-    gap: 20,
+    borderRadius: 32,
+    padding: 28,
+    gap: 24,
     position: 'relative',
+    overflow: 'hidden',
+    elevation: 8,
+    shadowColor: '#1E3A8A',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
   },
   heroOverlayOne: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    width: '100%',
-    height: '50%',
-    backgroundColor: 'rgba(29, 78, 216, 0.1)',
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
+    top: -50,
+    right: -50,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
   },
   heroOverlayTwo: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    width: '100%',
-    height: '50%',
-    backgroundColor: 'rgba(37, 99, 235, 0.1)',
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    bottom: -30,
+    left: -20,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
   },
   heroBackButton: {
     alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    borderRadius: 999,
+    borderRadius: 100,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.35)',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    backgroundColor: 'rgba(15, 23, 42, 0.2)',
+    borderColor: 'rgba(255,255,255,0.3)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.15)',
   },
   heroBackText: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   heroHeader: {
     gap: 12,
@@ -624,27 +598,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: 'rgba(255,255,255,0.18)',
+    backgroundColor: 'rgba(255,255,255,0.2)',
     alignSelf: 'flex-start',
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 6,
-    borderRadius: 999,
+    borderRadius: 100,
   },
   heroTagText: {
     color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '800',
     letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   heroTitle: {
     color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: '800',
+    fontSize: 26,
+    fontWeight: '900',
+    letterSpacing: -0.5,
   },
   heroSubtitle: {
-    color: 'rgba(233, 244, 255, 0.9)',
+    color: 'rgba(255, 255, 255, 0.85)',
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 22,
+    fontWeight: '500',
   },
   heroChecklist: {
     flexDirection: 'row',
@@ -655,197 +632,220 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.14)',
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  checkInnerIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   heroChecklistText: {
     color: '#FFFFFF',
     fontSize: 12,
+    fontWeight: '600',
   },
   sectionCard: {
-    borderRadius: 24,
+    borderRadius: 28,
     borderWidth: 1,
     padding: 24,
-    gap: 20,
+    gap: 24,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
   },
   sectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
+    gap: 16,
   },
   sectionIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 16,
+    width: 48,
+    height: 48,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
   sectionHeaderCopy: {
     flex: 1,
-    gap: 4,
+    gap: 2,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 19,
+    fontWeight: '800',
+    letterSpacing: -0.3,
   },
   sectionSubtitle: {
     fontSize: 13,
     lineHeight: 18,
+    fontWeight: '500',
   },
   formGroup: {
-    gap: 16,
+    gap: 20,
   },
   formField: {
-    gap: 8,
+    gap: 10,
   },
   label: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#42506B',
+    fontWeight: '700',
+    marginLeft: 4,
   },
   required: {
     color: '#EF4444',
   },
-  input: {
-    borderRadius: 14,
-    borderWidth: 1,
-    paddingHorizontal: 16,
-    paddingVertical: Platform.OS === 'ios' ? 14 : 10,
-    fontSize: 15,
-    outlineStyle: 'none',
-    outlineWidth: 0,
-  },
-  passwordField: {
-    borderRadius: 14,
-    borderWidth: 1,
+  inputWrapper: {
+    borderRadius: 16,
+    borderWidth: 1.5,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingLeft: 12,
-    paddingRight: 8,
+    paddingHorizontal: 16,
+    transitionDuration: '200ms',
   },
-  passwordInput: {
+  inputIcon: {
+    marginRight: 12,
+    opacity: 0.8,
+  },
+  input: {
     flex: 1,
     fontSize: 15,
-    paddingVertical: Platform.OS === 'ios' ? 14 : 10,
-    outlineStyle: 'none',
-    outlineWidth: 0,
+    fontWeight: '500',
+    height: '100%',
   },
   passwordToggle: {
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-  },
-  textArea: {
-    borderRadius: 14,
-    borderWidth: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 15,
-    minHeight: 96,
-    textAlignVertical: 'top',
-    outlineStyle: 'none',
-    outlineWidth: 0,
+    padding: 8,
+    marginLeft: 4,
   },
   selectButton: {
-    borderRadius: 14,
-    borderWidth: 1,
+    borderRadius: 16,
+    borderWidth: 1.5,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    height: 54,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  optionList: {
-    marginTop: 8,
-    borderRadius: 14,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  optionItem: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+  selectContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
   selectValue: {
     fontSize: 15,
-    color: '#0F1B3A',
+    fontWeight: '500',
   },
   placeholder: {
     fontSize: 15,
-    color: '#9DA8C3',
+    fontWeight: '500',
+  },
+  uploadField: {
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    paddingHorizontal: 16,
+    height: 60,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  uploadInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  uploadText: {
+    fontSize: 14,
+    fontWeight: '600',
+    flex: 1,
+  },
+  uploadTextSelected: {
+    fontWeight: '700',
+  },
+  optionalNote: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginLeft: 4,
+    marginTop: 2,
+    fontStyle: 'italic',
+  },
+  submitButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    borderRadius: 20,
+    paddingVertical: 18,
+    elevation: 6,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 15,
+    marginTop: 8,
+  },
+  submitButtonText: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(15,18,35,0.55)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     padding: 24,
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 20,
-    maxHeight: '80%',
+    borderRadius: 30,
+    padding: 24,
+    maxHeight: '75%',
+    elevation: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   modalTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#0F1B3A',
+    fontSize: 18,
+    fontWeight: '800',
   },
   modalList: {
-    gap: 8,
+    marginBottom: 8,
   },
-  modalOption: {
-    paddingVertical: 12,
+  optionItem: {
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   modalOptionText: {
     fontSize: 15,
-    color: '#0F1B3A',
-  },
-  uploadField: {
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#B7C3DE',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: '#F7F9FD',
-  },
-  uploadText: {
-    fontSize: 14,
-    color: '#1B5CC4',
     fontWeight: '600',
+    lineHeight: 22,
+    flex: 1,
+    marginRight: 12,
   },
-  uploadTextSelected: {
-    color: '#0F1B3A',
-  },
-  optionalNote: {
-    fontSize: 12,
-    color: '#5E6B85',
-  },
-  submitButton: {
-    borderRadius: 18,
-    paddingVertical: 16,
-    paddingHorizontal: 26,
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
+  footerLink: {
     alignItems: 'center',
-    gap: 8,
-    shadowColor: '#1B5CC4',
-    shadowOpacity: 0.18,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
+    marginVertical: 8,
   },
-  submitButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
+  footerText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
 });

@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { useAuth } from '@/hooks/use-auth';
+import { createSubmission } from '@/lib/api';
+import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -15,7 +18,6 @@ import {
   useColorScheme,
   View,
 } from 'react-native';
-import { Feather } from '@expo/vector-icons';
 
 const palette = {
   light: {
@@ -74,6 +76,7 @@ export default function LpdbServiceFormScreen() {
   const scheme = useColorScheme();
   const colors = scheme === 'dark' ? palette.dark : palette.light;
   const router = useRouter();
+  const { user } = useAuth();
 
   const [form, setForm] = useState<LpdbForm>(defaultForm);
   const [submitting, setSubmitting] = useState(false);
@@ -110,16 +113,24 @@ export default function LpdbServiceFormScreen() {
       return;
     }
 
+    if (!user?.token) {
+      Alert.alert('Error', 'Anda harus login terlebih dahulu.');
+      return;
+    }
+
     setSubmitting(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 900));
+      await createSubmission(user.token, {
+        type: 'lpdb',
+        data: form
+      });
       Alert.alert(
         'Pengajuan tersimpan',
         'Permohonan dana bergulir LPDB telah tercatat. Tim kami akan menghubungi untuk tahapan evaluasi lanjutan.',
       );
       resetForm();
     } catch (error) {
-      Alert.alert('Gagal mengirim', 'Terjadi gangguan saat mengirim data. Silakan coba kembali.');
+      Alert.alert('Gagal mengirim', error instanceof Error ? error.message : 'Terjadi gangguan saat mengirim data.');
     } finally {
       setSubmitting(false);
     }

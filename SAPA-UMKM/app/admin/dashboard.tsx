@@ -4,19 +4,20 @@ import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useState } from 'react';
 import {
-    Alert,
-    Modal,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    useColorScheme,
-    View,
+  Alert,
+  Modal,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  useColorScheme,
+  View,
 } from 'react-native';
 
 import { useAuth } from '@/hooks/use-auth';
+import { fetchSubmissions } from '@/lib/api';
 import type { StoredAccount } from '@/lib/auth-store';
 
 const palette = {
@@ -44,33 +45,18 @@ const palette = {
   },
 };
 
-type PendingAction = {
-  id: string;
-  title: string;
-  description: string;
-  type: 'verification' | 'support' | 'report';
+type Submission = {
+  id: number;
+  user_id: number;
+  type: string;
+  data: any;
+  status: 'pending' | 'approved' | 'rejected';
+  created_at: string;
+  email: string;
+  display_name: string;
 };
 
-const pendingActions: PendingAction[] = [
-  {
-    id: 'action-01',
-    title: 'Verifikasi dokumen usaha “Kopi Nusantara”',
-    description: 'Unggahan NIB & SIUP menunggu tinjauan.',
-    type: 'verification',
-  },
-  {
-    id: 'action-02',
-    title: 'Tanggapi laporan bantuan modal',
-    description: 'Pelaku UMKM “Batik Laras” meminta pengecekan dana KUR.',
-    type: 'support',
-  },
-  {
-    id: 'action-03',
-    title: 'Review aktivitas forum komunitas',
-    description: '3 topik baru menunggu moderasi.',
-    type: 'report',
-  },
-];
+
 
 export default function AdminDashboardScreen() {
   const scheme = useColorScheme();
@@ -86,7 +72,8 @@ export default function AdminDashboardScreen() {
     updateUserAccount,
     deleteUserAccount,
   } = useAuth();
- 
+
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [userModalVisible, setUserModalVisible] = useState(false);
   const [userFormMode, setUserFormMode] = useState<'create' | 'edit'>('create');
   const [userForm, setUserForm] = useState<{ id?: string; displayName: string; email: string; password: string }>({
@@ -103,33 +90,7 @@ export default function AdminDashboardScreen() {
     [accounts],
   );
 
-  useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        router.replace('/');
-        return;
-      }
-      if (user.role !== 'admin') {
-        router.replace('/user/dashboard');
-      }
-    }
-  }, [user, loading, router]);
-
-  useEffect(() => {
-    if (!loading && user?.role === 'admin') {
-      refreshAccounts();
-    }
-  }, [loading, user, refreshAccounts]);
-
-  if (loading || !user || user.role !== 'admin') {
-    return (
-      <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
-        <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
-      </SafeAreaView>
-    );
-  }
-
-  const adminName = user.displayName || 'Administrator';
+  const adminName = user?.displayName || 'Administrator';
   const adminInitial = adminName.charAt(0).toUpperCase();
 
   const analyticsCards = useMemo(
@@ -155,6 +116,42 @@ export default function AdminDashboardScreen() {
     ],
     [colors.accent, colors.primary, colors.success],
   );
+
+  useEffect(() => {
+    if (!loading) {
+      if (!user) {
+        router.replace('/');
+        return;
+      }
+      if (user.role !== 'admin') {
+        router.replace('/user/dashboard');
+      }
+    }
+  }, [user, loading, router]);
+
+  useEffect(() => {
+    if (!loading && user?.role === 'admin') {
+      refreshAccounts();
+      loadSubmissions();
+    }
+  }, [loading, user, refreshAccounts]);
+
+  const loadSubmissions = async () => {
+    if (user?.token) {
+      const response = await fetchSubmissions(user.token);
+      if (response.success) {
+        setSubmissions(response.data);
+      }
+    }
+  };
+
+  if (loading || !user || user.role !== 'admin') {
+    return (
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+        <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+      </SafeAreaView>
+    );
+  }
 
   const resetUserForm = () => {
     setUserForm({ id: undefined, displayName: '', email: '', password: '' });
@@ -300,16 +297,14 @@ export default function AdminDashboardScreen() {
 
   const handleSync = () => {
     Alert.alert('Sinkronisasi data', 'Data sistem sedang diperbarui.');
+    loadSubmissions();
   };
 
-  const handleAction = (action: PendingAction) => {
-    const actionMessage =
-      action.type === 'verification'
-        ? 'Buka modul verifikasi dokumen?'
-        : action.type === 'support'
-        ? 'Buka detail permintaan dukungan?'
-        : 'Buka modul moderasi laporan?';
-    Alert.alert(action.title, actionMessage);
+  const handleAction = (submission: Submission) => {
+    router.push({
+      pathname: '/admin/submission/[id]',
+      params: { id: submission.id }
+    });
   };
 
   return (
@@ -493,44 +488,76 @@ export default function AdminDashboardScreen() {
         </View>
 
         <View style={[styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Tindakan Mendesak</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Pengajuan Formulir</Text>
           <Text style={[styles.sectionSubtitle, { color: colors.subtle }]}>
             Prioritaskan item di bawah untuk menjaga kualitas layanan.
           </Text>
 
           <View style={styles.actionsList}>
-            {pendingActions.map(action => (
-              <TouchableOpacity
-                key={action.id}
-                accessibilityRole="button"
-                onPress={() => handleAction(action)}
-                style={[styles.actionItem, { borderColor: colors.border }]}
-              >
-                <View
-                  style={[
-                    styles.actionBadge,
-                    action.type === 'verification' && { backgroundColor: `${colors.success}20` },
-                    action.type === 'support' && { backgroundColor: `${colors.accent}20` },
-                    action.type === 'report' && { backgroundColor: `${colors.warning}20` },
-                  ]}
-                >
-                  <Text style={styles.actionBadgeText}>
-                    {action.type === 'verification'
-                      ? 'Verifikasi'
-                      : action.type === 'support'
-                      ? 'Dukungan'
-                      : 'Moderasi'}
-                  </Text>
-                </View>
-                <View style={styles.actionContent}>
-                  <Text style={[styles.actionTitle, { color: colors.text }]}>{action.title}</Text>
-                  <Text style={[styles.actionDescription, { color: colors.subtle }]}>
-                    {action.description}
-                  </Text>
-                </View>
-                <Feather name="chevron-right" size={18} color={colors.subtle} />
-              </TouchableOpacity>
-            ))}
+            {submissions.filter(s => s.status === 'pending').length === 0 ? (
+              <Text style={{ color: colors.subtle, padding: 16 }}>Tidak ada pengajuan formulir.</Text>
+            ) : (
+              submissions.filter(s => s.status === 'pending').map(submission => {
+                const getSubmissionIcon = (type: string) => {
+                  switch (type.toLowerCase()) {
+                    case 'nib': return 'shield';
+                    case 'merek': return 'tag';
+                    case 'halal': return 'check-circle';
+                    case 'sni': return 'award';
+                    case 'bpom': return 'package';
+                    case 'kur': return 'dollar-sign';
+                    case 'umi': return 'briefcase';
+                    case 'lpdb': return 'home';
+                    case 'inkubasi': return 'trending-up';
+                    case 'laporan': return 'file-text';
+                    default: return 'file';
+                  }
+                };
+
+                const getSubmissionTitle = (type: string) => {
+                  switch (type.toLowerCase()) {
+                    case 'nib': return 'Permohonan NIB';
+                    case 'merek': return 'Pendaftaran Merek';
+                    case 'halal': return 'Sertifikasi Halal';
+                    case 'sni': return 'Sertifikasi SNI';
+                    case 'bpom': return 'Izin Edar BPOM';
+                    case 'kur': return 'Pengajuan KUR';
+                    case 'umi': return 'Pembiayaan UMi';
+                    case 'lpdb': return 'Dana Bergulir LPDB';
+                    case 'inkubasi': return 'Inkubasi Bisnis';
+                    case 'laporan': return 'Laporan Bulanan';
+                    default: return type.toUpperCase();
+                  }
+                };
+
+                return (
+                  <TouchableOpacity
+                    key={submission.id}
+                    accessibilityRole="button"
+                    onPress={() => handleAction(submission)}
+                    style={[styles.actionItem, { borderColor: colors.border }]}
+                  >
+                    <View
+                      style={[
+                        styles.actionBadge,
+                        { backgroundColor: `${colors.accent}20` },
+                      ]}
+                    >
+                      <Feather name={getSubmissionIcon(submission.type)} size={20} color={colors.accent} />
+                    </View>
+                    <View style={styles.actionContent}>
+                      <Text style={[styles.actionTitle, { color: colors.text }]}>
+                        {getSubmissionTitle(submission.type)}
+                      </Text>
+                      <Text style={[styles.actionDescription, { color: colors.subtle }]}>
+                        Oleh: {submission.display_name} • {new Date(submission.created_at).toLocaleDateString()}
+                      </Text>
+                    </View>
+                    <Feather name="chevron-right" size={18} color={colors.subtle} />
+                  </TouchableOpacity>
+                )
+              })
+            )}
           </View>
         </View>
 

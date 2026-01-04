@@ -1,4 +1,7 @@
+import { useAuth } from '@/hooks/use-auth';
+import { createSubmission, uploadFile } from '@/lib/api';
 import { Feather } from '@expo/vector-icons';
+import * as DocumentPicker from 'expo-document-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -15,7 +18,7 @@ import {
   TextInput,
   TouchableOpacity,
   useColorScheme,
-  View,
+  View
 } from 'react-native';
 
 const palette = {
@@ -27,6 +30,7 @@ const palette = {
     text: '#1B1039',
     subtle: '#5E4B8B',
     accent: '#7C3AED',
+    success: '#16A34A',
   },
   dark: {
     background: '#120F24',
@@ -36,6 +40,7 @@ const palette = {
     text: '#F8FAFC',
     subtle: '#C4B5FD',
     accent: '#A855F7',
+    success: '#22C55E',
   },
 };
 
@@ -52,9 +57,9 @@ type BrandForm = {
   businessEntity: 'Perorangan' | 'CV' | 'PT' | 'Koperasi' | 'Badan Usaha Lain';
   brandName: string;
   brandSummary: string;
+  productPhoto: string;
   logoReference: string;
   docsIdOwner: string;
-  docsBusinessPermit: string;
   termsAccepted: boolean;
 };
 
@@ -65,9 +70,9 @@ const defaultForm: BrandForm = {
   businessEntity: 'Perorangan',
   brandName: '',
   brandSummary: '',
+  productPhoto: '',
   logoReference: '',
   docsIdOwner: '',
-  docsBusinessPermit: '',
   termsAccepted: false,
 };
 
@@ -75,6 +80,7 @@ export default function MerekServiceScreen() {
   const scheme = useColorScheme();
   const colors = scheme === 'dark' ? palette.dark : palette.light;
   const router = useRouter();
+  const { user } = useAuth();
   const [form, setForm] = useState<BrandForm>(defaultForm);
   const [modalVisible, setModalVisible] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -87,52 +93,78 @@ export default function MerekServiceScreen() {
     setForm(defaultForm);
   };
 
-  const validateForm = () => {
+  const validateForm = (): { valid: boolean; message?: string } => {
     const requiredFields: Array<keyof BrandForm> = [
       'ownerName',
       'contactEmail',
       'contactPhone',
       'brandName',
       'brandSummary',
+      'productPhoto',
       'logoReference',
       'docsIdOwner',
     ];
 
-    for (const field of requiredFields) {
-      if (!form[field]) {
-        return false;
-      }
+    const fieldNames: Record<keyof BrandForm, string> = {
+      ownerName: 'Nama Pemohon',
+      contactEmail: 'Email',
+      contactPhone: 'No. Telepon',
+      businessEntity: 'Bentuk Usaha',
+      brandName: 'Nama Merek',
+      brandSummary: 'Deskripsi Merek',
+      productPhoto: 'Foto Barang',
+      logoReference: 'Referensi Logo',
+      docsIdOwner: 'KTP Pemilik',
+      termsAccepted: 'Syarat & Ketentuan'
+    };
+
+    const missing = requiredFields.filter(field => !form[field]);
+    if (missing.length > 0) {
+      return {
+        valid: false,
+        message: `Mohon lengkapi: ${missing.map(f => fieldNames[f]).join(', ')}`
+      };
     }
 
     if (!form.termsAccepted) {
-      return false;
+      return { valid: false, message: 'Anda harus menyetujui syarat & ketentuan.' };
     }
 
-    return true;
+    return { valid: true };
   };
 
   const handleSubmit = async () => {
-    if (!validateForm()) {
-      Alert.alert('Form belum lengkap', 'Mohon lengkapi seluruh kolom wajib dan setujui syarat ketentuan.');
+    /* ... existing handleSubmit logic ... */
+    const validation = validateForm();
+    if (!validation.valid) {
+      Alert.alert('Data Belum Lengkap', validation.message);
+      return;
+    }
+
+    if (!user?.token) {
+      Alert.alert('Error', 'Anda harus login untuk mengirim permohonan.');
       return;
     }
 
     setSubmitting(true);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await createSubmission(user.token, {
+        type: 'merek',
+        data: form
+      });
       Alert.alert('Permohonan terkirim', 'Tim kami akan meninjau permohonan pendaftaran merek Anda.');
       setModalVisible(false);
       resetForm();
     } catch (error) {
-      Alert.alert('Gagal mengirim', 'Terjadi kesalahan saat mengirim permohonan. Silakan coba lagi.');
+      Alert.alert('Gagal mengirim', error instanceof Error ? error.message : 'Terjadi kesalahan saat mengirim permohonan.');
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}> 
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <LinearGradient
@@ -204,7 +236,9 @@ export default function MerekServiceScreen() {
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             style={styles.modalContainer}
           >
-            <ScrollView contentContainerStyle={[styles.modalCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            <ScrollView
+              contentContainerStyle={[styles.modalCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+              keyboardShouldPersistTaps="handled"
             >
               <View style={styles.modalHeader}>
                 <View style={styles.modalHeaderInfo}>
@@ -291,6 +325,91 @@ export default function MerekServiceScreen() {
                   onChangeText={value => handleChange('brandSummary', value)}
                   style={[styles.textArea, { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }]}
                 />
+                <View>
+                  <Text style={{ marginBottom: 8, fontSize: 13, color: colors.subtle, fontWeight: '600' }}>Foto Barang / Produk</Text>
+                  {form.productPhoto ? (
+                    <View style={{ gap: 8 }}>
+                      <View style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 10,
+                        padding: 12,
+                        backgroundColor: scheme === 'dark' ? 'rgba(34, 197, 94, 0.1)' : '#F0FDF4',
+                        borderRadius: 12,
+                        borderWidth: 1,
+                        borderColor: scheme === 'dark' ? 'rgba(34, 197, 94, 0.2)' : '#BBF7D0'
+                      }}>
+                        <Feather name="check" size={16} color={colors.success} />
+                        <Text style={{ flex: 1, fontSize: 13, color: colors.text }} numberOfLines={1}>
+                          {form.productPhoto.split('/').pop()}
+                        </Text>
+                        <TouchableOpacity onPress={() => handleChange('productPhoto', '')}>
+                          <Feather name="x" size={16} color={colors.subtle} />
+                        </TouchableOpacity>
+                      </View>
+                      <Text style={{ fontSize: 11, color: colors.success }}>File berhasil diunggah.</Text>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      onPress={async () => {
+                        try {
+                          const result = await DocumentPicker.getDocumentAsync({
+                            type: ['image/*', 'application/pdf'],
+                            copyToCacheDirectory: true
+                          });
+
+                          if (result.canceled) return;
+
+                          const asset = result.assets[0];
+                          if (!asset) return;
+
+                          // Show loading indicator usually, here just simple alert or blocking
+                          if (user?.token) {
+                            // Optimistically showing "Uploading..." could be better but sticking to simple flow
+                            const uploadRes = await uploadFile(user.token, asset.uri, asset.mimeType ?? 'image/jpeg', asset.name);
+                            if (uploadRes.success) {
+                              handleChange('productPhoto', uploadRes.url);
+                            } else {
+                              Alert.alert('Gagal Upload', uploadRes.message);
+                            }
+                          } else {
+                            Alert.alert('Error', 'Anda harus login untuk mengunggah file.');
+                          }
+                        } catch (err) {
+                          Alert.alert('Error', 'Gagal memilih file.');
+                        }
+                      }}
+                      style={{
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        borderStyle: 'dashed',
+                        borderRadius: 14,
+                        padding: 24,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 8,
+                        backgroundColor: scheme === 'dark' ? 'rgba(255,255,255,0.02)' : '#FAFAFA'
+                      }}
+                    >
+                      <View style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 99,
+                        backgroundColor: scheme === 'dark' ? 'rgba(124, 58, 237, 0.15)' : '#F3E8FF',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        <Feather name="upload-cloud" size={20} color={colors.accent} />
+                      </View>
+                      <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text }}>
+                        Klik untuk unggah foto
+                      </Text>
+                      <Text style={{ fontSize: 12, color: colors.subtle, textAlign: 'center' }}>
+                        Format JPG, PNG, atau PDF (Max 5MB)
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
                 <TextInput
                   placeholder="Tautan referensi/logo (drive, URL)"
                   placeholderTextColor={`${colors.subtle}80`}
@@ -302,20 +421,89 @@ export default function MerekServiceScreen() {
 
               <View style={styles.sectionGroup}>
                 <Text style={[styles.sectionHeading, { color: colors.text }]}>Upload & Referensi Dokumen</Text>
-                <TextInput
-                  placeholder="Tautan KTP / Identitas pemilik"
-                  placeholderTextColor={`${colors.subtle}80`}
-                  value={form.docsIdOwner}
-                  onChangeText={value => handleChange('docsIdOwner', value)}
-                  style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }]}
-                />
-                <TextInput
-                  placeholder="Tautan izin usaha / NIB / IUMK (opsional)"
-                  placeholderTextColor={`${colors.subtle}80`}
-                  value={form.docsBusinessPermit}
-                  onChangeText={value => handleChange('docsBusinessPermit', value)}
-                  style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.surface }]}
-                />
+                <View>
+                  <Text style={{ marginBottom: 8, fontSize: 13, color: colors.subtle, fontWeight: '600' }}>KTP / Identitas Pemilik</Text>
+                  {form.docsIdOwner ? (
+                    <View style={{ gap: 8 }}>
+                      <View style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 10,
+                        padding: 12,
+                        backgroundColor: scheme === 'dark' ? 'rgba(34, 197, 94, 0.1)' : '#F0FDF4',
+                        borderRadius: 12,
+                        borderWidth: 1,
+                        borderColor: scheme === 'dark' ? 'rgba(34, 197, 94, 0.2)' : '#BBF7D0'
+                      }}>
+                        <Feather name="check" size={16} color={colors.success} />
+                        <Text style={{ flex: 1, fontSize: 13, color: colors.text }} numberOfLines={1}>
+                          {form.docsIdOwner.split('/').pop()}
+                        </Text>
+                        <TouchableOpacity onPress={() => handleChange('docsIdOwner', '')}>
+                          <Feather name="x" size={16} color={colors.subtle} />
+                        </TouchableOpacity>
+                      </View>
+                      <Text style={{ fontSize: 11, color: colors.success }}>File berhasil diunggah.</Text>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      onPress={async () => {
+                        try {
+                          const result = await DocumentPicker.getDocumentAsync({
+                            type: ['image/*', 'application/pdf'],
+                            copyToCacheDirectory: true
+                          });
+
+                          if (result.canceled) return;
+
+                          const asset = result.assets[0];
+                          if (!asset) return;
+
+                          if (user?.token) {
+                            const uploadRes = await uploadFile(user.token, asset.uri, asset.mimeType ?? 'image/jpeg', asset.name);
+                            if (uploadRes.success) {
+                              handleChange('docsIdOwner', uploadRes.url);
+                            } else {
+                              Alert.alert('Gagal Upload', uploadRes.message);
+                            }
+                          } else {
+                            Alert.alert('Error', 'Anda harus login untuk mengunggah file.');
+                          }
+                        } catch (err) {
+                          Alert.alert('Error', 'Gagal memilih file.');
+                        }
+                      }}
+                      style={{
+                        borderWidth: 1,
+                        borderColor: colors.border,
+                        borderStyle: 'dashed',
+                        borderRadius: 14,
+                        padding: 24,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 8,
+                        backgroundColor: scheme === 'dark' ? 'rgba(255,255,255,0.02)' : '#FAFAFA'
+                      }}
+                    >
+                      <View style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 99,
+                        backgroundColor: scheme === 'dark' ? 'rgba(124, 58, 237, 0.15)' : '#F3E8FF',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        <Feather name="upload-cloud" size={20} color={colors.accent} />
+                      </View>
+                      <Text style={{ fontSize: 14, fontWeight: '600', color: colors.text }}>
+                        Klik untuk unggah KTP
+                      </Text>
+                      <Text style={{ fontSize: 12, color: colors.subtle, textAlign: 'center' }}>
+                        Format JPG, PNG, atau PDF (Max 5MB)
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
 
               <TouchableOpacity
@@ -482,6 +670,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 24,
     gap: 20,
+    flexGrow: 0,
   },
   modalHeader: {
     flexDirection: 'row',

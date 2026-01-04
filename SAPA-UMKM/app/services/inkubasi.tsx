@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { useAuth } from '@/hooks/use-auth';
+import { createSubmission } from '@/lib/api';
+import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -15,7 +18,6 @@ import {
   useColorScheme,
   View,
 } from 'react-native';
-import { Feather } from '@expo/vector-icons';
 
 const palette = {
   light: {
@@ -78,6 +80,7 @@ export default function IncubationProgramScreen() {
   const scheme = useColorScheme();
   const colors = scheme === 'dark' ? palette.dark : palette.light;
   const router = useRouter();
+  const { user } = useAuth();
 
   const [form, setForm] = useState<IncubationForm>(defaultForm);
   const [submitting, setSubmitting] = useState(false);
@@ -112,16 +115,24 @@ export default function IncubationProgramScreen() {
       return;
     }
 
+    if (!user?.token) {
+      Alert.alert('Error', 'Anda harus login terlebih dahulu.');
+      return;
+    }
+
     setSubmitting(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await createSubmission(user.token, {
+        type: 'inkubasi',
+        data: form
+      });
       Alert.alert(
         'Pendaftaran terkirim',
         'Pengajuan program inkubasi telah kami terima. Tim kurator akan menghubungi Anda untuk proses selanjutnya.',
       );
       resetForm();
     } catch (error) {
-      Alert.alert('Gagal mengirim', 'Terjadi kesalahan saat mengirim formulir. Silakan coba lagi.');
+      Alert.alert('Gagal mengirim', error instanceof Error ? error.message : 'Terjadi kesalahan saat mengirim formulir.');
     } finally {
       setSubmitting(false);
     }

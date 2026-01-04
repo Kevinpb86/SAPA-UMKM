@@ -14,6 +14,8 @@ import {
   View
 } from 'react-native';
 
+import { useAuth } from '@/hooks/use-auth';
+
 type FeatherIconName = ComponentProps<typeof Feather>['name'];
 
 type QuickAction = {
@@ -162,6 +164,7 @@ export default function HomeScreen() {
   const scheme = useColorScheme();
   const colors = scheme === 'dark' ? palette.dark : palette.light;
   const router = useRouter();
+  const { user } = useAuth();
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
@@ -200,15 +203,15 @@ export default function HomeScreen() {
                 pendampingan komunitas, dan pembelajaran kompetensi dalam satu dasbor terpadu.
               </Text>
               <View style={styles.heroPillRow}>
-                <View style={[styles.heroPill, { backgroundColor: colors.pill }]}> 
+                <View style={[styles.heroPill, { backgroundColor: colors.pill }]}>
                   <Feather name="zap" size={16} color="#FFFFFF" />
                   <Text style={styles.heroPillText}>Legalitas lebih cepat</Text>
                 </View>
-                <View style={[styles.heroPill, { backgroundColor: colors.pill }]}> 
+                <View style={[styles.heroPill, { backgroundColor: colors.pill }]}>
                   <Feather name="target" size={16} color="#FFFFFF" />
                   <Text style={styles.heroPillText}>Program terkurasi</Text>
                 </View>
-                <View style={[styles.heroPill, { backgroundColor: colors.pill }]}> 
+                <View style={[styles.heroPill, { backgroundColor: colors.pill }]}>
                   <Feather name="globe" size={16} color="#FFFFFF" />
                   <Text style={styles.heroPillText}>Pembelajaran daring</Text>
                 </View>
@@ -225,7 +228,7 @@ export default function HomeScreen() {
           </View>
           <View style={styles.heroStatsRow}>
             <View style={styles.statItem}>
-              <View style={[styles.statIconBadge, { backgroundColor: 'rgba(255,255,255,0.18)' }]}> 
+              <View style={[styles.statIconBadge, { backgroundColor: 'rgba(255,255,255,0.18)' }]}>
                 <Feather name="layers" size={16} color="#FFFFFF" />
               </View>
               <Text style={styles.statValue}>120+</Text>
@@ -233,7 +236,7 @@ export default function HomeScreen() {
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <View style={[styles.statIconBadge, { backgroundColor: 'rgba(255,255,255,0.18)' }]}> 
+              <View style={[styles.statIconBadge, { backgroundColor: 'rgba(255,255,255,0.18)' }]}>
                 <Feather name="users" size={16} color="#FFFFFF" />
               </View>
               <Text style={styles.statValue}>35K</Text>
@@ -241,7 +244,7 @@ export default function HomeScreen() {
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <View style={[styles.statIconBadge, { backgroundColor: 'rgba(255,255,255,0.18)' }]}> 
+              <View style={[styles.statIconBadge, { backgroundColor: 'rgba(255,255,255,0.18)' }]}>
                 <Feather name="headphones" size={16} color="#FFFFFF" />
               </View>
               <Text style={styles.statValue}>24/7</Text>
@@ -275,9 +278,13 @@ export default function HomeScreen() {
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Program & Layanan</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              {user ? 'Program & Layanan' : 'Contoh Layanan & Program'}
+            </Text>
             <Text style={[styles.sectionSubtitle, { color: colors.subtle }]}>
-              Jelajahi layanan resmi dan komunitas untuk mendukung perjalanan usaha Anda.
+              {user
+                ? 'Jelajahi layanan resmi dan komunitas untuk mendukung perjalanan usaha Anda.'
+                : 'Berikut adalah contoh layanan yang dapat Anda akses setelah masuk.'}
             </Text>
           </View>
           {serviceCategories.map(category => (
@@ -303,14 +310,37 @@ export default function HomeScreen() {
                   </Text>
                 </View>
               </View>
-              <View style={styles.featureList}>
-                {category.items.map(item => (
-                  <View key={item} style={styles.featureItem}>
-                    <Feather name="check-circle" size={18} color={colors.primary} />
-                    <Text style={[styles.featureText, { color: colors.text }]}>{item}</Text>
+
+              {user ? (
+                <View style={styles.featureList}>
+                  {category.items.map(item => (
+                    <View key={item} style={styles.featureItem}>
+                      <Feather name="check-circle" size={18} color={colors.primary} />
+                      <Text style={[styles.featureText, { color: colors.text }]}>{item}</Text>
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                <View style={[styles.previewContainer, { backgroundColor: scheme === 'dark' ? '#1E293B' : '#F8FAFC', borderColor: colors.border }]}>
+                  <View style={styles.previewHeader}>
+                    <Text style={[styles.previewLabel, { color: colors.subtle }]}>CONTOH STATUS PENGGUNA</Text>
                   </View>
-                ))}
-              </View>
+                  <View style={styles.featureItem}>
+                    <Feather name="check-circle" size={18} color="#16A34A" />
+                    <Text style={[styles.featureText, { color: colors.text, fontWeight: '600' }]}>
+                      {category.id === 'layanan'
+                        ? 'Izin Usaha (NIB) Telah Terbit'
+                        : category.id === 'pemberdayaan'
+                          ? 'Pengajuan KUR Disetujui'
+                          : category.id === 'pelaporan'
+                            ? 'Laporan Keuangan Terverifikasi'
+                            : category.id === 'komunitas'
+                              ? 'Anggota Aktif Komunitas'
+                              : 'Sertifikat Kompetensi Lulus'}
+                    </Text>
+                  </View>
+                </View>
+              )}
             </TouchableOpacity>
           ))}
         </View>
@@ -334,9 +364,9 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   heroContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: 24,
   },
   heroHeader: {
     flexDirection: 'row',
@@ -371,8 +401,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   heroTextBlock: {
-    flex: 1,
-    marginRight: 16,
+    width: '100%',
     gap: 10,
   },
   heroKicker: {
@@ -421,6 +450,8 @@ const styles = StyleSheet.create({
     height: 130,
     alignItems: 'center',
     justifyContent: 'center',
+    alignSelf: 'center',
+    marginTop: 12,
   },
   heroVisualGlow: {
     position: 'absolute',
@@ -555,5 +586,21 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     lineHeight: 20,
+  },
+  previewContainer: {
+    marginTop: 16,
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+  },
+  previewHeader: {
+    marginBottom: 8,
+  },
+  previewLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
 });

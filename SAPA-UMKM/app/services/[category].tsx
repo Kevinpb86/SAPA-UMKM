@@ -1,8 +1,8 @@
-import { useMemo } from 'react';
-import { LinearGradient } from 'expo-linear-gradient';
-import { StatusBar } from 'expo-status-bar';
-import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { useMemo } from 'react';
 import {
   Alert,
   SafeAreaView,
@@ -11,8 +11,10 @@ import {
   Text,
   TouchableOpacity,
   useColorScheme,
-  View,
+  View
 } from 'react-native';
+
+import { useAuth } from '@/hooks/use-auth';
 
 import {
   serviceCatalog,
@@ -85,12 +87,13 @@ export default function ServiceDetailScreen() {
   const colors = scheme === 'dark' ? palette.dark : palette.light;
   const router = useRouter();
   const params = useLocalSearchParams<{ category?: string }>();
+  const { user } = useAuth();
 
   const categoryDetail = useMemo(() => findCategory(params.category), [params.category]);
 
   if (!categoryDetail) {
     return (
-      <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}> 
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
         <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
         <View style={styles.emptyState}>
           <Feather name="alert-triangle" size={32} color={colors.subtle} />
@@ -112,6 +115,11 @@ export default function ServiceDetailScreen() {
   }
 
   const handleAction = (action: ServiceAction) => {
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+
     const targetRoute = actionRoutes[action.id];
     if (targetRoute) {
       router.push(targetRoute as never);
@@ -169,7 +177,7 @@ export default function ServiceDetailScreen() {
     }
 
     return categoryDetail.actions.map(action => (
-      <View key={action.id} style={[styles.actionRow, { borderColor: colors.border }]}> 
+      <View key={action.id} style={[styles.actionRow, { borderColor: colors.border }]}>
         <View style={[styles.actionIcon, { backgroundColor: `${categoryDetail.accent}1A` }]}
         >
           <Feather name={action.icon} size={18} color={categoryDetail.accent} />
@@ -191,7 +199,7 @@ export default function ServiceDetailScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}> 
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <LinearGradient
@@ -222,7 +230,7 @@ export default function ServiceDetailScreen() {
           <Text style={styles.heroDescription}>{categoryDetail.description}</Text>
         </LinearGradient>
 
-        <View style={[styles.card, { borderColor: colors.border, backgroundColor: colors.surface }]}> 
+        <View style={[styles.card, { borderColor: colors.border, backgroundColor: colors.surface }]}>
           <Text style={[styles.cardTitle, { color: colors.text }]}>Layanan yang tersedia</Text>
           <View style={styles.divider} />
           {renderActions()}

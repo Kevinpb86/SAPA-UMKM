@@ -25,9 +25,10 @@ export type StoredAccount = {
   id: string;
   role: AccountRole;
   email: string;
-  password: string;
+  password?: string;
   displayName: string;
   profile?: AccountProfile;
+  token?: string;
 };
 
 type LegacyStoredUser = {

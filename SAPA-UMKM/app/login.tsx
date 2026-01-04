@@ -2,9 +2,10 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Alert,
+  Animated,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
@@ -21,12 +22,16 @@ import { useAuth } from '@/hooks/use-auth';
 
 const palette = {
   light: {
-    background: '#F5F7FB',
+    background: '#F8FAFD',
     card: '#FFFFFF',
-    text: '#0F1B3A',
-    subtle: '#66728F',
-    primary: '#1B5CC4',
-    border: '#DEE4F2',
+    text: '#0F172A',
+    subtle: '#64748B',
+    primary: '#2563EB',
+    border: '#E2E8F0',
+    input: '#FBFDFF',
+    accent: '#3B82F6',
+    focus: '#2563EB',
+    success: '#10B981',
   },
   dark: {
     background: '#0F172A',
@@ -34,7 +39,11 @@ const palette = {
     text: '#F8FAFC',
     subtle: '#94A3B8',
     primary: '#3B82F6',
-    border: '#273449',
+    border: '#334155',
+    input: '#1A2333',
+    accent: '#60A5FA',
+    focus: '#3B82F6',
+    success: '#34D399',
   },
 };
 
@@ -52,10 +61,34 @@ export default function LoginScreen() {
   }, [user, loading, router]);
 
   const [form, setForm] = useState({ email: '', password: '' });
+  const [focusedField, setFocusedField] = useState<'email' | 'password' | null>(null);
+  const [passwordVisible, setPasswordVisible] = useState(false);
+
+  const buttonScale = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    Animated.spring(buttonScale, {
+      toValue: 0.96,
+      useNativeDriver: true,
+      speed: 50,
+      bounciness: 10,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(buttonScale, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 50,
+      bounciness: 20,
+    }).start();
+  };
 
   const handleChange = (key: 'email' | 'password', value: string) => {
     setForm(prev => ({ ...prev, [key]: value }));
   };
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
     const trimmedEmail = form.email.trim().toLowerCase();
@@ -64,31 +97,47 @@ export default function LoginScreen() {
       return;
     }
 
-    const account = await login(trimmedEmail, form.password);
-    if (!account) {
-      Alert.alert('Login gagal', 'Email atau kata sandi tidak sesuai dengan data registrasi.');
-      return;
-    }
+    setIsSubmitting(true);
+    try {
+      const account = await login(trimmedEmail, form.password);
+      if (!account) {
+        Alert.alert('Login gagal', 'Email atau kata sandi tidak sesuai dengan data registrasi.');
+        return;
+      }
 
-    const destination = account.role === 'admin' ? '/admin/dashboard' : '/user/dashboard';
-    router.replace(destination);
+      Alert.alert('Login Berhasil', 'Anda akan dialihkan ke dashboard...', [
+        {
+          text: 'OK',
+          onPress: () => {
+            const destination = account.role === 'admin' ? '/admin/dashboard' : '/user/dashboard';
+            router.replace(destination);
+          }
+        }
+      ]);
+    } catch (error) {
+      Alert.alert('Terjadi Kesalahan', 'Gagal terhubung ke server. Silakan coba lagi.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}> 
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <StatusBar style="dark" />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.flexOne}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <LinearGradient
-            colors={['#1D4ED8', '#2563EB']}
+            colors={['#1E3A8A', '#2563EB', '#3B82F6', '#60A5FA']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.hero}
           >
             <View style={styles.heroOverlayOne} />
             <View style={styles.heroOverlayTwo} />
+            <View style={styles.heroOverlayThree} />
+
             <TouchableOpacity
               accessibilityRole="button"
               onPress={() => router.back()}
@@ -100,79 +149,137 @@ export default function LoginScreen() {
 
             <View style={styles.heroHeader}>
               <View style={styles.heroTag}>
-                <Feather name="log-in" size={16} color="#FFFFFF" />
-                <Text style={styles.heroTagText}>Masuk ke SAPA UMKM</Text>
+                <Feather name="shield" size={16} color="#FFFFFF" />
+                <Text style={styles.heroTagText}>Portal SAPA UMKM</Text>
               </View>
               <Text style={styles.heroTitle}>Selamat Datang Kembali</Text>
               <Text style={styles.heroSubtitle}>
-                Akses layanan perizinan, program bantuan, komunitas, dan pelatihan UMKM dalam satu aplikasi.
+                Akses layanan perizinan, program bantuan, komunitas, dan pelatihan UMKM dalam satu ekosistem digital terpadu.
               </Text>
             </View>
 
             <View style={styles.heroChecklist}>
               <View style={styles.heroChecklistItem}>
-                <Feather name="shield" size={16} color="#FFFFFF" />
-                <Text style={styles.heroChecklistText}>Autentikasi aman dengan email terdaftar.</Text>
+                <View style={styles.checkInnerIcon}>
+                  <Feather name="lock" size={14} color="#FFFFFF" />
+                </View>
+                <Text style={styles.heroChecklistText}>Akses Aman</Text>
               </View>
               <View style={styles.heroChecklistItem}>
-                <Feather name="pie-chart" size={16} color="#FFFFFF" />
-                <Text style={styles.heroChecklistText}>Pantau status legalitas dan program aktif.</Text>
+                <View style={styles.checkInnerIcon}>
+                  <Feather name="trending-up" size={14} color="#FFFFFF" />
+                </View>
+                <Text style={styles.heroChecklistText}>Pantau Usaha</Text>
+              </View>
+              <View style={styles.heroChecklistItem}>
+                <View style={styles.checkInnerIcon}>
+                  <Feather name="users" size={14} color="#FFFFFF" />
+                </View>
+                <Text style={styles.heroChecklistText}>Komunitas</Text>
               </View>
             </View>
           </LinearGradient>
 
-          <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}> 
+          <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.formHeader}>
-              <View style={[styles.formHeaderIcon, { backgroundColor: 'rgba(37,99,235,0.12)' }]}
-              >
-                <Feather name="mail" size={18} color={colors.primary} />
+              <View style={styles.formHeaderIconOuter}>
+                <View style={[styles.formHeaderIcon, { backgroundColor: `${colors.primary}15` }]}>
+                  <Feather name="user-check" size={20} color={colors.primary} />
+                </View>
               </View>
-              <Text style={[styles.formHeaderTitle, { color: colors.text }]}>Masuk dengan akun Anda</Text>
+              <Text style={[styles.formHeaderTitle, { color: colors.text }]}>Masuk ke Akun Anda</Text>
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: colors.subtle }]}>Email</Text>
-              <View style={[styles.inputWrapper, { borderColor: colors.border, backgroundColor: colors.card }]}
-              >
-                <Feather name="at-sign" size={18} color={colors.subtle} style={styles.inputIcon} />
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Email</Text>
+              <View style={[
+                styles.inputWrapper,
+                {
+                  borderColor: focusedField === 'email' ? colors.focus : colors.border,
+                  backgroundColor: colors.input
+                }
+              ]}>
+                <Feather
+                  name="mail"
+                  size={18}
+                  color={focusedField === 'email' ? colors.focus : colors.subtle}
+                  style={styles.inputIcon}
+                />
                 <TextInput
-                  placeholder="contoh: pelaku@umkm.id"
-                  placeholderTextColor={`${colors.subtle}80`}
+                  placeholder="name@company.com"
+                  placeholderTextColor={`${colors.subtle}60`}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   value={form.email}
+                  onFocus={() => setFocusedField('email')}
+                  onBlur={() => setFocusedField(null)}
                   onChangeText={value => handleChange('email', value)}
-                  style={[styles.input, { color: colors.text }]}
+                  style={[styles.input, { color: colors.text }, Platform.OS === 'web' && ({ outlineStyle: 'none' } as any)]}
                 />
               </View>
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: colors.subtle }]}>Kata Sandi</Text>
-              <View style={[styles.inputWrapper, { borderColor: colors.border, backgroundColor: colors.card }]}
-              >
-                <Feather name="lock" size={18} color={colors.subtle} style={styles.inputIcon} />
-                <TextInput
-                  placeholder="Masukkan kata sandi"
-                  placeholderTextColor={`${colors.subtle}80`}
-                  secureTextEntry
-                  value={form.password}
-                  onChangeText={value => handleChange('password', value)}
-                  style={[styles.input, { color: colors.text }]}
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Kata Sandi</Text>
+              <View style={[
+                styles.inputWrapper,
+                {
+                  borderColor: focusedField === 'password' ? colors.focus : colors.border,
+                  backgroundColor: colors.input
+                }
+              ]}>
+                <Feather
+                  name="lock"
+                  size={18}
+                  color={focusedField === 'password' ? colors.focus : colors.subtle}
+                  style={styles.inputIcon}
                 />
+                <TextInput
+                  placeholder="••••••••"
+                  placeholderTextColor={`${colors.subtle}60`}
+                  secureTextEntry={!passwordVisible}
+                  value={form.password}
+                  onFocus={() => setFocusedField('password')}
+                  onBlur={() => setFocusedField(null)}
+                  onChangeText={value => handleChange('password', value)}
+                  style={[styles.input, { color: colors.text }, Platform.OS === 'web' && ({ outlineStyle: 'none' } as any)]}
+                />
+                <TouchableOpacity
+                  onPress={() => setPasswordVisible(!passwordVisible)}
+                  style={styles.passwordToggle}>
+                  <Feather
+                    name={passwordVisible ? 'eye-off' : 'eye'}
+                    size={18}
+                    color={colors.subtle}
+                  />
+                </TouchableOpacity>
               </View>
               <TouchableOpacity style={styles.linkInline}>
                 <Text style={[styles.linkText, { color: colors.primary }]}>Lupa kata sandi?</Text>
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity
-              accessibilityRole="button"
-              onPress={handleSubmit}
-              style={[styles.primaryButton, { backgroundColor: colors.primary }]}>
-              <Text style={styles.primaryButtonText}>Masuk</Text>
-              <Feather name="arrow-right" size={16} color="#FFFFFF" />
-            </TouchableOpacity>
+            <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
+              <TouchableOpacity
+                accessibilityRole="button"
+                onPressIn={handlePressIn}
+                onPressOut={handlePressOut}
+                onPress={handleSubmit}
+                disabled={isSubmitting}
+                activeOpacity={0.9}
+                style={[
+                  styles.primaryButton,
+                  {
+                    backgroundColor: isSubmitting ? colors.subtle : colors.focus,
+                    shadowColor: colors.focus
+                  }
+                ]}>
+                <Text style={styles.primaryButtonText}>
+                  {isSubmitting ? 'Memproses...' : 'Masuk ke Akun'}
+                </Text>
+                {!isSubmitting && <Feather name="log-in" size={20} color="#FFFFFF" />}
+              </TouchableOpacity>
+            </Animated.View>
 
             <View style={styles.divider}>
               <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
@@ -205,28 +312,43 @@ const styles = StyleSheet.create({
     gap: 24,
   },
   hero: {
-    borderRadius: 28,
-    padding: 24,
-    gap: 20,
+    borderRadius: 32,
+    padding: 28,
+    gap: 24,
     overflow: 'hidden',
+    position: 'relative',
+    elevation: 10,
+    shadowColor: '#1E3A8A',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.35,
+    shadowRadius: 20,
   },
   heroOverlayOne: {
     position: 'absolute',
-    width: 200,
-    height: 200,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    top: -80,
-    right: -70,
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    top: -100,
+    right: -80,
   },
   heroOverlayTwo: {
     position: 'absolute',
-    width: 160,
-    height: 160,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    bottom: -60,
-    left: -40,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    bottom: -80,
+    left: -60,
+  },
+  heroOverlayThree: {
+    position: 'absolute',
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    top: '20%',
+    left: '10%',
   },
   heroBackButton: {
     alignSelf: 'flex-start',
@@ -266,13 +388,16 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: '800',
+    fontSize: 30,
+    fontWeight: '900',
+    letterSpacing: -0.8,
+    lineHeight: 36,
   },
   heroSubtitle: {
-    color: 'rgba(233, 244, 255, 0.9)',
-    fontSize: 14,
-    lineHeight: 20,
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: '500',
   },
   heroChecklist: {
     flexDirection: 'row',
@@ -283,20 +408,37 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.14)',
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  checkInnerIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   heroChecklistText: {
     color: '#FFFFFF',
     fontSize: 12,
+    fontWeight: '600',
   },
   formCard: {
-    borderRadius: 24,
+    borderRadius: 32,
     borderWidth: 1,
     padding: 24,
-    gap: 20,
+    gap: 24,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.12,
+    shadowRadius: 25,
+    marginTop: -8,
   },
   formHeader: {
     flexDirection: 'row',
@@ -311,24 +453,33 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   formHeaderTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 20,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  formHeaderIconOuter: {
+    padding: 3,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: 'rgba(37, 99, 235, 0.08)',
   },
   inputGroup: {
     gap: 10,
   },
   inputLabel: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 0.1,
+    marginLeft: 4,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    borderRadius: 14,
-    borderWidth: 1,
+    borderRadius: 18,
+    borderWidth: 1.5,
     paddingHorizontal: 16,
-    paddingVertical: Platform.OS === 'ios' ? 14 : 12,
+    height: 56,
   },
   inputIcon: {
     opacity: 0.75,
@@ -336,8 +487,11 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 15,
-    outlineStyle: 'none',
-    outlineWidth: 0,
+    fontWeight: '500',
+  },
+  passwordToggle: {
+    padding: 8,
+    marginLeft: 4,
   },
   linkInline: {
     alignSelf: 'flex-end',
@@ -350,18 +504,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    borderRadius: 16,
-    paddingVertical: 16,
-    shadowColor: '#1B5CC4',
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
+    gap: 12,
+    borderRadius: 20,
+    paddingVertical: 18,
+    elevation: 6,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 15,
+    marginTop: 8,
   },
   primaryButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 17,
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
   divider: {
     flexDirection: 'row',
@@ -378,9 +534,9 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   secondaryButton: {
-    borderRadius: 16,
-    borderWidth: 1,
-    paddingVertical: 14,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },

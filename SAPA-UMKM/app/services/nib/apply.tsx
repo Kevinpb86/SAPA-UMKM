@@ -1,6 +1,9 @@
-import { useState } from 'react';
-import { StatusBar } from 'expo-status-bar';
+import { useAuth } from '@/hooks/use-auth';
+import { createSubmission } from '@/lib/api';
+import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -14,7 +17,6 @@ import {
   useColorScheme,
   View,
 } from 'react-native';
-import { Feather } from '@expo/vector-icons';
 
 const palette = {
   light: {
@@ -42,6 +44,8 @@ export default function NibApplyScreen() {
   const scheme = useColorScheme();
   const colors = scheme === 'dark' ? palette.dark : palette.light;
   const router = useRouter();
+  const { user } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [owner, setOwner] = useState({
     nik: '',
@@ -58,17 +62,38 @@ export default function NibApplyScreen() {
     capital: '',
   });
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!owner.nik || !owner.fullName || !owner.email || !business.name || !business.sector) {
       Alert.alert('Data belum lengkap', 'Mohon lengkapi minimal data pemilik dan data usaha utama.');
       return;
     }
-    Alert.alert('Pengajuan NIB terkirim', 'Data permohonan NIB Anda telah disimpan untuk diproses.');
-    router.back();
+
+    if (!user?.token) {
+      Alert.alert('Error', 'Anda harus login terlebih dahulu.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await createSubmission(user.token, {
+        type: 'nib',
+        data: {
+          owner,
+          business
+        }
+      });
+      Alert.alert('Sukses', 'Pengajuan NIB berhasil dikirim. Silakan cek status di dashboard Anda.', [
+        { text: 'OK', onPress: () => router.replace('/user/dashboard') }
+      ]);
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'Gagal mengirim pengajuan.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}> 
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -183,9 +208,10 @@ export default function NibApplyScreen() {
             <TouchableOpacity
               accessibilityRole="button"
               onPress={handleSubmit}
-              style={[styles.submitButton, { backgroundColor: colors.accent }]}>
-              <Text style={styles.submitText}>Kirim Pengajuan NIB</Text>
-              <Feather name="send" size={16} color="#FFFFFF" />
+              disabled={isSubmitting}
+              style={[styles.submitButton, { backgroundColor: colors.accent, opacity: isSubmitting ? 0.7 : 1 }]}>
+              <Text style={styles.submitText}>{isSubmitting ? 'Mengirim...' : 'Kirim Pengajuan NIB'}</Text>
+              {!isSubmitting && <Feather name="send" size={16} color="#FFFFFF" />}
             </TouchableOpacity>
           </View>
         </ScrollView>
