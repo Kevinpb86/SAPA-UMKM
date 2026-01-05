@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useMemo, useState } from 'react';
 import {
   FlatList,
+  Platform,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -110,7 +111,7 @@ export default function ProgramDistributionScreen() {
       >
         <View style={styles.programHeader}>
           <View style={styles.programHeaderLeft}>
-            <View style={[styles.programBadge, { backgroundColor: `${colors.accent}16` }]}> 
+            <View style={[styles.programBadge, { backgroundColor: `${colors.accent}16` }]}>
               <Feather name="layers" size={16} color={colors.accent} />
               <Text style={[styles.programBadgeText, { color: colors.accent }]}>{item.type}</Text>
             </View>
@@ -148,8 +149,8 @@ export default function ProgramDistributionScreen() {
             <SectionTitle colors={colors} icon="gift" title="Keunggulan Program" />
             <View style={styles.benefitGrid}>
               {item.benefits.map(benefit => (
-                <View key={benefit.id} style={[styles.benefitCard, { borderColor: colors.border }]}> 
-                  <View style={[styles.benefitIcon, { backgroundColor: `${colors.accent}16` }]}> 
+                <View key={benefit.id} style={[styles.benefitCard, { borderColor: colors.border }]}>
+                  <View style={[styles.benefitIcon, { backgroundColor: `${colors.accent}16` }]}>
                     <Feather name={benefit.icon} size={16} color={colors.accent} />
                   </View>
                   <Text style={[styles.benefitTitle, { color: colors.text }]}>{benefit.title}</Text>
@@ -163,7 +164,7 @@ export default function ProgramDistributionScreen() {
             <SectionTitle colors={colors} icon="check-circle" title="Persyaratan Inti" />
             <View style={styles.requirementsList}>
               {item.requirements.map(requirement => (
-                <View key={requirement} style={styles.requirementRow}> 
+                <View key={requirement} style={styles.requirementRow}>
                   <Feather name="check" size={14} color={colors.accent} />
                   <Text style={[styles.requirementText, { color: colors.text }]}>{requirement}</Text>
                 </View>
@@ -186,7 +187,7 @@ export default function ProgramDistributionScreen() {
                   style={[styles.resourceCard, { borderColor: colors.border }]}
                   onPress={() => router.push('/services/penyaluran/resources')}
                 >
-                  <View style={[styles.resourceIcon, { backgroundColor: `${colors.accent}16` }]}> 
+                  <View style={[styles.resourceIcon, { backgroundColor: `${colors.accent}16` }]}>
                     <Feather name="download" size={16} color={colors.accent} />
                   </View>
                   <View style={styles.resourceTextWrapper}>
@@ -199,17 +200,17 @@ export default function ProgramDistributionScreen() {
             </View>
 
             <SectionTitle colors={colors} icon="life-buoy" title="Kontak & Pendampingan" />
-            <View style={[styles.contactCard, { borderColor: colors.border }]}> 
-              <View style={styles.contactRow}> 
+            <View style={[styles.contactCard, { borderColor: colors.border }]}>
+              <View style={styles.contactRow}>
                 <Feather name="mail" size={16} color={colors.accent} />
                 <Text style={[styles.contactText, { color: colors.text }]}>{item.contact.email}</Text>
               </View>
-              <View style={styles.contactRow}> 
+              <View style={styles.contactRow}>
                 <Feather name="phone" size={16} color={colors.accent} />
                 <Text style={[styles.contactText, { color: colors.text }]}>{item.contact.phone}</Text>
               </View>
               {item.contact.notes && (
-                <View style={styles.contactRow}> 
+                <View style={styles.contactRow}>
                   <Feather name="info" size={16} color={colors.accent} />
                   <Text style={[styles.contactNotes, { color: colors.subtle }]}>{item.contact.notes}</Text>
                 </View>
@@ -222,7 +223,7 @@ export default function ProgramDistributionScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}> 
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <FlatList
         keyExtractor={program => program.id}
@@ -231,38 +232,48 @@ export default function ProgramDistributionScreen() {
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={
           <>
-            <LinearGradient
-              colors={colors.hero}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.hero}
-            >
-              <TouchableOpacity
-                accessibilityRole="button"
-                onPress={() => router.back()}
-                style={styles.backButton}
+            <View style={styles.heroWrapper}>
+              <LinearGradient
+                colors={colors.hero}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.hero}
               >
-                <Feather name="arrow-left" size={18} color="#FFFFFF" />
-                <Text style={styles.backText}>Kembali</Text>
-              </TouchableOpacity>
-              <Text style={styles.heroKicker}>Informasi Penyaluran Program KemenKopUKM</Text>
-              <Text style={styles.heroTitle}>Akses Dana & Dukungan Resmi untuk UMKM</Text>
-              <Text style={styles.heroSubtitle}>
-                Pantau status penyaluran pembiayaan, bantuan usaha, dan program pendampingan yang disediakan pemerintah.
-              </Text>
-            </LinearGradient>
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  onPress={() => router.back()}
+                  style={styles.backButton}
+                >
+                  <Feather name="arrow-left" size={18} color="#FFFFFF" />
+                  <Text style={styles.backText}>Kembali</Text>
+                </TouchableOpacity>
+                <Text style={styles.heroKicker}>Informasi Penyaluran Program KemenKopUKM</Text>
+                <Text style={styles.heroTitle}>Akses Dana & Dukungan Resmi untuk UMKM</Text>
+                <Text style={styles.heroSubtitle}>
+                  Pantau status penyaluran pembiayaan, bantuan usaha, dan program pendampingan yang disediakan pemerintah.
+                </Text>
+              </LinearGradient>
+              <LinearGradient
+                colors={scheme === 'dark' ? ['#2563EB33', 'transparent'] : ['#F0F6FF', 'transparent']}
+                style={styles.meshGradient}
+              />
+            </View>
 
-            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}> 
+            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>Filter & Pencarian</Text>
-              <Text style={[styles.sectionSubtitle, { color: colors.subtle }]}> 
+              <Text style={[styles.sectionSubtitle, { color: colors.subtle }]}>
                 Temukan informasi penyaluran yang paling relevan dengan kebutuhan usaha Anda.
               </Text>
-              <View style={[styles.searchBar, { borderColor: colors.border, backgroundColor: colors.card }]}> 
-                <Feather name="search" size={16} color={colors.subtle} />
+              <View style={[styles.searchBar, { backgroundColor: `${colors.subtle}08`, borderColor: 'transparent' }]}>
+                <Feather name="search" size={16} color={colors.accent} />
                 <TextInput
-                  style={[styles.searchInput, { color: colors.text }]}
+                  style={[
+                    styles.searchInput,
+                    { color: colors.text },
+                    Platform.OS === 'web' && ({ outlineStyle: 'none' } as any)
+                  ]}
                   placeholder="Cari nama program, lembaga penyalur, atau kata kunci..."
-                  placeholderTextColor={`${colors.subtle}80`}
+                  placeholderTextColor={`${colors.subtle}50`}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
                 />
@@ -284,18 +295,18 @@ export default function ProgramDistributionScreen() {
             </View>
 
             {upcomingDeadlines.length > 0 && (
-              <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}> 
+              <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>Agenda & Tenggat Terdekat</Text>
-                <Text style={[styles.sectionSubtitle, { color: colors.subtle }]}> 
+                <Text style={[styles.sectionSubtitle, { color: colors.subtle }]}>
                   Pastikan Anda menyiapkan dokumen sebelum batas waktu pendaftaran.
                 </Text>
                 <View style={styles.deadlineList}>
                   {upcomingDeadlines.map(deadline => (
-                    <View key={deadline.id} style={[styles.deadlineItem, { borderColor: colors.border }]}> 
-                      <View style={[styles.deadlineIcon, { backgroundColor: `${colors.accent}16` }]}> 
+                    <View key={deadline.id} style={[styles.deadlineItem, { borderColor: colors.border }]}>
+                      <View style={[styles.deadlineIcon, { backgroundColor: `${colors.accent}16` }]}>
                         <Feather name="calendar" size={16} color={colors.accent} />
                       </View>
-                      <View style={styles.deadlineContent}> 
+                      <View style={styles.deadlineContent}>
                         <Text style={[styles.deadlineTitle, { color: colors.text }]}>{deadline.name}</Text>
                         <Text style={[styles.deadlineDate, { color: colors.subtle }]}>{deadline.deadline}</Text>
                       </View>
@@ -308,10 +319,10 @@ export default function ProgramDistributionScreen() {
           </>
         }
         ListEmptyComponent={
-          <View style={[styles.emptyState, { backgroundColor: colors.card, borderColor: colors.border }]}> 
+          <View style={[styles.emptyState, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Feather name="inbox" size={20} color={colors.subtle} />
             <Text style={[styles.emptyTitle, { color: colors.text }]}>Program tidak ditemukan</Text>
-            <Text style={[styles.emptySubtitle, { color: colors.subtle }]}> 
+            <Text style={[styles.emptySubtitle, { color: colors.subtle }]}>
               Coba ubah filter atau kata kunci pencarian untuk menampilkan program penyaluran lainnya.
             </Text>
           </View>
@@ -331,7 +342,7 @@ type FilterRowProps<T extends string> = {
 
 function FilterRow<T extends string>({ colors, label, options, active, onSelect }: FilterRowProps<T>) {
   return (
-    <View style={styles.filterGroup}> 
+    <View style={styles.filterGroup}>
       <Text style={[styles.filterLabel, { color: colors.subtle }]}>{label}</Text>
       <View style={styles.filterList}>
         {options.map(option => {
@@ -381,7 +392,7 @@ function ProgramStatusPill({ status, colors }: ProgramStatusPillProps) {
   const config = statusConfig[status];
 
   return (
-    <View style={[styles.statusBadge, { backgroundColor: `${config.color}22` }]}> 
+    <View style={[styles.statusBadge, { backgroundColor: `${config.color}22` }]}>
       <Feather name={config.icon} size={12} color={config.color} />
       <Text style={[styles.statusBadgeText, { color: config.color }]}>{status}</Text>
     </View>
@@ -396,7 +407,7 @@ type MetaInfoProps = {
 
 function MetaInfo({ colors, icon, text }: MetaInfoProps) {
   return (
-    <View style={styles.metaInfo}> 
+    <View style={styles.metaInfo}>
       <Feather name={icon} size={14} color={colors.accent} />
       <Text style={[styles.metaInfoText, { color: colors.subtle }]} numberOfLines={2}>
         {text}
@@ -413,8 +424,8 @@ type SectionTitleProps = {
 
 function SectionTitle({ colors, icon, title }: SectionTitleProps) {
   return (
-    <View style={styles.sectionTitleRow}> 
-      <View style={[styles.sectionTitleIcon, { backgroundColor: `${colors.accent}16` }]}> 
+    <View style={styles.sectionTitleRow}>
+      <View style={[styles.sectionTitleIcon, { backgroundColor: `${colors.accent}16` }]}>
         <Feather name={icon} size={14} color={colors.accent} />
       </View>
       <Text style={[styles.sectionTitleText, { color: colors.text }]}>{title}</Text>
@@ -440,11 +451,11 @@ function TimelineItemRow({ step, colors }: TimelineItemRowProps) {
   const statusConfig = statusColors[step.status];
 
   return (
-    <View style={[styles.timelineItem, { borderColor: colors.border }]}> 
-      <View style={[styles.timelineIcon, { backgroundColor: statusConfig.background }]}> 
+    <View style={[styles.timelineItem, { borderColor: colors.border }]}>
+      <View style={[styles.timelineIcon, { backgroundColor: statusConfig.background }]}>
         <Feather name={statusConfig.icon} size={14} color={statusConfig.iconColor} />
       </View>
-      <View style={styles.timelineContent}> 
+      <View style={styles.timelineContent}>
         <Text style={[styles.timelineLabel, { color: colors.text }]}>{step.label}</Text>
         <Text style={[styles.timelinePeriod, { color: colors.accent }]}>{step.period}</Text>
         <Text style={[styles.timelineDescription, { color: colors.subtle }]}>{step.description}</Text>
@@ -462,11 +473,28 @@ const styles = StyleSheet.create({
     gap: 20,
     paddingBottom: 48,
   },
-  hero: {
+  heroWrapper: {
     borderRadius: 28,
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    marginBottom: 16,
+  },
+  hero: {
     padding: 24,
     gap: 16,
-    marginBottom: 16,
+    zIndex: 1,
+  },
+  meshGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.5,
   },
   backButton: {
     alignSelf: 'flex-start',
@@ -474,10 +502,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.35)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.4)',
     paddingHorizontal: 14,
-    paddingVertical: 6,
+    paddingVertical: 8,
     backgroundColor: 'rgba(11, 29, 58, 0.25)',
   },
   backText: {
@@ -490,39 +518,50 @@ const styles = StyleSheet.create({
     fontSize: 13,
     letterSpacing: 1,
     textTransform: 'uppercase',
+    fontWeight: '800',
   },
   heroTitle: {
     color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: '800',
+    fontSize: 26,
+    fontWeight: '700',
+    letterSpacing: -0.5,
   },
   heroSubtitle: {
     color: 'rgba(230, 241, 255, 0.9)',
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 22,
+    fontWeight: '500',
   },
   card: {
-    borderRadius: 24,
-    borderWidth: 1,
-    padding: 22,
-    gap: 18,
+    borderRadius: 32,
+    borderWidth: 0,
+    padding: 24,
+    gap: 24,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 15,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
+    letterSpacing: -0.3,
   },
   sectionSubtitle: {
     fontSize: 13,
     lineHeight: 20,
+    fontWeight: '500',
+    opacity: 0.7,
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    borderRadius: 16,
-    borderWidth: 1,
+    borderRadius: 18,
+    borderWidth: 1.5,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
   },
   searchInput: {
     flex: 1,
@@ -534,31 +573,31 @@ const styles = StyleSheet.create({
   },
   filterLabel: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.6,
   },
   filterList: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: 8,
   },
   filterChip: {
-    borderRadius: 999,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 1.5,
     paddingHorizontal: 14,
     paddingVertical: 8,
   },
   filterChipText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   deadlineList: {
     gap: 12,
   },
   deadlineItem: {
     borderRadius: 18,
-    borderWidth: 1,
+    borderWidth: 1.5,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -577,10 +616,12 @@ const styles = StyleSheet.create({
   },
   deadlineTitle: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   deadlineDate: {
     fontSize: 12,
+    fontWeight: '600',
+    opacity: 0.7,
   },
   statusBadge: {
     flexDirection: 'row',
@@ -595,10 +636,15 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   programCard: {
-    borderRadius: 22,
-    borderWidth: 1,
-    padding: 20,
-    gap: 16,
+    borderRadius: 24,
+    borderWidth: 0,
+    padding: 24,
+    gap: 20,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
   },
   programHeader: {
     flexDirection: 'row',
@@ -666,17 +712,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    marginTop: 8,
   },
   sectionTitleIcon: {
     width: 32,
     height: 32,
-    borderRadius: 12,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
   sectionTitleText: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: -0.2,
   },
   benefitGrid: {
     flexDirection: 'row',

@@ -14,6 +14,7 @@ import {
     View
 } from 'react-native';
 
+import { useTheme } from '@/components/theme-provider';
 import { useAuth } from '@/hooks/use-auth';
 
 const palette = {
@@ -42,10 +43,11 @@ export default function SettingsScreen() {
     const scheme = useColorScheme();
     const colors = scheme === 'dark' ? palette.dark : palette.light;
     const { logout } = useAuth();
+    const { theme, toggleTheme } = useTheme();
 
     const [notifications, setNotifications] = useState(true);
     const [biometrics, setBiometrics] = useState(false);
-    const [darkMode, setDarkMode] = useState(scheme === 'dark');
+    const darkMode = theme === 'dark';
 
     const handleLogout = async () => {
         Alert.alert('Keluar', 'Apakah Anda yakin ingin keluar dari aplikasi?', [
@@ -77,7 +79,7 @@ export default function SettingsScreen() {
                     icon: 'moon',
                     type: 'toggle',
                     value: darkMode,
-                    onValueChange: setDarkMode,
+                    onValueChange: toggleTheme,
                 },
             ],
         },

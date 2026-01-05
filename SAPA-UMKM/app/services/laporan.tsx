@@ -131,27 +131,33 @@ export default function BusinessReportScreen() {
         style={styles.flexOne}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <LinearGradient
-            colors={colors.hero}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.hero}
-          >
-            <TouchableOpacity
-              accessibilityRole="button"
-              onPress={() => router.back()}
-              style={styles.backButton}
+          <View style={styles.heroWrapper}>
+            <LinearGradient
+              colors={colors.hero}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.hero}
             >
-              <Feather name="arrow-left" size={18} color="#FFFFFF" />
-              <Text style={styles.backText}>Kembali</Text>
-            </TouchableOpacity>
-            <Text style={styles.heroKicker}>Pelaporan Kegiatan Usaha</Text>
-            <Text style={styles.heroTitle}>Pantau Perkembangan Usaha Setiap Bulan</Text>
-            <Text style={styles.heroSubtitle}>
-              Kirim ringkasan kinerja usaha, aktivitas utama, serta kebutuhan dukungan agar pemerintah dapat
-              memberikan pendampingan yang tepat.
-            </Text>
-          </LinearGradient>
+              <TouchableOpacity
+                accessibilityRole="button"
+                onPress={() => router.back()}
+                style={styles.backButton}
+              >
+                <Feather name="arrow-left" size={18} color="#FFFFFF" />
+                <Text style={styles.backText}>Kembali</Text>
+              </TouchableOpacity>
+              <Text style={styles.heroKicker}>Pelaporan Kegiatan Usaha</Text>
+              <Text style={styles.heroTitle}>Pantau Perkembangan Usaha Setiap Bulan</Text>
+              <Text style={styles.heroSubtitle}>
+                Kirim ringkasan kinerja usaha, aktivitas utama, serta kebutuhan dukungan agar pemerintah dapat
+                memberikan pendampingan yang tepat.
+              </Text>
+            </LinearGradient>
+            <LinearGradient
+              colors={scheme === 'dark' ? ['#0EA5E933', 'transparent'] : ['#F0F9FF', 'transparent']}
+              style={styles.meshGradient}
+            />
+          </View>
 
           <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.sectionHeader}>
@@ -195,7 +201,7 @@ export default function BusinessReportScreen() {
             </View>
 
             <View style={styles.inputWrapper}>
-              <Text style={[styles.inputLabel, { color: colors.subtle }]}>Periode Pelaporan</Text>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Periode Pelaporan</Text>
               <View style={styles.pillGroup}>
                 {monthOptions.map(option => {
                   const active = option === form.period;
@@ -207,8 +213,12 @@ export default function BusinessReportScreen() {
                       style={[
                         styles.pill,
                         {
-                          borderColor: active ? colors.accent : colors.border,
-                          backgroundColor: active ? `${colors.accent}1A` : colors.card,
+                          backgroundColor: `${colors.subtle}08`,
+                          borderColor: 'transparent',
+                        },
+                        active && {
+                          borderColor: colors.accent,
+                          backgroundColor: `${colors.accent}15`,
                         },
                       ]}
                     >
@@ -229,6 +239,7 @@ export default function BusinessReportScreen() {
             <View style={styles.fieldGroup}>
               <LabeledInput
                 label="Omzet/Bulan"
+                icon="dollar-sign"
                 placeholder="Contoh: Rp 35.000.000"
                 value={form.revenue}
                 onChangeText={value => handleChange('revenue', value)}
@@ -236,6 +247,7 @@ export default function BusinessReportScreen() {
               />
               <LabeledInput
                 label="Pengeluaran Utama"
+                icon="shopping-cart"
                 placeholder="Contoh: Rp 18.000.000"
                 value={form.expenses}
                 onChangeText={value => handleChange('expenses', value)}
@@ -243,6 +255,7 @@ export default function BusinessReportScreen() {
               />
               <LabeledInput
                 label="Aktivitas Kunci Bulan Ini"
+                icon="activity"
                 placeholder="Tuliskan promosi, produksi, kemitraan, dsb."
                 value={form.keyActivities}
                 onChangeText={value => handleChange('keyActivities', value)}
@@ -251,6 +264,7 @@ export default function BusinessReportScreen() {
               />
               <LabeledInput
                 label="Pencapaian Penting"
+                icon="award"
                 placeholder="Contoh: Tambah 5 reseller baru, produk baru diluncurkan"
                 value={form.achievements}
                 onChangeText={value => handleChange('achievements', value)}
@@ -259,6 +273,7 @@ export default function BusinessReportScreen() {
               />
               <LabeledInput
                 label="Kendala yang Dihadapi"
+                icon="alert-octagon"
                 placeholder="Contoh: Terbatasnya bahan baku, peralatan rusak"
                 value={form.challenges}
                 onChangeText={value => handleChange('challenges', value)}
@@ -267,6 +282,7 @@ export default function BusinessReportScreen() {
               />
               <LabeledInput
                 label="Kebutuhan Dukungan (opsional)"
+                icon="help-circle"
                 placeholder="Pendampingan pemasaran, akses pembiayaan, pelatihan, dll."
                 value={form.supportRequested}
                 onChangeText={value => handleChange('supportRequested', value)}
@@ -279,13 +295,17 @@ export default function BusinessReportScreen() {
               accessibilityRole="button"
               onPress={handleSubmit}
               disabled={submitting}
-              style={[
-                styles.submitButton,
-                { backgroundColor: colors.accent, opacity: submitting ? 0.6 : 1 },
-              ]}
+              style={styles.submitWrapper}
             >
-              <Text style={styles.submitText}>{submitting ? 'Mengirim...' : 'Upload Laporan'}</Text>
-              <Feather name="send" size={16} color="#FFFFFF" />
+              <LinearGradient
+                colors={submitting ? [`${colors.accent}80`, `${colors.accent}60`] : [`${colors.accent}`, '#2563EB']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.submitButton}
+              >
+                <Text style={styles.submitText}>{submitting ? 'Mengirim...' : 'Upload Laporan Bulanan'}</Text>
+                <Feather name={submitting ? 'loader' : 'send'} size={16} color="#FFFFFF" />
+              </LinearGradient>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -296,6 +316,7 @@ export default function BusinessReportScreen() {
 
 type LabeledInputProps = {
   label: string;
+  icon: React.ComponentProps<typeof Feather>['name'];
   placeholder: string;
   value: string;
   onChangeText: (value: string) => void;
@@ -303,27 +324,50 @@ type LabeledInputProps = {
   multiline?: boolean;
 };
 
-function LabeledInput({ label, placeholder, value, onChangeText, colors, multiline }: LabeledInputProps) {
+function LabeledInput({
+  label,
+  icon,
+  placeholder,
+  value,
+  onChangeText,
+  colors,
+  multiline,
+}: LabeledInputProps) {
+  const [isFocused, setIsFocused] = useState(false);
   return (
     <View style={styles.inputWrapper}>
-      <Text style={[styles.inputLabel, { color: colors.subtle }]}>{label}</Text>
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor={`${colors.subtle}80`}
-        multiline={multiline}
-        style={[
-          styles.input,
-          {
-            borderColor: colors.border,
-            backgroundColor: colors.card,
-            color: colors.text,
-            minHeight: multiline ? 96 : 48,
-            textAlignVertical: multiline ? 'top' : 'center',
-          },
-        ]}
-      />
+      <Text style={[styles.inputLabel, { color: colors.text }]}>{label}</Text>
+      <View style={[
+        styles.inputInner,
+        {
+          backgroundColor: isFocused ? colors.card : `${colors.subtle}08`,
+          borderColor: isFocused ? colors.accent : 'transparent',
+          alignItems: multiline ? 'flex-start' : 'center',
+          paddingTop: multiline ? 12 : 0,
+        }
+      ]}>
+        <View style={multiline ? { marginTop: 4 } : null}>
+          <Feather name={icon} size={18} color={isFocused ? colors.accent : colors.subtle} />
+        </View>
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          placeholderTextColor={`${colors.subtle}50`}
+          multiline={multiline}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          style={[
+            styles.input,
+            {
+              color: colors.text,
+              minHeight: multiline ? 96 : 48,
+            },
+            multiline && { paddingTop: 0, paddingBottom: 12 },
+            Platform.OS === 'web' && ({ outlineStyle: 'none' } as any)
+          ]}
+        />
+      </View>
     </View>
   );
 }
@@ -358,10 +402,27 @@ const styles = StyleSheet.create({
     padding: 24,
     gap: 20,
   },
-  hero: {
+  heroWrapper: {
     borderRadius: 28,
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+  },
+  hero: {
     padding: 24,
     gap: 16,
+    zIndex: 1,
+  },
+  meshGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.5,
   },
   backButton: {
     alignSelf: 'flex-start',
@@ -369,38 +430,46 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.35)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.4)',
     paddingHorizontal: 14,
-    paddingVertical: 6,
-    backgroundColor: 'rgba(15, 23, 42, 0.24)',
+    paddingVertical: 8,
+    backgroundColor: 'rgba(15, 23, 42, 0.25)',
   },
   backText: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   heroKicker: {
     color: 'rgba(224, 242, 254, 0.9)',
     fontSize: 13,
     letterSpacing: 1,
     textTransform: 'uppercase',
+    fontWeight: '800',
   },
   heroTitle: {
     color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: '800',
+    fontSize: 26,
+    fontWeight: '900',
+    letterSpacing: -0.5,
   },
   heroSubtitle: {
     color: 'rgba(235, 248, 255, 0.9)',
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 22,
+    fontWeight: '500',
   },
   card: {
-    borderRadius: 24,
-    borderWidth: 1,
-    padding: 22,
-    gap: 18,
+    borderRadius: 32,
+    borderWidth: 0,
+    padding: 24,
+    gap: 24,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 15,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -408,19 +477,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconWrapper: {
-    width: 44,
-    height: 44,
-    borderRadius: 16,
+    width: 48,
+    height: 48,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '800',
+    letterSpacing: -0.3,
   },
   sectionBody: {
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 22,
+    fontWeight: '500',
+    opacity: 0.7,
   },
   highlights: {
     flexDirection: 'row',
@@ -431,41 +503,52 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 150,
     borderRadius: 18,
-    borderWidth: 1,
+    borderWidth: 1.5,
     padding: 16,
     gap: 10,
   },
   badgeIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
+    width: 40,
+    height: 40,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
   badgeTitle: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   badgeDescription: {
     fontSize: 12,
     lineHeight: 18,
+    fontWeight: '500',
+    opacity: 0.7,
   },
   inputWrapper: {
-    gap: 8,
+    gap: 10,
   },
   inputLabel: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 4,
+  },
+  inputInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+    paddingHorizontal: 16,
   },
   fieldGroup: {
-    gap: 16,
+    gap: 20,
   },
   input: {
-    borderRadius: 14,
-    borderWidth: 1,
-    paddingHorizontal: 16,
-    paddingVertical: Platform.OS === 'ios' ? 14 : 12,
+    flex: 1,
     fontSize: 15,
+    fontWeight: '400',
+    paddingHorizontal: 12,
+    paddingVertical: 14,
   },
   pillGroup: {
     flexDirection: 'row',
@@ -473,28 +556,36 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   pill: {
-    borderRadius: 999,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
   pillText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
+  },
+  submitWrapper: {
+    marginTop: 8,
   },
   submitButton: {
-    alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    borderRadius: 999,
-    paddingHorizontal: 20,
-    paddingVertical: 13,
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 18,
+    borderRadius: 20,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
   },
   submitText: {
     color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
 });
 

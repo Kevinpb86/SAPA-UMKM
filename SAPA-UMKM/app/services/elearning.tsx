@@ -53,27 +53,33 @@ export default function ElearningScreen() {
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <LinearGradient
-          colors={colors.hero}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.hero}
-        >
-          <TouchableOpacity
-            accessibilityRole="button"
-            onPress={() => router.back()}
-            style={styles.backButton}
+        <View style={styles.heroWrapper}>
+          <LinearGradient
+            colors={colors.hero}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.hero}
           >
-            <Feather name="arrow-left" size={18} color="#FFFFFF" />
-            <Text style={styles.backText}>Kembali</Text>
-          </TouchableOpacity>
-          <Text style={styles.heroKicker}>Modul Pembelajaran E-Learning</Text>
-          <Text style={styles.heroTitle}>Belajar Mandiri Kapan Saja dan Di Mana Saja</Text>
-          <Text style={styles.heroSubtitle}>
-            Akses modul interaktif yang disusun oleh KemenKopUKM. Tingkatkan kompetensi usaha Anda melalui video,
-            studi kasus, dan kuis evaluasi.
-          </Text>
-        </LinearGradient>
+            <TouchableOpacity
+              accessibilityRole="button"
+              onPress={() => router.back()}
+              style={styles.backButton}
+            >
+              <Feather name="arrow-left" size={18} color="#FFFFFF" />
+              <Text style={styles.backText}>Kembali</Text>
+            </TouchableOpacity>
+            <Text style={styles.heroKicker}>Modul Pembelajaran E-Learning</Text>
+            <Text style={styles.heroTitle}>Belajar Mandiri Kapan Saja dan Di Mana Saja</Text>
+            <Text style={styles.heroSubtitle}>
+              Akses modul interaktif yang disusun oleh KemenKopUKM. Tingkatkan kompetensi usaha Anda melalui video,
+              studi kasus, dan kuis evaluasi.
+            </Text>
+          </LinearGradient>
+          <LinearGradient
+            colors={scheme === 'dark' ? [`${colors.accent}33`, 'transparent'] : ['#E0F2FE', 'transparent']}
+            style={styles.meshGradient}
+          />
+        </View>
 
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.sectionHeader}>
@@ -162,10 +168,17 @@ export default function ElearningScreen() {
           <TouchableOpacity
             accessibilityRole="button"
             onPress={() => handleStartModule(activeModule)}
-            style={[styles.primaryButton, { backgroundColor: colors.accent }]}
+            style={styles.submitWrapper}
           >
-            <Feather name="play" size={16} color="#FFFFFF" />
-            <Text style={styles.primaryButtonText}>Mulai Modul</Text>
+            <LinearGradient
+              colors={[`${colors.accent}`, '#0284C7']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.primaryButton}
+            >
+              <Feather name="play" size={16} color="#FFFFFF" />
+              <Text style={styles.primaryButtonText}>Mulai Modul Sekarang</Text>
+            </LinearGradient>
           </TouchableOpacity>
 
           <View
@@ -264,10 +277,27 @@ const styles = StyleSheet.create({
     gap: 20,
     paddingBottom: 48,
   },
-  hero: {
+  heroWrapper: {
     borderRadius: 28,
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+  },
+  hero: {
     padding: 24,
     gap: 16,
+    zIndex: 1,
+  },
+  meshGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.5,
   },
   backButton: {
     alignSelf: 'flex-start',
@@ -275,38 +305,46 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.35)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.4)',
     paddingHorizontal: 14,
-    paddingVertical: 6,
-    backgroundColor: 'rgba(15, 23, 42, 0.22)',
+    paddingVertical: 8,
+    backgroundColor: 'rgba(15, 23, 42, 0.25)',
   },
   backText: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   heroKicker: {
     color: 'rgba(219, 239, 255, 0.92)',
     fontSize: 13,
     letterSpacing: 1,
     textTransform: 'uppercase',
+    fontWeight: '800',
   },
   heroTitle: {
     color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: '800',
+    fontSize: 26,
+    fontWeight: '900',
+    letterSpacing: -0.5,
   },
   heroSubtitle: {
     color: 'rgba(225, 245, 255, 0.92)',
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 22,
+    fontWeight: '500',
   },
   card: {
-    borderRadius: 24,
-    borderWidth: 1,
-    padding: 22,
-    gap: 18,
+    borderRadius: 32,
+    borderWidth: 0,
+    padding: 24,
+    gap: 24,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 15,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -322,7 +360,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '800',
+    letterSpacing: -0.3,
   },
   moduleList: {
     gap: 12,
@@ -393,19 +432,27 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 8,
   },
+  submitWrapper: {
+    marginTop: 8,
+  },
   primaryButton: {
-    alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    borderRadius: 999,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 18,
+    borderRadius: 20,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
   },
   primaryButtonText: {
     color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   sectionDivider: {
     height: 1,

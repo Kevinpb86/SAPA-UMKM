@@ -3,9 +3,12 @@ import { createContext, type ReactNode, useCallback, useEffect, useMemo, useStat
 import { deleteUser as deleteUserAPI, fetchUsers, loginUser as loginUserAPI, registerUser as registerUserAPI, updateUser as updateUserAPI } from '@/lib/api';
 import {
   type AccountProfile,
+  clearActiveSession,
   deleteAccountById,
   findAccountById,
   listAccounts,
+  loadActiveSession,
+  saveActiveSession,
   seedAdminAccount,
   type StoredAccount,
   upsertAccount
@@ -98,6 +101,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     (async () => {
       await seedAdminAccount(ADMIN_ACCOUNT);
+      const session = await loadActiveSession();
+      if (session) {
+        setUser(session);
+      }
       await refreshAccounts();
       setLoading(false);
     })();
@@ -152,6 +159,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         };
 
         setUser(account);
+        await saveActiveSession(account);
         return account;
       }
 
@@ -164,6 +172,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logout = useCallback(async () => {
     setUser(null);
+    await clearActiveSession();
   }, []);
 
   const createUserAccount = useCallback(

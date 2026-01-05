@@ -1,7 +1,7 @@
-import { LinearGradient } from 'expo-linear-gradient';
-import { StatusBar } from 'expo-status-bar';
-import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import {
   SafeAreaView,
   ScrollView,
@@ -45,30 +45,36 @@ export default function SertifikasiServiceScreen() {
   const router = useRouter();
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}> 
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <LinearGradient
-          colors={colors.hero}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.hero}
-        >
-          <TouchableOpacity
-            accessibilityRole="button"
-            onPress={() => router.back()}
-            style={styles.backButton}
+        <View style={styles.heroWrapper}>
+          <LinearGradient
+            colors={colors.hero}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.hero}
           >
-            <Feather name="arrow-left" size={18} color="#FFFFFF" />
-            <Text style={styles.backButtonText}>Kembali</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              accessibilityRole="button"
+              onPress={() => router.back()}
+              style={styles.backButton}
+            >
+              <Feather name="arrow-left" size={18} color="#FFFFFF" />
+              <Text style={styles.backText}>Kembali</Text>
+            </TouchableOpacity>
 
-          <Text style={styles.heroKicker}>Pengajuan Sertifikasi</Text>
-          <Text style={styles.heroTitle}>Halal, SNI, dan Standar Lainnya</Text>
-          <Text style={styles.heroSubtitle}>
-            Pastikan produk Anda memenuhi standar kualitas dengan sertifikasi resmi. Pantau seluruh proses dari satu halaman terpadu.
-          </Text>
-        </LinearGradient>
+            <Text style={styles.heroKicker}>Pengajuan Sertifikasi</Text>
+            <Text style={styles.heroTitle}>Halal, SNI, dan Standar Lainnya</Text>
+            <Text style={styles.heroSubtitle}>
+              Pastikan produk Anda memenuhi standar kualitas dengan sertifikasi resmi. Pantau seluruh proses dari satu halaman terpadu.
+            </Text>
+          </LinearGradient>
+          <LinearGradient
+            colors={scheme === 'dark' ? ['#065F4633', 'transparent'] : ['#F3FBF8', 'transparent']}
+            style={styles.meshGradient}
+          />
+        </View>
 
         <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <View style={styles.cardHeader}>
@@ -96,9 +102,17 @@ export default function SertifikasiServiceScreen() {
           <TouchableOpacity
             accessibilityRole="button"
             onPress={() => router.push('/services/sertifikasi/cek')}
-            style={[styles.primaryButton, { backgroundColor: colors.accent }]}>
-            <Text style={styles.primaryButtonText}>Cek Sertifikasi</Text>
-            <Feather name="external-link" size={16} color="#FFFFFF" />
+            style={styles.submitWrapper}
+          >
+            <LinearGradient
+              colors={[`${colors.accent}`, '#10B981']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.primaryButton}
+            >
+              <Text style={styles.primaryButtonText}>Cek Sertifikasi</Text>
+              <Feather name="external-link" size={16} color="#FFFFFF" />
+            </LinearGradient>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -114,10 +128,27 @@ const styles = StyleSheet.create({
     padding: 24,
     gap: 20,
   },
-  hero: {
+  heroWrapper: {
     borderRadius: 28,
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+  },
+  hero: {
     padding: 24,
     gap: 16,
+    zIndex: 1,
+  },
+  meshGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.5,
   },
   backButton: {
     alignSelf: 'flex-start',
@@ -125,38 +156,46 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.35)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.4)',
     paddingHorizontal: 14,
-    paddingVertical: 6,
+    paddingVertical: 8,
     backgroundColor: 'rgba(8, 34, 30, 0.25)',
   },
-  backButtonText: {
+  backText: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   heroKicker: {
     color: 'rgba(209, 250, 229, 0.9)',
     fontSize: 13,
-    textTransform: 'uppercase',
     letterSpacing: 1,
+    textTransform: 'uppercase',
+    fontWeight: '800',
   },
   heroTitle: {
     color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: '800',
+    fontSize: 26,
+    fontWeight: '900',
+    letterSpacing: -0.5,
   },
   heroSubtitle: {
     color: 'rgba(236, 253, 245, 0.92)',
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 22,
+    fontWeight: '500',
   },
   card: {
-    borderRadius: 24,
-    borderWidth: 1,
-    padding: 20,
-    gap: 20,
+    borderRadius: 32,
+    borderWidth: 0,
+    padding: 24,
+    gap: 24,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 15,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -176,11 +215,14 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '800',
+    letterSpacing: -0.3,
   },
   cardSubtitle: {
     fontSize: 13,
-    lineHeight: 18,
+    lineHeight: 20,
+    fontWeight: '500',
+    opacity: 0.7,
   },
   checklist: {
     gap: 12,
@@ -193,20 +235,30 @@ const styles = StyleSheet.create({
   checklistText: {
     flex: 1,
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 22,
+    fontWeight: '500',
+    opacity: 0.8,
+  },
+  submitWrapper: {
+    marginTop: 8,
   },
   primaryButton: {
-    alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    borderRadius: 999,
-    paddingHorizontal: 18,
-    paddingVertical: 12,
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 18,
+    borderRadius: 20,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
   },
   primaryButtonText: {
     color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
 });

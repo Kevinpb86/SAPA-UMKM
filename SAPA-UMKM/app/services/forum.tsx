@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useMemo, useState } from 'react';
 import {
   FlatList,
+  Platform,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -116,7 +117,7 @@ export default function CommunityForumScreen() {
                 {item.author.avatarInitials}
               </Text>
             </View>
-            <View>
+            <View style={styles.topicInfo}>
               <Text style={[styles.topicTitle, { color: colors.text }]}>{item.title}</Text>
               <Text style={[styles.topicMeta, { color: colors.subtle }]}>
                 {item.author.name} • {item.author.role} • {new Date(item.createdAt).toLocaleString('id-ID', {
@@ -222,43 +223,49 @@ export default function CommunityForumScreen() {
       <FlatList
         ListHeaderComponent={
           <>
-            <LinearGradient
-              colors={colors.hero}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.hero}
-            >
-              <TouchableOpacity
-                accessibilityRole="button"
-                onPress={() => router.back()}
-                style={styles.backButton}
+            <View style={styles.heroWrapper}>
+              <LinearGradient
+                colors={colors.hero}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.hero}
               >
-                <Feather name="arrow-left" size={18} color="#FFFFFF" />
-                <Text style={styles.backText}>Kembali</Text>
-              </TouchableOpacity>
-              <Text style={styles.heroKicker}>Forum Komunikasi & Diskusi</Text>
-              <Text style={styles.heroTitle}>Temukan Solusi Bersama Komunitas UMKM</Text>
-              <Text style={styles.heroSubtitle}>
-                Berdiskusi, berbagi strategi, dan kolaborasi secara langsung antar pelaku UMKM serta mentor.
-              </Text>
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  onPress={() => router.back()}
+                  style={styles.backButton}
+                >
+                  <Feather name="arrow-left" size={18} color="#FFFFFF" />
+                  <Text style={styles.backText}>Kembali</Text>
+                </TouchableOpacity>
+                <Text style={styles.heroKicker}>Forum Komunikasi & Diskusi</Text>
+                <Text style={styles.heroTitle}>Temukan Solusi Bersama Komunitas UMKM</Text>
+                <Text style={styles.heroSubtitle}>
+                  Berdiskusi, berbagi strategi, dan kolaborasi secara langsung antar pelaku UMKM serta mentor.
+                </Text>
 
-              <View style={styles.heroStats}>
-                <View style={styles.heroStatItem}>
-                  <Text style={styles.heroStatValue}>{forumTopics.length}</Text>
-                  <Text style={styles.heroStatLabel}>Topik aktif</Text>
+                <View style={styles.heroStats}>
+                  <View style={styles.heroStatItem}>
+                    <Text style={styles.heroStatValue}>{forumTopics.length}</Text>
+                    <Text style={styles.heroStatLabel}>Topik aktif</Text>
+                  </View>
+                  <View style={styles.heroStatItem}>
+                    <Text style={styles.heroStatValue}>
+                      {forumTopics.reduce((acc, topic) => acc + topic.replies.length, 0)}
+                    </Text>
+                    <Text style={styles.heroStatLabel}>Balasan</Text>
+                  </View>
+                  <View style={styles.heroStatItem}>
+                    <Text style={styles.heroStatValue}>{availableTags.length}</Text>
+                    <Text style={styles.heroStatLabel}>Kategori diskusi</Text>
+                  </View>
                 </View>
-                <View style={styles.heroStatItem}>
-                  <Text style={styles.heroStatValue}>
-                    {forumTopics.reduce((acc, topic) => acc + topic.replies.length, 0)}
-                  </Text>
-                  <Text style={styles.heroStatLabel}>Balasan</Text>
-                </View>
-                <View style={styles.heroStatItem}>
-                  <Text style={styles.heroStatValue}>{availableTags.length}</Text>
-                  <Text style={styles.heroStatLabel}>Kategori diskusi</Text>
-                </View>
-              </View>
-            </LinearGradient>
+              </LinearGradient>
+              <LinearGradient
+                colors={scheme === 'dark' ? [`${colors.accent}33`, 'transparent'] : ['#F5F3FF', 'transparent']}
+                style={styles.meshGradient}
+              />
+            </View>
 
             <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={styles.searchHeader}>
@@ -267,14 +274,18 @@ export default function CommunityForumScreen() {
                   Jelajahi pertanyaan atau bagikan pengalaman Anda.
                 </Text>
               </View>
-              <View style={[styles.searchBar, { borderColor: colors.border, backgroundColor: colors.highlight }]}>
-                <Feather name="search" size={16} color={colors.subtle} />
+              <View style={[styles.searchBar, { backgroundColor: `${colors.subtle}08`, borderColor: 'transparent' }]}>
+                <Feather name="search" size={16} color={colors.accent} />
                 <TextInput
                   value={searchQuery}
                   onChangeText={setSearchQuery}
                   placeholder="Cari topik, kata kunci, atau kategori..."
-                  placeholderTextColor={`${colors.subtle}88`}
-                  style={[styles.searchInput, { color: colors.text }]}
+                  placeholderTextColor={`${colors.subtle}50`}
+                  style={[
+                    styles.searchInput,
+                    { color: colors.text },
+                    Platform.OS === 'web' && ({ outlineStyle: 'none' } as any)
+                  ]}
                 />
               </View>
               <View style={styles.filterRow}>
@@ -417,11 +428,28 @@ const styles = StyleSheet.create({
     gap: 20,
     paddingBottom: 48,
   },
-  hero: {
+  heroWrapper: {
     borderRadius: 28,
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    marginBottom: 16,
+  },
+  hero: {
     padding: 24,
     gap: 16,
-    marginBottom: 16,
+    zIndex: 1,
+  },
+  meshGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.5,
   },
   backButton: {
     alignSelf: 'flex-start',
@@ -429,32 +457,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.35)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.4)',
     paddingHorizontal: 14,
-    paddingVertical: 6,
+    paddingVertical: 8,
     backgroundColor: 'rgba(31, 15, 51, 0.25)',
   },
   backText: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   heroKicker: {
     color: 'rgba(237, 233, 254, 0.92)',
     fontSize: 13,
     letterSpacing: 1,
     textTransform: 'uppercase',
+    fontWeight: '800',
   },
   heroTitle: {
     color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: '800',
+    fontSize: 26,
+    fontWeight: '900',
+    letterSpacing: -0.5,
   },
   heroSubtitle: {
     color: 'rgba(240, 240, 255, 0.9)',
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 22,
+    fontWeight: '500',
   },
   heroStats: {
     flexDirection: 'row',
@@ -477,18 +508,26 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   card: {
-    borderRadius: 24,
-    borderWidth: 1,
-    padding: 22,
-    gap: 18,
+    borderRadius: 32,
+    borderWidth: 0,
+    padding: 24,
+    gap: 24,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 15,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
+    letterSpacing: -0.3,
   },
   sectionSubtitle: {
     fontSize: 13,
     lineHeight: 20,
+    fontWeight: '500',
+    opacity: 0.7,
   },
   searchHeader: {
     gap: 6,
@@ -497,10 +536,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    borderWidth: 1,
-    borderRadius: 16,
+    borderWidth: 1.5,
+    borderRadius: 18,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
   },
   searchInput: {
     flex: 1,
@@ -508,19 +547,17 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
   },
   filterRow: {
-    flexDirection: 'row',
-    gap: 12,
-    flexWrap: 'wrap',
+    gap: 16,
+    marginTop: 8,
   },
   tagScroll: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    flex: 1,
   },
   tagFilter: {
-    borderRadius: 999,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 1.5,
     paddingHorizontal: 14,
     paddingVertical: 8,
   },
@@ -530,27 +567,33 @@ const styles = StyleSheet.create({
   },
   sortMenu: {
     flexDirection: 'row',
-    borderRadius: 999,
-    borderWidth: 1,
-    padding: 4,
+    alignSelf: 'flex-start',
+    borderRadius: 14,
+    borderWidth: 1.5,
+    padding: 3,
   },
   sortOption: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    borderRadius: 999,
+    borderRadius: 11,
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 8,
   },
   sortText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   topicCard: {
-    borderRadius: 22,
-    borderWidth: 1,
-    padding: 20,
-    gap: 16,
+    borderRadius: 24,
+    borderWidth: 0,
+    padding: 24,
+    gap: 20,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
   },
   topicHeader: {
     flexDirection: 'row',
@@ -574,13 +617,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
+  topicInfo: {
+    flex: 1,
+  },
   topicTitle: {
     fontSize: 16,
     fontWeight: '700',
+    flexShrink: 1,
   },
   topicMeta: {
     fontSize: 12,
     marginTop: 2,
+    opacity: 0.7,
   },
   topicSummary: {
     fontSize: 14,

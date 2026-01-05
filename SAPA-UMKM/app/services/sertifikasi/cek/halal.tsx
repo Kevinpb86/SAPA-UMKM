@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   input: {
     borderRadius: 14,

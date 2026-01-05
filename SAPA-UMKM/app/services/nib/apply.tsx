@@ -1,11 +1,14 @@
 import { useAuth } from '@/hooks/use-auth';
 import { createSubmission } from '@/lib/api';
 import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Alert,
+  Animated,
+  Easing,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
@@ -17,6 +20,8 @@ import {
   useColorScheme,
   View,
 } from 'react-native';
+
+const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 const palette = {
   light: {
@@ -69,11 +74,17 @@ export default function NibApplyScreen() {
     }
 
     if (!user?.token) {
-      Alert.alert('Error', 'Anda harus login terlebih dahulu.');
+      router.push('/login');
       return;
     }
 
     setIsSubmitting(true);
+    Animated.timing(buttonScale, {
+      toValue: 0.95,
+      duration: 150,
+      useNativeDriver: true,
+    }).start();
+
     try {
       await createSubmission(user.token, {
         type: 'nib',
@@ -89,8 +100,66 @@ export default function NibApplyScreen() {
       Alert.alert('Error', error instanceof Error ? error.message : 'Gagal mengirim pengajuan.');
     } finally {
       setIsSubmitting(false);
+      Animated.spring(buttonScale, {
+        toValue: 1,
+        useNativeDriver: true,
+      }).start();
     }
   };
+
+  // Ultra-Premium Animations logic
+  const meshAnim = useRef(new Animated.Value(0)).current;
+  const floatAnim = useRef(new Animated.Value(0)).current;
+  const entryAnim = useRef(new Animated.Value(0)).current;
+  const buttonScale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    // Background mesh loop
+    Animated.loop(
+      Animated.timing(meshAnim, {
+        toValue: 1,
+        duration: 20000,
+        easing: Easing.bezier(0.4, 0, 0.2, 1),
+        useNativeDriver: true,
+      })
+    ).start();
+
+    // Secondary floating loop
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatAnim, {
+          toValue: 1,
+          duration: 4000,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(floatAnim, {
+          toValue: 0,
+          duration: 4000,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    // Entry animation for badges
+    Animated.spring(entryAnim, {
+      toValue: 1,
+      tension: 20,
+      friction: 7,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  const meshRotate = meshAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  const floatY = floatAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -15],
+  });
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
@@ -99,28 +168,65 @@ export default function NibApplyScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.flexOne}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[styles.card, { backgroundColor: colors.card }]}>
+            {/* Animated Mesh Background Section */}
+            <View style={styles.meshContainer}>
+
+              {/* Decorative Floating Symbols */}
+              <Animated.View style={[styles.floatingDeco, { top: '20%', right: '10%', transform: [{ translateY: floatY }] }]}>
+                <Feather name="globe" size={80} color={colors.accent} style={{ opacity: 0.03 }} />
+              </Animated.View>
+              <Animated.View style={[styles.floatingDeco, { bottom: '30%', left: '5%', transform: [{ translateY: Animated.multiply(floatY, -0.8) }] }]}>
+                <Feather name="award" size={100} color={colors.accent} style={{ opacity: 0.02 }} />
+              </Animated.View>
+            </View>
+
             <TouchableOpacity
               accessibilityRole="button"
               onPress={() => router.back()}
-              style={[styles.backButton, { borderColor: colors.border }]}>
+              style={[styles.backButton, { backgroundColor: `${colors.accent}12` }]}>
               <Feather name="arrow-left" size={18} color={colors.accent} />
               <Text style={[styles.backText, { color: colors.accent }]}>Kembali</Text>
             </TouchableOpacity>
 
             <View style={styles.header}>
-              <Feather name="file-text" size={32} color={colors.accent} />
-              <Text style={[styles.title, { color: colors.text }]}>Form Pengajuan NIB</Text>
-              <Text style={[styles.subtitle, { color: colors.subtle }]}>
-                Isi data sesuai dokumen resmi untuk mempercepat penerbitan Nomor Induk Berusaha.
-              </Text>
+              <View style={[styles.headerIconWrapper, { backgroundColor: `${colors.accent}15` }]}>
+                <Feather name="award" size={32} color={colors.accent} />
+                <Animated.View style={[styles.shieldPulse, { backgroundColor: colors.accent, opacity: meshAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.1, 0.3, 0.1] }) }]} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.title, { color: colors.text }]}>Sertifikasi NIB</Text>
+                <Text style={[styles.subtitle, { color: colors.subtle }]}>
+                  Dapatkan legalitas usaha Anda dalam hitungan menit. Proses digital resmi & terintegrasi OSS.
+                </Text>
+              </View>
             </View>
 
+            {/* Trust Badges Row */}
+            <Animated.View style={[styles.trustRow, { opacity: entryAnim, transform: [{ translateY: entryAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }] }]}>
+              <View style={styles.trustBadge}>
+                <Feather name="check-circle" size={12} color="#10B981" />
+                <Text style={[styles.trustText, { color: colors.subtle }]}>Verifikasi OSS</Text>
+              </View>
+              <View style={styles.trustBadge}>
+                <Feather name="unlock" size={12} color="#6366F1" />
+                <Text style={[styles.trustText, { color: colors.subtle }]}>Enkripsi Data</Text>
+              </View>
+              <View style={styles.trustBadge}>
+                <Feather name="award" size={12} color="#F59E0B" />
+                <Text style={[styles.trustText, { color: colors.subtle }]}>Layanan Resmi</Text>
+              </View>
+            </Animated.View>
+
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Data Pemilik Usaha</Text>
+              <View style={styles.sectionHeaderRow}>
+                <Feather name="user" size={20} color={colors.accent} />
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>Data Pemilik Usaha</Text>
+              </View>
               <View style={styles.fieldGroup}>
                 <LabeledInput
                   label="NIK (Nomor Induk Kependudukan)"
+                  icon="credit-card"
                   value={owner.nik}
                   onChangeText={value => setOwner(prev => ({ ...prev, nik: value }))}
                   placeholder="Masukkan 16 digit NIK"
@@ -129,6 +235,7 @@ export default function NibApplyScreen() {
                 />
                 <LabeledInput
                   label="Nama Lengkap"
+                  icon="user"
                   value={owner.fullName}
                   onChangeText={value => setOwner(prev => ({ ...prev, fullName: value }))}
                   placeholder="Sesuai KTP"
@@ -136,6 +243,7 @@ export default function NibApplyScreen() {
                 />
                 <LabeledInput
                   label="Email Aktif"
+                  icon="mail"
                   value={owner.email}
                   onChangeText={value => setOwner(prev => ({ ...prev, email: value }))}
                   placeholder="contoh: pelaku@umkm.id"
@@ -144,6 +252,7 @@ export default function NibApplyScreen() {
                 />
                 <LabeledInput
                   label="Nomor Telepon"
+                  icon="phone"
                   value={owner.phone}
                   onChangeText={value => setOwner(prev => ({ ...prev, phone: value }))}
                   placeholder="08xxxxxxxxxx"
@@ -152,6 +261,7 @@ export default function NibApplyScreen() {
                 />
                 <LabeledInput
                   label="Alamat Domisili"
+                  icon="map-pin"
                   value={owner.address}
                   onChangeText={value => setOwner(prev => ({ ...prev, address: value }))}
                   placeholder="Alamat domisili sesuai KTP"
@@ -162,10 +272,14 @@ export default function NibApplyScreen() {
             </View>
 
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Data Usaha</Text>
+              <View style={styles.sectionHeaderRow}>
+                <Feather name="briefcase" size={20} color={colors.accent} />
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>Data Usaha</Text>
+              </View>
               <View style={styles.fieldGroup}>
                 <LabeledInput
                   label="Nama Usaha"
+                  icon="shopping-bag"
                   value={business.name}
                   onChangeText={value => setBusiness(prev => ({ ...prev, name: value }))}
                   placeholder="Nama brand atau toko"
@@ -173,6 +287,7 @@ export default function NibApplyScreen() {
                 />
                 <LabeledInput
                   label="Bentuk Usaha"
+                  icon="grid"
                   value={business.form}
                   onChangeText={value => setBusiness(prev => ({ ...prev, form: value }))}
                   placeholder="PT/CV/Firma/Koperasi/Perorangan"
@@ -180,6 +295,7 @@ export default function NibApplyScreen() {
                 />
                 <LabeledInput
                   label="Alamat Operasional"
+                  icon="map"
                   value={business.address}
                   onChangeText={value => setBusiness(prev => ({ ...prev, address: value }))}
                   placeholder="Alamat lokasi usaha"
@@ -188,6 +304,7 @@ export default function NibApplyScreen() {
                 />
                 <SelectField
                   label="Sektor Usaha"
+                  icon="layers"
                   value={business.sector}
                   placeholder="Pilih sektor usaha"
                   options={businessSectors}
@@ -196,6 +313,7 @@ export default function NibApplyScreen() {
                 />
                 <SelectField
                   label="Skala Modal"
+                  icon="trending-up"
                   value={business.capital}
                   placeholder="Pilih skala modal"
                   options={capitalScales}
@@ -205,14 +323,41 @@ export default function NibApplyScreen() {
               </View>
             </View>
 
-            <TouchableOpacity
-              accessibilityRole="button"
-              onPress={handleSubmit}
-              disabled={isSubmitting}
-              style={[styles.submitButton, { backgroundColor: colors.accent, opacity: isSubmitting ? 0.7 : 1 }]}>
-              <Text style={styles.submitText}>{isSubmitting ? 'Mengirim...' : 'Kirim Pengajuan NIB'}</Text>
-              {!isSubmitting && <Feather name="send" size={16} color="#FFFFFF" />}
-            </TouchableOpacity>
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                accessibilityRole="button"
+                onPress={() => router.back()}
+                style={[styles.secondaryButton, { backgroundColor: scheme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)' }]}
+              >
+                <Text style={[styles.secondaryButtonText, { color: colors.subtle }]}>Batal</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                accessibilityRole="button"
+                onPress={handleSubmit}
+                disabled={isSubmitting}
+                activeOpacity={0.8}
+                style={styles.modalSubmitWrapper}
+              >
+                <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
+                  <LinearGradient
+                    colors={isSubmitting ? [`${colors.accent}CC`, `${colors.accent}CC`] : [`${colors.accent}`, `${colors.accent}EE`]}
+                    style={styles.modalSubmitBtn}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                  >
+                    <Text style={styles.submitText}>{isSubmitting ? 'Memproses...' : 'Kirim Permohonan'}</Text>
+                    {isSubmitting ? (
+                      <Animated.View style={{ transform: [{ rotate: meshRotate }] }}>
+                        <Feather name="loader" size={18} color="#FFFFFF" />
+                      </Animated.View>
+                    ) : (
+                      <Feather name="send" size={18} color="#FFFFFF" />
+                    )}
+                  </LinearGradient>
+                </Animated.View>
+              </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -222,6 +367,7 @@ export default function NibApplyScreen() {
 
 type LabeledInputProps = {
   label: string;
+  icon: keyof typeof Feather.glyphMap;
   value: string;
   placeholder: string;
   onChangeText: (value: string) => void;
@@ -230,25 +376,74 @@ type LabeledInputProps = {
   keyboardType?: 'default' | 'email-address' | 'number-pad' | 'phone-pad';
 };
 
-function LabeledInput({ label, value, placeholder, onChangeText, colors, multiline, keyboardType = 'default' }: LabeledInputProps) {
+function LabeledInput({ label, icon, value, placeholder, onChangeText, colors, multiline, keyboardType = 'default' }: LabeledInputProps) {
+  const scheme = useColorScheme();
+  const [isFocused, setIsFocused] = useState(false);
+  const focusAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(focusAnim, {
+      toValue: isFocused ? 1 : 0,
+      duration: 250,
+      useNativeDriver: false, // Color and borderWidth don't support native driver in all versions
+    }).start();
+  }, [isFocused]);
+
+  const borderColor = focusAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [scheme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', colors.accent],
+  });
+
+  const backgroundColor = focusAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [scheme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', `${colors.accent}04`],
+  });
+
   return (
     <View style={styles.inputWrapper}>
-      <Text style={[styles.inputLabel, { color: colors.subtle }]}>{label}</Text>
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor={`${colors.subtle}80`}
-        keyboardType={keyboardType}
-        multiline={multiline}
-        style={[styles.input, { borderColor: colors.border, color: colors.text, backgroundColor: colors.card, minHeight: multiline ? 96 : 48 }]}
-      />
+      <Text style={[styles.inputLabel, { color: colors.text, opacity: isFocused ? 1 : 0.8 }]}>{label}</Text>
+      <Animated.View style={[
+        styles.inputInner,
+        {
+          backgroundColor,
+          borderColor,
+          alignItems: multiline ? 'flex-start' : 'center',
+          paddingTop: multiline ? 12 : 0,
+          transform: [{ scale: focusAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.015] }) }],
+          shadowColor: colors.accent,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: focusAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 0.25] }),
+          shadowRadius: focusAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 8] }),
+          elevation: focusAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 4] }),
+        }
+      ]}>
+        <View style={multiline ? { marginTop: 4 } : null}>
+          <Feather name={icon} size={18} color={isFocused ? colors.accent : colors.subtle} />
+        </View>
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          placeholderTextColor={`${colors.subtle}50`}
+          keyboardType={keyboardType}
+          multiline={multiline}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          style={[
+            styles.input,
+            { color: colors.text, minHeight: multiline ? 96 : 48 },
+            multiline && { paddingTop: 0, paddingBottom: 12 },
+            Platform.OS === 'web' && ({ outlineStyle: 'none' } as any)
+          ]}
+        />
+      </Animated.View>
     </View>
   );
 }
 
 type SelectFieldProps = {
   label: string;
+  icon: keyof typeof Feather.glyphMap;
   value: string;
   placeholder: string;
   options: string[];
@@ -256,22 +451,68 @@ type SelectFieldProps = {
   colors: typeof palette.light;
 };
 
-function SelectField({ label, value, placeholder, options, onSelect, colors }: SelectFieldProps) {
+function SelectField({ label, icon, value, placeholder, options, onSelect, colors }: SelectFieldProps) {
+  const scheme = useColorScheme();
   const [open, setOpen] = useState(false);
+  const openAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.spring(openAnim, {
+      toValue: open ? 1 : 0,
+      useNativeDriver: false,
+    }).start();
+  }, [open]);
+
+  const borderColor = openAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [scheme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', colors.accent],
+  });
+
+  const backgroundColor = openAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [scheme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', `${colors.accent}04`],
+  });
+
   return (
     <View style={styles.inputWrapper}>
-      <Text style={[styles.inputLabel, { color: colors.subtle }]}>{label}</Text>
-      <TouchableOpacity
+      <Text style={[styles.inputLabel, { color: colors.text, opacity: open ? 1 : 0.8 }]}>{label}</Text>
+      <AnimatedTouchable
         accessibilityRole="button"
         onPress={() => setOpen(!open)}
-        style={[styles.selectButton, { borderColor: colors.border, backgroundColor: colors.card }]}
+        activeOpacity={0.7}
+        style={[
+          styles.selectButton,
+          {
+            backgroundColor,
+            borderColor,
+            transform: [{ scale: openAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.015] }) }],
+            shadowColor: colors.accent,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: openAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 0.25] }),
+            shadowRadius: openAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 8] }),
+            elevation: openAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 4] }),
+          }
+        ]}
       >
-        <Text style={{ color: value ? colors.text : `${colors.subtle}80` }}>{value || placeholder}</Text>
-        <Feather name={open ? 'chevron-up' : 'chevron-down'} size={18} color={colors.subtle} />
-      </TouchableOpacity>
+        <View style={styles.selectBtnLeft}>
+          <Feather name={icon} size={18} color={value ? colors.accent : colors.subtle} />
+          <Text style={{ color: value ? colors.text : `${colors.subtle}60`, marginLeft: 12, fontSize: 15, fontWeight: '400' }}>
+            {value || placeholder}
+          </Text>
+        </View>
+        <Animated.View style={{ transform: [{ rotate: openAnim.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '180deg'] }) }] }}>
+          <Feather name="chevron-down" size={18} color={colors.subtle} />
+        </Animated.View>
+      </AnimatedTouchable>
       {open && (
-        <View style={[styles.optionList, { borderColor: colors.border, backgroundColor: colors.card }]}
-        >
+        <Animated.View style={[
+          styles.optionList,
+          {
+            backgroundColor: colors.card,
+            opacity: openAnim,
+            transform: [{ translateY: openAnim.interpolate({ inputRange: [0, 1], outputRange: [-10, 0] }) }]
+          }
+        ]}>
           {options.map(option => (
             <TouchableOpacity
               key={option}
@@ -280,12 +521,13 @@ function SelectField({ label, value, placeholder, options, onSelect, colors }: S
                 onSelect(option);
                 setOpen(false);
               }}
-              style={styles.optionItem}
+              style={[styles.optionItem, { borderBottomColor: `${colors.subtle}10` }]}
             >
-              <Text style={{ color: colors.text }}>{option}</Text>
+              <Text style={{ color: colors.text, fontSize: 15, fontWeight: '400' }}>{option}</Text>
+              {value === option && <Feather name="check" size={16} color={colors.accent} />}
             </TouchableOpacity>
           ))}
-        </View>
+        </Animated.View>
       )}
     </View>
   );
@@ -300,94 +542,221 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 24,
+    paddingBottom: 40,
   },
   card: {
-    borderRadius: 24,
-    borderWidth: 1,
+    borderRadius: 32,
     padding: 24,
     gap: 24,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  cardGradient: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: '100%',
+    height: 200,
   },
   backButton: {
     alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    borderRadius: 999,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
+    borderRadius: 99,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
   backText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   header: {
-    gap: 12,
+    gap: 16,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  meshContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: -1,
+    overflow: 'hidden',
+  },
+  meshCircle: {
+    position: 'absolute',
+    borderRadius: 999,
+  },
+  floatingDeco: {
+    position: 'absolute',
+    zIndex: -1,
+  },
+  shieldPulse: {
+    position: 'absolute',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    zIndex: -1,
+  },
+  trustRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: 16,
+    padding: 12,
+    marginTop: -8,
+  },
+  trustBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  trustText: {
+    fontSize: 11,
+    fontWeight: '600',
+    opacity: 0.6,
+  },
+  loaderContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  headerIconWrapper: {
+    width: 60,
+    height: 60,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '700',
+    letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: '500',
+    opacity: 0.8,
   },
   section: {
-    gap: 16,
+    gap: 20,
+    marginTop: 8,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 19,
     fontWeight: '700',
+    letterSpacing: -0.3,
   },
   fieldGroup: {
-    gap: 16,
+    gap: 20,
   },
   inputWrapper: {
-    gap: 8,
+    gap: 10,
   },
   inputLabel: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '500',
+    marginLeft: 4,
+  },
+  inputInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+    paddingHorizontal: 16,
   },
   input: {
-    borderRadius: 14,
-    borderWidth: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 15,
-    textAlignVertical: 'top',
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '400',
+    paddingHorizontal: 12,
+    paddingVertical: 14,
   },
   selectButton: {
-    borderRadius: 14,
-    borderWidth: 1,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  optionList: {
-    marginTop: 8,
-    borderRadius: 14,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  optionItem: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  submitButton: {
-    alignSelf: 'flex-start',
+  selectBtnLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    borderRadius: 999,
+    flex: 1,
+  },
+  optionList: {
+    marginTop: 8,
+    borderRadius: 16,
+    overflow: 'hidden',
+    elevation: 8,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+  },
+  optionItem: {
     paddingHorizontal: 20,
-    paddingVertical: 13,
+    paddingVertical: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  secondaryButton: {
+    flex: 1,
+    height: 56,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  secondaryButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalSubmitWrapper: {
+    flex: 2.2,
+  },
+  modalSubmitBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    height: 56,
+    borderRadius: 20,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
   },
   submitText: {
     color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 0.3,
   },
 });

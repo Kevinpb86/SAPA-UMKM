@@ -146,27 +146,33 @@ export default function IncubationProgramScreen() {
         style={styles.flexOne}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <LinearGradient
-            colors={colors.hero}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.hero}
-          >
-            <TouchableOpacity
-              accessibilityRole="button"
-              onPress={() => router.back()}
-              style={styles.backButton}
+          <View style={styles.heroWrapper}>
+            <LinearGradient
+              colors={colors.hero}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.hero}
             >
-              <Feather name="arrow-left" size={18} color="#FFFFFF" />
-              <Text style={styles.backText}>Kembali</Text>
-            </TouchableOpacity>
-            <Text style={styles.heroKicker}>Program Inkubasi & Bimbingan</Text>
-            <Text style={styles.heroTitle}>Skala Usaha Anda Bersama Mentor Terbaik</Text>
-            <Text style={styles.heroSubtitle}>
-              Dapatkan pendampingan terstruktur, konsultasi bisnis, serta akses jaringan pemasaran dan pendanaan
-              melalui cohort terbaru SAPA UMKM.
-            </Text>
-          </LinearGradient>
+              <TouchableOpacity
+                accessibilityRole="button"
+                onPress={() => router.back()}
+                style={styles.backButton}
+              >
+                <Feather name="arrow-left" size={18} color="#FFFFFF" />
+                <Text style={styles.backText}>Kembali</Text>
+              </TouchableOpacity>
+              <Text style={styles.heroKicker}>Program Inkubasi & Bimbingan</Text>
+              <Text style={styles.heroTitle}>Skala Usaha Anda Bersama Mentor Terbaik</Text>
+              <Text style={styles.heroSubtitle}>
+                Dapatkan pendampingan terstruktur, konsultasi bisnis, serta akses jaringan pemasaran dan pendanaan
+                melalui cohort terbaru SAPA UMKM.
+              </Text>
+            </LinearGradient>
+            <LinearGradient
+              colors={scheme === 'dark' ? ['#1D4ED833', 'transparent'] : ['#F5F8FF', 'transparent']}
+              style={styles.meshGradient}
+            />
+          </View>
 
           <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.sectionHeader}>
@@ -206,6 +212,7 @@ export default function IncubationProgramScreen() {
             <View style={styles.fieldGroup}>
               <LabeledInput
                 label="Nama Founder / Penanggung Jawab"
+                icon="user"
                 placeholder="Nama lengkap"
                 value={form.founderName}
                 onChangeText={value => handleChange('founderName', value)}
@@ -213,6 +220,7 @@ export default function IncubationProgramScreen() {
               />
               <LabeledInput
                 label="Email Aktif"
+                icon="mail"
                 placeholder="contoh: founder@usaha.id"
                 keyboardType="email-address"
                 value={form.email}
@@ -221,6 +229,7 @@ export default function IncubationProgramScreen() {
               />
               <LabeledInput
                 label="Nomor Telepon / WhatsApp"
+                icon="phone"
                 placeholder="08xxxxxxxxxx"
                 keyboardType="phone-pad"
                 value={form.phone}
@@ -229,6 +238,7 @@ export default function IncubationProgramScreen() {
               />
               <LabeledInput
                 label="Nama Usaha"
+                icon="tag"
                 placeholder="Nama brand atau usaha yang berjalan"
                 value={form.businessName}
                 onChangeText={value => handleChange('businessName', value)}
@@ -236,7 +246,7 @@ export default function IncubationProgramScreen() {
               />
 
               <View style={styles.inputWrapper}>
-                <Text style={[styles.inputLabel, { color: colors.subtle }]}>Tahap Usaha Saat Ini</Text>
+                <Text style={[styles.inputLabel, { color: colors.text }]}>Tahap Usaha Saat Ini</Text>
                 <View style={styles.pillGroup}>
                   {stageOptions.map(option => {
                     const active = option === form.businessStage;
@@ -248,8 +258,12 @@ export default function IncubationProgramScreen() {
                         style={[
                           styles.pill,
                           {
-                            borderColor: active ? colors.accent : colors.border,
-                            backgroundColor: active ? `${colors.accent}1A` : colors.card,
+                            backgroundColor: `${colors.subtle}08`,
+                            borderColor: 'transparent',
+                          },
+                          active && {
+                            borderColor: colors.accent,
+                            backgroundColor: `${colors.accent}15`,
                           },
                         ]}
                       >
@@ -269,6 +283,7 @@ export default function IncubationProgramScreen() {
 
               <LabeledInput
                 label="Fokus Produk / Layanan"
+                icon="layers"
                 placeholder="Contoh: Kopi siap seduh, aplikasi edukasi UMKM"
                 value={form.focusArea}
                 onChangeText={value => handleChange('focusArea', value)}
@@ -276,6 +291,7 @@ export default function IncubationProgramScreen() {
               />
               <LabeledInput
                 label="Tujuan Mengikuti Program"
+                icon="target"
                 placeholder="Jelaskan target yang ingin dicapai selama program"
                 value={form.programGoal}
                 onChangeText={value => handleChange('programGoal', value)}
@@ -284,6 +300,7 @@ export default function IncubationProgramScreen() {
               />
               <LabeledInput
                 label="Bantuan yang Dibutuhkan (opsional)"
+                icon="help-circle"
                 placeholder="Mentor pemasaran, pengelolaan keuangan, akses investor, dll."
                 value={form.supportNeeded}
                 onChangeText={value => handleChange('supportNeeded', value)}
@@ -296,13 +313,17 @@ export default function IncubationProgramScreen() {
               accessibilityRole="button"
               onPress={handleSubmit}
               disabled={submitting}
-              style={[
-                styles.submitButton,
-                { backgroundColor: colors.accent, opacity: submitting ? 0.6 : 1 },
-              ]}
+              style={styles.submitWrapper}
             >
-              <Text style={styles.submitText}>{submitting ? 'Mengirim...' : 'Daftar Program Inkubasi'}</Text>
-              <Feather name="send" size={16} color="#FFFFFF" />
+              <LinearGradient
+                colors={submitting ? [`${colors.accent}80`, `${colors.accent}60`] : [`${colors.accent}`, '#2563EB']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.submitButton}
+              >
+                <Text style={styles.submitText}>{submitting ? 'Mengirim...' : 'Daftar Program Inkubasi'}</Text>
+                <Feather name={submitting ? 'loader' : 'send'} size={16} color="#FFFFFF" />
+              </LinearGradient>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -313,6 +334,7 @@ export default function IncubationProgramScreen() {
 
 type LabeledInputProps = {
   label: string;
+  icon: React.ComponentProps<typeof Feather>['name'];
   placeholder: string;
   value: string;
   onChangeText: (value: string) => void;
@@ -323,6 +345,7 @@ type LabeledInputProps = {
 
 function LabeledInput({
   label,
+  icon,
   placeholder,
   value,
   onChangeText,
@@ -330,27 +353,40 @@ function LabeledInput({
   multiline,
   keyboardType = 'default',
 }: LabeledInputProps) {
+  const [isFocused, setIsFocused] = useState(false);
   return (
     <View style={styles.inputWrapper}>
-      <Text style={[styles.inputLabel, { color: colors.subtle }]}>{label}</Text>
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor={`${colors.subtle}80`}
-        multiline={multiline}
-        keyboardType={keyboardType}
-        style={[
-          styles.input,
-          {
-            borderColor: colors.border,
-            backgroundColor: colors.card,
-            color: colors.text,
-            minHeight: multiline ? 96 : 50,
-            textAlignVertical: multiline ? 'top' : 'center',
-          },
-        ]}
-      />
+      <Text style={[styles.inputLabel, { color: colors.text }]}>{label}</Text>
+      <View style={[
+        styles.inputInner,
+        {
+          backgroundColor: isFocused ? colors.card : `${colors.subtle}08`,
+          borderColor: isFocused ? colors.accent : 'transparent',
+          alignItems: multiline ? 'flex-start' : 'center',
+          paddingTop: multiline ? 12 : 0,
+        }
+      ]}>
+        <View style={multiline ? { marginTop: 4 } : null}>
+          <Feather name={icon} size={18} color={isFocused ? colors.accent : colors.subtle} />
+        </View>
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          placeholderTextColor={`${colors.subtle}50`}
+          multiline={multiline}
+          keyboardType={keyboardType}
+          style={[
+            styles.input,
+            {
+              color: colors.text,
+              minHeight: multiline ? 96 : 48,
+            },
+            multiline && { paddingTop: 0, paddingBottom: 12 },
+            Platform.OS === 'web' && ({ outlineStyle: 'none' } as any)
+          ]}
+        />
+      </View>
     </View>
   );
 }
@@ -366,10 +402,27 @@ const styles = StyleSheet.create({
     padding: 24,
     gap: 20,
   },
-  hero: {
+  heroWrapper: {
     borderRadius: 28,
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+  },
+  hero: {
     padding: 24,
     gap: 16,
+    zIndex: 1,
+  },
+  meshGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.5,
   },
   backButton: {
     alignSelf: 'flex-start',
@@ -377,38 +430,46 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.35)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.4)',
     paddingHorizontal: 14,
-    paddingVertical: 6,
-    backgroundColor: 'rgba(17, 24, 39, 0.24)',
+    paddingVertical: 8,
+    backgroundColor: 'rgba(17, 24, 39, 0.25)',
   },
   backText: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   heroKicker: {
     color: 'rgba(219, 234, 254, 0.9)',
     fontSize: 13,
     letterSpacing: 1,
     textTransform: 'uppercase',
+    fontWeight: '800',
   },
   heroTitle: {
     color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: '800',
+    fontSize: 26,
+    fontWeight: '900',
+    letterSpacing: -0.5,
   },
   heroSubtitle: {
     color: 'rgba(235, 245, 255, 0.92)',
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 22,
+    fontWeight: '500',
   },
   card: {
-    borderRadius: 24,
-    borderWidth: 1,
-    padding: 22,
-    gap: 20,
+    borderRadius: 32,
+    borderWidth: 0,
+    padding: 24,
+    gap: 24,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 15,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -416,15 +477,16 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   iconWrapper: {
-    width: 44,
-    height: 44,
-    borderRadius: 16,
+    width: 48,
+    height: 48,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '800',
+    letterSpacing: -0.3,
   },
   sectionBody: {
     gap: 12,
@@ -438,14 +500,16 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     lineHeight: 20,
+    fontWeight: '500',
+    opacity: 0.8,
   },
   divider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(37, 99, 235, 0.2)',
+    height: 1,
+    backgroundColor: 'rgba(37, 99, 235, 0.12)',
   },
   scheduleHeading: {
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   scheduleList: {
     flexDirection: 'row',
@@ -456,34 +520,45 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 140,
     borderRadius: 16,
-    borderWidth: 1,
+    borderWidth: 1.5,
     padding: 14,
     gap: 6,
   },
   scheduleTitle: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   scheduleValue: {
     fontSize: 13,
     lineHeight: 18,
+    fontWeight: '500',
+    opacity: 0.7,
   },
   fieldGroup: {
-    gap: 16,
+    gap: 20,
   },
   inputWrapper: {
-    gap: 8,
+    gap: 10,
   },
   inputLabel: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 4,
+  },
+  inputInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+    paddingHorizontal: 16,
   },
   input: {
-    borderRadius: 14,
-    borderWidth: 1,
-    paddingHorizontal: 16,
-    paddingVertical: Platform.OS === 'ios' ? 14 : 12,
+    flex: 1,
     fontSize: 15,
+    fontWeight: '400',
+    paddingHorizontal: 12,
+    paddingVertical: 14,
   },
   pillGroup: {
     flexDirection: 'row',
@@ -491,28 +566,36 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   pill: {
-    borderRadius: 999,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
   pillText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
+  },
+  submitWrapper: {
+    marginTop: 8,
   },
   submitButton: {
-    alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    borderRadius: 999,
-    paddingHorizontal: 20,
-    paddingVertical: 13,
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 18,
+    borderRadius: 20,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
   },
   submitText: {
     color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
 });
 

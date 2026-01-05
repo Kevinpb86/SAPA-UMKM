@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
   backButtonText: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   heroHeader: {
     flexDirection: 'row',
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
   heroTitle: {
     color: '#FFFFFF',
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   heroSubtitle: {
     color: 'rgba(255,255,255,0.86)',
@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   divider: {
     height: StyleSheet.hairlineWidth,
@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
   },
   actionTitle: {
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   actionDescription: {
     fontSize: 13,

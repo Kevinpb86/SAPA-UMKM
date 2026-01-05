@@ -51,6 +51,7 @@ const STORAGE_ROOT = fsCompat.documentDirectory ?? fsCompat.cacheDirectory ?? ''
 const ENCODING_UTF8 = fsCompat.EncodingType?.UTF8 ?? 'utf8';
 
 const STORAGE_FILE = `${STORAGE_ROOT}sapa-umkm-auth.json`;
+const SESSION_FILE = `${STORAGE_ROOT}sapa-umkm-session.json`;
 
 let cachedAccounts: StoredAccount[] | null = null;
 
@@ -165,6 +166,35 @@ export const deleteAllAccounts = async () => {
     await FileSystem.deleteAsync(STORAGE_FILE, { idempotent: true });
   } catch (error) {
     // Ignore failures when cleaning up storage.
+  }
+};
+
+export const saveActiveSession = async (account: StoredAccount) => {
+  try {
+    await FileSystem.writeAsStringAsync(SESSION_FILE, JSON.stringify(account), {
+      encoding: ENCODING_UTF8 as never,
+    });
+  } catch (error) {
+    // Ignore persistence errors
+  }
+};
+
+export const loadActiveSession = async (): Promise<StoredAccount | null> => {
+  try {
+    const content = await FileSystem.readAsStringAsync(SESSION_FILE, {
+      encoding: ENCODING_UTF8 as never,
+    });
+    return JSON.parse(content) as StoredAccount;
+  } catch (error) {
+    return null;
+  }
+};
+
+export const clearActiveSession = async () => {
+  try {
+    await FileSystem.deleteAsync(SESSION_FILE, { idempotent: true });
+  } catch (error) {
+    // Ignore failures
   }
 };
 

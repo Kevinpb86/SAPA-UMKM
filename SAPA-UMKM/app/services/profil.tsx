@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -15,7 +16,6 @@ import {
   useColorScheme,
   View,
 } from 'react-native';
-import { Feather } from '@expo/vector-icons';
 
 import { useAuth } from '@/hooks/use-auth';
 
@@ -167,27 +167,33 @@ export default function ProfileUpdateScreen() {
         style={styles.flexOne}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <LinearGradient
-            colors={colors.hero}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.hero}
-          >
-            <TouchableOpacity
-              accessibilityRole="button"
-              onPress={() => router.back()}
-              style={styles.backButton}
+          <View style={styles.heroWrapper}>
+            <LinearGradient
+              colors={colors.hero}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.hero}
             >
-              <Feather name="arrow-left" size={18} color="#FFFFFF" />
-              <Text style={styles.backText}>Kembali</Text>
-            </TouchableOpacity>
-            <Text style={styles.heroKicker}>Pembaruan Data Profil UMKM</Text>
-            <Text style={styles.heroTitle}>Pastikan Profil Usaha Selalu Terkini</Text>
-            <Text style={styles.heroSubtitle}>
-              Informasi profil yang akurat memudahkan proses verifikasi dan memprioritaskan dukungan program sesuai
-              kebutuhan UMKM Anda.
-            </Text>
-          </LinearGradient>
+              <TouchableOpacity
+                accessibilityRole="button"
+                onPress={() => router.back()}
+                style={styles.backButton}
+              >
+                <Feather name="arrow-left" size={18} color="#FFFFFF" />
+                <Text style={styles.backText}>Kembali</Text>
+              </TouchableOpacity>
+              <Text style={styles.heroKicker}>Pembaruan Data Profil UMKM</Text>
+              <Text style={styles.heroTitle}>Pastikan Profil Usaha Selalu Terkini</Text>
+              <Text style={styles.heroSubtitle}>
+                Informasi profil yang akurat memudahkan proses verifikasi dan memprioritaskan dukungan program sesuai
+                kebutuhan UMKM Anda.
+              </Text>
+            </LinearGradient>
+            <LinearGradient
+              colors={scheme === 'dark' ? ['#10B98133', 'transparent'] : ['#F6FFF9', 'transparent']}
+              style={styles.meshGradient}
+            />
+          </View>
 
           <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.sectionHeader}>
@@ -226,6 +232,7 @@ export default function ProfileUpdateScreen() {
             <View style={styles.fieldGroup}>
               <LabeledInput
                 label="Nama Usaha"
+                icon="briefcase"
                 placeholder="Nama brand atau badan usaha"
                 value={form.businessName}
                 onChangeText={value => handleChange('businessName', value)}
@@ -233,6 +240,7 @@ export default function ProfileUpdateScreen() {
               />
               <LabeledInput
                 label="Nama Pemilik/Penanggung Jawab"
+                icon="user"
                 placeholder="Nama lengkap"
                 value={form.ownerName}
                 onChangeText={value => handleChange('ownerName', value)}
@@ -240,6 +248,7 @@ export default function ProfileUpdateScreen() {
               />
               <LabeledInput
                 label="Sektor Usaha"
+                icon="grid"
                 placeholder="Contoh: Kuliner, Perdagangan, Jasa"
                 value={form.sector}
                 onChangeText={value => handleChange('sector', value)}
@@ -247,6 +256,7 @@ export default function ProfileUpdateScreen() {
               />
               <LabeledInput
                 label="Kode KBLI (opsional)"
+                icon="hash"
                 placeholder="Contoh: 56101 - Rumah makan/restoran"
                 value={form.kbli}
                 onChangeText={value => handleChange('kbli', value)}
@@ -254,6 +264,7 @@ export default function ProfileUpdateScreen() {
               />
               <LabeledInput
                 label="Jumlah Tenaga Kerja"
+                icon="users"
                 placeholder="Contoh: 12 orang"
                 value={form.employees}
                 onChangeText={value => handleChange('employees', value)}
@@ -261,6 +272,7 @@ export default function ProfileUpdateScreen() {
               />
               <LabeledInput
                 label="Alamat Usaha"
+                icon="map-pin"
                 placeholder="Jalan, kelurahan, kecamatan"
                 value={form.address}
                 onChangeText={value => handleChange('address', value)}
@@ -269,6 +281,7 @@ export default function ProfileUpdateScreen() {
               />
               <LabeledInput
                 label="Kabupaten/Kota"
+                icon="map"
                 placeholder="Contoh: Kota Malang"
                 value={form.city}
                 onChangeText={value => handleChange('city', value)}
@@ -276,6 +289,7 @@ export default function ProfileUpdateScreen() {
               />
               <LabeledInput
                 label="Nomor Telepon / WhatsApp"
+                icon="phone"
                 placeholder="08xxxxxxxxxx"
                 keyboardType="phone-pad"
                 value={form.phone}
@@ -284,6 +298,7 @@ export default function ProfileUpdateScreen() {
               />
               <LabeledInput
                 label="Email (opsional)"
+                icon="mail"
                 placeholder={accountEmail || 'contoh: kontak@umkm.id'}
                 keyboardType="email-address"
                 value={form.email}
@@ -292,6 +307,7 @@ export default function ProfileUpdateScreen() {
               />
               <LabeledInput
                 label="Deskripsi Usaha"
+                icon="align-left"
                 placeholder="Ringkasan produk/jasa, segmentasi pelanggan, dll."
                 value={form.description}
                 onChangeText={value => handleChange('description', value)}
@@ -300,6 +316,7 @@ export default function ProfileUpdateScreen() {
               />
               <LabeledInput
                 label="Kebutuhan Dukungan (opsional)"
+                icon="help-circle"
                 placeholder="Pelatihan digital marketing, akses bahan baku, kemitraan, dsb."
                 value={form.supportNeeds}
                 onChangeText={value => handleChange('supportNeeds', value)}
@@ -312,13 +329,17 @@ export default function ProfileUpdateScreen() {
               accessibilityRole="button"
               onPress={handleSubmit}
               disabled={submitting}
-              style={[
-                styles.submitButton,
-                { backgroundColor: colors.accent, opacity: submitting ? 0.6 : 1 },
-              ]}
+              style={styles.submitWrapper}
             >
-              <Text style={styles.submitText}>{submitting ? 'Menyimpan...' : 'Perbarui Profil'}</Text>
-              <Feather name="save" size={16} color="#FFFFFF" />
+              <LinearGradient
+                colors={submitting ? [`${colors.accent}80`, `${colors.accent}60`] : [`${colors.accent}`, '#059669']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.submitButton}
+              >
+                <Text style={styles.submitText}>{submitting ? 'Menyimpan...' : 'Perbarui Profil UMKM'}</Text>
+                <Feather name={submitting ? 'loader' : 'save'} size={18} color="#FFFFFF" />
+              </LinearGradient>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -329,6 +350,7 @@ export default function ProfileUpdateScreen() {
 
 type LabeledInputProps = {
   label: string;
+  icon: React.ComponentProps<typeof Feather>['name'];
   placeholder: string;
   value: string;
   onChangeText: (value: string) => void;
@@ -339,6 +361,7 @@ type LabeledInputProps = {
 
 function LabeledInput({
   label,
+  icon,
   placeholder,
   value,
   onChangeText,
@@ -346,27 +369,42 @@ function LabeledInput({
   multiline,
   keyboardType = 'default',
 }: LabeledInputProps) {
+  const [isFocused, setIsFocused] = useState(false);
   return (
     <View style={styles.inputWrapper}>
-      <Text style={[styles.inputLabel, { color: colors.subtle }]}>{label}</Text>
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor={`${colors.subtle}80`}
-        multiline={multiline}
-        keyboardType={keyboardType}
-        style={[
-          styles.input,
-          {
-            borderColor: colors.border,
-            backgroundColor: colors.card,
-            color: colors.text,
-            minHeight: multiline ? 96 : 50,
-            textAlignVertical: multiline ? 'top' : 'center',
-          },
-        ]}
-      />
+      <Text style={[styles.inputLabel, { color: colors.text }]}>{label}</Text>
+      <View style={[
+        styles.inputInner,
+        {
+          backgroundColor: isFocused ? colors.card : `${colors.subtle}08`,
+          borderColor: isFocused ? colors.accent : 'transparent',
+          alignItems: multiline ? 'flex-start' : 'center',
+          paddingTop: multiline ? 12 : 0,
+        }
+      ]}>
+        <View style={multiline ? { marginTop: 4 } : null}>
+          <Feather name={icon} size={18} color={isFocused ? colors.accent : colors.subtle} />
+        </View>
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          placeholderTextColor={`${colors.subtle}50`}
+          multiline={multiline}
+          keyboardType={keyboardType}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          style={[
+            styles.input,
+            {
+              color: colors.text,
+              minHeight: multiline ? 120 : 50,
+            },
+            multiline && { paddingTop: 0, paddingBottom: 12 },
+            Platform.OS === 'web' && ({ outlineStyle: 'none' } as any)
+          ]}
+        />
+      </View>
     </View>
   );
 }
@@ -397,10 +435,27 @@ const styles = StyleSheet.create({
     padding: 24,
     gap: 20,
   },
-  hero: {
+  heroWrapper: {
     borderRadius: 28,
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+  },
+  hero: {
     padding: 24,
     gap: 16,
+    zIndex: 1,
+  },
+  meshGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.5,
   },
   backButton: {
     alignSelf: 'flex-start',
@@ -408,38 +463,46 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.35)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.4)',
     paddingHorizontal: 14,
-    paddingVertical: 6,
-    backgroundColor: 'rgba(6, 78, 59, 0.22)',
+    paddingVertical: 8,
+    backgroundColor: 'rgba(6, 78, 59, 0.25)',
   },
   backText: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   heroKicker: {
     color: 'rgba(204, 251, 241, 0.9)',
     fontSize: 13,
     letterSpacing: 1,
     textTransform: 'uppercase',
+    fontWeight: '800',
   },
   heroTitle: {
     color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: '800',
+    fontSize: 26,
+    fontWeight: '900',
+    letterSpacing: -0.5,
   },
   heroSubtitle: {
     color: 'rgba(209, 250, 229, 0.88)',
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 22,
+    fontWeight: '500',
   },
   card: {
-    borderRadius: 24,
-    borderWidth: 1,
-    padding: 22,
-    gap: 18,
+    borderRadius: 32,
+    borderWidth: 0,
+    padding: 24,
+    gap: 24,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 15,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -447,15 +510,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconWrapper: {
-    width: 44,
-    height: 44,
-    borderRadius: 16,
+    width: 48,
+    height: 48,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '800',
+    letterSpacing: -0.3,
   },
   sectionBody: {
     gap: 12,
@@ -467,39 +531,58 @@ const styles = StyleSheet.create({
   },
   infoText: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 13,
     lineHeight: 20,
+    fontWeight: '500',
+    opacity: 0.7,
   },
   fieldGroup: {
-    gap: 16,
+    gap: 20,
   },
   inputWrapper: {
-    gap: 8,
+    gap: 10,
   },
   inputLabel: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 4,
   },
-  input: {
-    borderRadius: 14,
-    borderWidth: 1,
-    paddingHorizontal: 16,
-    paddingVertical: Platform.OS === 'ios' ? 14 : 12,
-    fontSize: 15,
-  },
-  submitButton: {
-    alignSelf: 'flex-start',
+  inputInner: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    borderRadius: 999,
-    paddingHorizontal: 20,
-    paddingVertical: 13,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+    paddingHorizontal: 16,
+  },
+  input: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '400',
+    paddingHorizontal: 12,
+    paddingVertical: 14,
+  },
+  submitWrapper: {
+    marginTop: 8,
+  },
+  submitButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 18,
+    borderRadius: 20,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
   },
   submitText: {
     color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
 });
 

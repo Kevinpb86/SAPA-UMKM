@@ -654,10 +654,10 @@ const styles = StyleSheet.create({
   },
   sectionCard: {
     borderRadius: 28,
-    borderWidth: 1,
+    borderWidth: 0,
     padding: 24,
     gap: 24,
-    elevation: 2,
+    elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
@@ -681,7 +681,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 19,
-    fontWeight: '800',
+    fontWeight: '700',
     letterSpacing: -0.3,
   },
   sectionSubtitle: {
@@ -697,7 +697,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '500',
     marginLeft: 4,
   },
   required: {
@@ -705,11 +705,10 @@ const styles = StyleSheet.create({
   },
   inputWrapper: {
     borderRadius: 16,
-    borderWidth: 1.5,
+    borderWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    transitionDuration: '200ms',
   },
   inputIcon: {
     marginRight: 12,
@@ -718,7 +717,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 15,
-    fontWeight: '500',
+    fontWeight: '400',
     height: '100%',
   },
   passwordToggle: {
@@ -727,7 +726,7 @@ const styles = StyleSheet.create({
   },
   selectButton: {
     borderRadius: 16,
-    borderWidth: 1.5,
+    borderWidth: 0,
     paddingHorizontal: 16,
     height: 54,
     flexDirection: 'row',
@@ -741,11 +740,11 @@ const styles = StyleSheet.create({
   },
   selectValue: {
     fontSize: 15,
-    fontWeight: '500',
+    fontWeight: '400',
   },
   placeholder: {
     fontSize: 15,
-    fontWeight: '500',
+    fontWeight: '400',
   },
   uploadField: {
     borderRadius: 16,
@@ -769,7 +768,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   uploadTextSelected: {
-    fontWeight: '700',
+    fontWeight: '600',
   },
   optionalNote: {
     fontSize: 12,
@@ -794,7 +793,7 @@ const styles = StyleSheet.create({
   submitButtonText: {
     color: '#FFFFFF',
     fontSize: 17,
-    fontWeight: '800',
+    fontWeight: '700',
     letterSpacing: 0.3,
   },
   modalOverlay: {
@@ -821,7 +820,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   modalList: {
     marginBottom: 8,
@@ -835,7 +834,7 @@ const styles = StyleSheet.create({
   },
   modalOptionText: {
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '500',
     lineHeight: 22,
     flex: 1,
     marginRight: 12,

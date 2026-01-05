@@ -1,7 +1,7 @@
-import { LinearGradient } from 'expo-linear-gradient';
-import { StatusBar } from 'expo-status-bar';
-import { useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import {
   SafeAreaView,
   ScrollView,
@@ -45,7 +45,7 @@ export default function NibServiceScreen() {
   const router = useRouter();
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}> 
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <LinearGradient
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
   heroTitle: {
     color: '#FFFFFF',
     fontSize: 28,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   heroSubtitle: {
     color: 'rgba(233, 244, 255, 0.92)',
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   cardSubtitle: {
     fontSize: 13,
@@ -220,6 +220,6 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 });

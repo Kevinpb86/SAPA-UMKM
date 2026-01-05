@@ -1,9 +1,11 @@
-import { useMemo, useState } from 'react';
+import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { useMemo, useState } from 'react';
 import {
   FlatList,
+  Platform,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -12,14 +14,13 @@ import {
   useColorScheme,
   View,
 } from 'react-native';
-import { Feather } from '@expo/vector-icons';
 
 import {
-  trainingModules,
-  TrainingModule,
+  TrainingAudience,
   TrainingLevel,
   TrainingMode,
-  TrainingAudience,
+  TrainingModule,
+  trainingModules,
 } from '../../constants/trainingPrograms';
 
 const palette = {
@@ -119,7 +120,7 @@ export default function TechnicalTrainingScreen() {
       >
         <View style={styles.moduleHeader}>
           <View style={styles.moduleHeaderLeft}>
-            <View style={[styles.modeBadge, { backgroundColor: `${colors.accent}18` }]}> 
+            <View style={[styles.modeBadge, { backgroundColor: `${colors.accent}18` }]}>
               <Feather name={item.mode === 'Tatap Muka' ? 'map-pin' : item.mode === 'Hybrid' ? 'shuffle' : 'wifi'} size={14} color={colors.accent} />
               <Text style={[styles.modeBadgeText, { color: colors.accent }]}>{item.mode}</Text>
             </View>
@@ -221,7 +222,7 @@ export default function TechnicalTrainingScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}> 
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <FlatList
         data={filteredModules}
@@ -230,33 +231,39 @@ export default function TechnicalTrainingScreen() {
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={
           <>
-            <LinearGradient
-              colors={colors.hero}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.hero}
-            >
-              <TouchableOpacity
-                accessibilityRole="button"
-                onPress={() => router.back()}
-                style={styles.backButton}
+            <View style={styles.heroWrapper}>
+              <LinearGradient
+                colors={colors.hero}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.hero}
               >
-                <Feather name="arrow-left" size={18} color="#FFFFFF" />
-                <Text style={styles.backText}>Kembali</Text>
-              </TouchableOpacity>
-              <Text style={styles.heroKicker}>Pelatihan Teknis & Manajemen KemenKopUKM</Text>
-              <Text style={styles.heroTitle}>Sesuaikan Jadwal Pelatihan untuk Tim UMKM Anda</Text>
-              <Text style={styles.heroSubtitle}>
-                Telusuri katalog modul pelatihan resmi beserta silabus, fasilitator, dan layanan pendampingan lanjutan.
-              </Text>
-            </LinearGradient>
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  onPress={() => router.back()}
+                  style={styles.backButton}
+                >
+                  <Feather name="arrow-left" size={18} color="#FFFFFF" />
+                  <Text style={styles.backText}>Kembali</Text>
+                </TouchableOpacity>
+                <Text style={styles.heroKicker}>Pelatihan Teknis & Manajemen KemenKopUKM</Text>
+                <Text style={styles.heroTitle}>Sesuaikan Jadwal Pelatihan untuk Tim UMKM Anda</Text>
+                <Text style={styles.heroSubtitle}>
+                  Telusuri katalog modul pelatihan resmi beserta silabus, fasilitator, dan layanan pendampingan lanjutan.
+                </Text>
+              </LinearGradient>
+              <LinearGradient
+                colors={scheme === 'dark' ? ['#0EA5E933', 'transparent'] : ['#F1F7FF', 'transparent']}
+                style={styles.meshGradient}
+              />
+            </View>
 
-            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}> 
+            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>Mengapa Memilih Pelatihan Resmi?</Text>
               <Text style={[styles.sectionSubtitle, { color: colors.subtle }]}>Pelatihan dirancang untuk membawa perubahan nyata di usaha Anda.</Text>
               <View style={styles.highlightGrid}>
                 {highlightCards.map(card => (
-                  <View key={card.id} style={[styles.highlightCard, { borderColor: colors.border }]}> 
+                  <View key={card.id} style={[styles.highlightCard, { borderColor: colors.border }]}>
                     <View style={[styles.highlightIcon, { backgroundColor: `${colors.accent}18` }]}>
                       <Feather name={card.icon} size={16} color={colors.accent} />
                     </View>
@@ -267,15 +274,19 @@ export default function TechnicalTrainingScreen() {
               </View>
             </View>
 
-            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}> 
+            <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>Temukan Modul yang Tepat</Text>
               <Text style={[styles.sectionSubtitle, { color: colors.subtle }]}>Gunakan pencarian dan filter untuk menampilkan rekomendasi pelatihan yang relevan.</Text>
-              <View style={[styles.searchBar, { borderColor: colors.border }]}> 
-                <Feather name="search" size={16} color={colors.subtle} />
+              <View style={[styles.searchBar, { backgroundColor: `${colors.subtle}08`, borderColor: 'transparent' }]}>
+                <Feather name="search" size={16} color={colors.accent} />
                 <TextInput
-                  style={[styles.searchInput, { color: colors.text }]}
+                  style={[
+                    styles.searchInput,
+                    { color: colors.text },
+                    Platform.OS === 'web' && ({ outlineStyle: 'none' } as any)
+                  ]}
                   placeholder="Cari judul atau fokus pelatihan..."
-                  placeholderTextColor={`${colors.subtle}70`}
+                  placeholderTextColor={`${colors.subtle}50`}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
                 />
@@ -305,7 +316,7 @@ export default function TechnicalTrainingScreen() {
           </>
         }
         ListEmptyComponent={
-          <View style={[styles.emptyState, { backgroundColor: colors.card, borderColor: colors.border }]}> 
+          <View style={[styles.emptyState, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Feather name="info" size={18} color={colors.subtle} />
             <Text style={[styles.emptyTitle, { color: colors.text }]}>Belum ada modul yang cocok</Text>
             <Text style={[styles.emptySubtitle, { color: colors.subtle }]}>Ubah kata kunci atau kombinasikan filter untuk melihat pilihan pelatihan lainnya.</Text>
@@ -326,7 +337,7 @@ type FilterRowProps<T extends string> = {
 
 function FilterRow<T extends string>({ title, options, active, onSelectOption, colors }: FilterRowProps<T>) {
   return (
-    <View style={styles.filterGroup}> 
+    <View style={styles.filterGroup}>
       <Text style={[styles.filterLabel, { color: colors.subtle }]}>{title}</Text>
       <View style={styles.filterList}>
         {options.map(option => {
@@ -358,8 +369,8 @@ type SectionTitleProps = {
 
 function SectionTitle({ icon, title, colors }: SectionTitleProps) {
   return (
-    <View style={styles.sectionTitleRow}> 
-      <View style={[styles.sectionTitleIcon, { backgroundColor: `${colors.accent}18` }]}> 
+    <View style={styles.sectionTitleRow}>
+      <View style={[styles.sectionTitleIcon, { backgroundColor: `${colors.accent}18` }]}>
         <Feather name={icon} size={14} color={colors.accent} />
       </View>
       <Text style={[styles.sectionTitleText, { color: colors.text }]}>{title}</Text>
@@ -396,11 +407,28 @@ const styles = StyleSheet.create({
     gap: 20,
     paddingBottom: 48,
   },
-  hero: {
+  heroWrapper: {
     borderRadius: 28,
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    marginBottom: 16,
+  },
+  hero: {
     padding: 24,
     gap: 16,
-    marginBottom: 16,
+    zIndex: 1,
+  },
+  meshGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.5,
   },
   backButton: {
     alignSelf: 'flex-start',
@@ -408,11 +436,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.35)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.4)',
     paddingHorizontal: 14,
-    paddingVertical: 6,
-    backgroundColor: 'rgba(8, 33, 72, 0.24)',
+    paddingVertical: 8,
+    backgroundColor: 'rgba(8, 33, 72, 0.25)',
   },
   backText: {
     color: '#FFFFFF',
@@ -424,30 +452,41 @@ const styles = StyleSheet.create({
     fontSize: 13,
     letterSpacing: 1,
     textTransform: 'uppercase',
+    fontWeight: '700',
   },
   heroTitle: {
     color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: '800',
+    fontSize: 26,
+    fontWeight: '700',
+    letterSpacing: -0.5,
   },
   heroSubtitle: {
     color: 'rgba(226, 241, 255, 0.9)',
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 22,
+    fontWeight: '500',
   },
   card: {
-    borderRadius: 24,
-    borderWidth: 1,
-    padding: 22,
-    gap: 18,
+    borderRadius: 32,
+    borderWidth: 0,
+    padding: 24,
+    gap: 24,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 15,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
+    letterSpacing: -0.3,
   },
   sectionSubtitle: {
     fontSize: 13,
     lineHeight: 20,
+    fontWeight: '500',
+    opacity: 0.7,
   },
   highlightGrid: {
     flexDirection: 'row',
@@ -458,7 +497,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 200,
     borderRadius: 18,
-    borderWidth: 1,
+    borderWidth: 1.5,
     padding: 16,
     gap: 10,
   },
@@ -471,7 +510,7 @@ const styles = StyleSheet.create({
   },
   highlightTitle: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   highlightDescription: {
     fontSize: 13,
@@ -481,10 +520,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    borderRadius: 16,
-    borderWidth: 1,
+    borderRadius: 18,
+    borderWidth: 1.5,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
   },
   searchInput: {
     flex: 1,
@@ -549,7 +588,7 @@ const styles = StyleSheet.create({
   },
   moduleTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   moduleSubtitle: {
     fontSize: 12,
@@ -717,6 +756,24 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     textAlign: 'center',
+  },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 8,
+  },
+  sectionTitleIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sectionTitleText: {
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: -0.2,
   },
 });
 

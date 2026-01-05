@@ -3,9 +3,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import type { ComponentProps } from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Alert,
+  Animated,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -20,6 +21,7 @@ import {
 } from 'react-native';
 
 import { useAuth } from '@/hooks/use-auth';
+import { availableTags, forumTopics } from '../../constants/forumData';
 
 const palette = {
   light: {
@@ -206,8 +208,66 @@ export default function UserDashboardScreen() {
   // Community State
   const [createPostModalVisible, setCreatePostModalVisible] = useState(false);
   const [posts, setPosts] = useState<any[]>([]);
+  const [newPostTitle, setNewPostTitle] = useState('');
   const [newPostContent, setNewPostContent] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('Umum');
   const [posting, setPosting] = useState(false);
+
+  // Ultra-Premium Animations
+  const titleFocusAnim = useRef(new Animated.Value(0)).current;
+  const contentFocusAnim = useRef(new Animated.Value(0)).current;
+  const meshMotionAnim = useRef(new Animated.Value(0)).current;
+  const buttonScaleAnim = useRef(new Animated.Value(1)).current;
+  const chipPopAnim = useRef(new Animated.Value(0)).current;
+  const loaderRotateAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(meshMotionAnim, { toValue: 1, duration: 4000, useNativeDriver: true }),
+        Animated.timing(meshMotionAnim, { toValue: 0, duration: 4000, useNativeDriver: true }),
+      ])
+    ).start();
+  }, []);
+
+  useEffect(() => {
+    if (posting) {
+      Animated.loop(
+        Animated.timing(loaderRotateAnim, { toValue: 1, duration: 1000, useNativeDriver: true })
+      ).start();
+    } else {
+      loaderRotateAnim.setValue(0);
+    }
+  }, [posting]);
+
+  const handleTitleFocus = () => {
+    Animated.spring(titleFocusAnim, { toValue: 1, useNativeDriver: false, friction: 8 }).start();
+  };
+  const handleTitleBlur = () => {
+    Animated.timing(titleFocusAnim, { toValue: 0, duration: 300, useNativeDriver: false }).start();
+  };
+
+  const handleContentFocus = () => {
+    Animated.spring(contentFocusAnim, { toValue: 1, useNativeDriver: false, friction: 8 }).start();
+  };
+  const handleContentBlur = () => {
+    Animated.timing(contentFocusAnim, { toValue: 0, duration: 300, useNativeDriver: false }).start();
+  };
+
+  const triggerChipPop = () => {
+    chipPopAnim.setValue(0);
+    Animated.spring(chipPopAnim, { toValue: 1, friction: 4, tension: 40, useNativeDriver: true }).start();
+  };
+
+  const isPostValid = newPostTitle.length >= 5 && newPostContent.length >= 10;
+
+  useEffect(() => {
+    Animated.spring(buttonScaleAnim, {
+      toValue: isPostValid ? 1 : 0.95,
+      friction: 7,
+      useNativeDriver: true
+    }).start();
+  }, [isPostValid]);
   const [initialLoading, setInitialLoading] = useState(true);
 
   // Edit Profile State
@@ -278,13 +338,42 @@ export default function UserDashboardScreen() {
 
   const fetchPosts = async () => {
     try {
+      // Start with static forum topics mapped to the dashboard's post structure
+      const staticPosts = forumTopics.map(topic => ({
+        id: topic.id,
+        author_name: topic.author.name,
+        category: topic.tags[0],
+        created_at: topic.createdAt,
+        title: topic.title,
+        content: topic.summary,
+        likes: topic.replies.reduce((acc, r) => acc + r.upvotes, 0),
+        comments_count: topic.replies.length,
+        is_verified: topic.author.role !== 'Pelaku UMKM',
+      }));
+
       const response = await fetch('http://localhost:3000/api/community');
       if (response.ok) {
         const data = await response.json();
-        setPosts(data);
+        // Merge static posts with remote posts, avoid duplicates if any
+        setPosts([...staticPosts, ...data.filter((p: any) => !staticPosts.some(sp => sp.id === p.id))]);
+      } else {
+        setPosts(staticPosts);
       }
     } catch (error) {
       console.error('Failed to fetch posts:', error);
+      // Fallback to static topics if fetch fails
+      const staticPosts = forumTopics.map(topic => ({
+        id: topic.id,
+        author_name: topic.author.name,
+        category: topic.tags[0],
+        created_at: topic.createdAt,
+        title: topic.title,
+        content: topic.summary,
+        likes: topic.replies.reduce((acc, r) => acc + r.upvotes, 0),
+        comments_count: topic.replies.length,
+        is_verified: topic.author.role !== 'Pelaku UMKM',
+      }));
+      setPosts(staticPosts);
     }
   };
 
@@ -303,7 +392,9 @@ export default function UserDashboardScreen() {
       });
 
       if (response.ok) {
+        setNewPostTitle('');
         setNewPostContent('');
+        setSelectedCategory('Umum');
         setCreatePostModalVisible(false);
         fetchPosts();
         Alert.alert('Sukses', 'Postingan berhasil dibuat');
@@ -696,49 +787,46 @@ export default function UserDashboardScreen() {
                   {posts.map((post) => (
                     <View
                       key={post.id}
-                      style={{
-                        padding: 16,
-                        borderRadius: 16,
-                        backgroundColor: scheme === 'dark' ? 'rgba(255,255,255,0.03)' : '#F8FAFC',
-                        borderWidth: 1,
-                        borderColor: scheme === 'dark' ? 'rgba(255,255,255,0.05)' : '#F1F5F9',
-                        gap: 12
-                      }}
+                      style={[styles.postCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
                     >
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-                          <View style={{
-                            width: 40, height: 40, borderRadius: 20,
-                            backgroundColor: '#E0F2FE', alignItems: 'center', justifyContent: 'center'
-                          }}>
-                            <Text style={{ fontSize: 16, fontWeight: '700', color: '#0284C7' }}>
-                              {post.author_name.charAt(0)}
-                            </Text>
+                      <View style={styles.postCardHeader}>
+                        <View style={styles.postAuthorGroup}>
+                          <View style={[styles.postAvatar, { backgroundColor: `${colors.primary}12` }]}>
+                            <Feather name="user" size={18} color={colors.primary} />
                           </View>
                           <View>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                              <Text style={{ fontSize: 15, fontWeight: '700', color: colors.text }}>{post.author_name}</Text>
-                              {post.is_verified && <Feather name="check-circle" size={14} color="#0EA5E9" />}
+                            <View style={styles.postAuthorNameRow}>
+                              <Text style={[styles.postAuthorName, { color: colors.text }]}>{post.author_name}</Text>
+                              {post.is_verified && <Feather name="check-circle" size={13} color={colors.primary} />}
+                              <View style={[styles.postCategoryBadge, { backgroundColor: `${colors.primary}08` }]}>
+                                <Text style={[styles.postCategoryText, { color: colors.primary }]}>{post.category || 'Umum'}</Text>
+                              </View>
                             </View>
-                            <Text style={{ fontSize: 12, color: colors.subtle }}>
+                            <Text style={[styles.postTime, { color: colors.subtle }]}>
                               {new Date(post.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                             </Text>
                           </View>
                         </View>
                       </View>
 
-                      <Text style={{ fontSize: 15, lineHeight: 22, color: colors.text }}>
-                        {post.content}
-                      </Text>
+                      <View style={styles.postContentArea}>
+                        {post.title && <Text style={[styles.postDisplayTitle, { color: colors.text }]}>{post.title}</Text>}
+                        <Text style={[styles.postBodyText, { color: colors.text }]}>
+                          {post.content}
+                        </Text>
+                      </View>
 
-                      <View style={{ flexDirection: 'row', gap: 20, marginTop: 4 }}>
-                        <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <View style={styles.postInteractionBar}>
+                        <TouchableOpacity style={styles.interactionButton}>
                           <Feather name="heart" size={18} color={colors.subtle} />
-                          <Text style={{ fontSize: 13, color: colors.subtle, fontWeight: '600' }}>{post.likes} Suka</Text>
+                          <Text style={[styles.interactionText, { color: colors.subtle }]}>{post.likes || 0}</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <TouchableOpacity style={styles.interactionButton}>
                           <Feather name="message-circle" size={18} color={colors.subtle} />
-                          <Text style={{ fontSize: 13, color: colors.subtle, fontWeight: '600' }}>{post.comments_count} Komentar</Text>
+                          <Text style={[styles.interactionText, { color: colors.subtle }]}>{post.comments_count || 0}</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.interactionButton}>
+                          <Feather name="share-2" size={18} color={colors.subtle} />
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -753,46 +841,220 @@ export default function UserDashboardScreen() {
               visible={createPostModalVisible}
               onRequestClose={() => setCreatePostModalVisible(false)}
             >
-              <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
-                <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-                  <View style={{
-                    backgroundColor: colors.surface,
-                    borderTopLeftRadius: 24, borderTopRightRadius: 24,
-                    padding: 24, minHeight: 300, gap: 16
-                  }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text }}>Buat Postingan</Text>
-                      <TouchableOpacity onPress={() => setCreatePostModalVisible(false)}>
-                        <Feather name="x" size={24} color={colors.subtle} />
-                      </TouchableOpacity>
+              <View style={styles.modalOverlay}>
+                <KeyboardAvoidingView
+                  behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                  style={styles.modalKeyboardAvoid}
+                >
+                  <View style={[styles.createPostContainer, { backgroundColor: colors.surface }]}>
+                    {/* Premium Mesh Gradient Background Decoration */}
+                    <View style={styles.composerMeshDecor}>
+                      <Animated.View style={[
+                        styles.meshBlobOne,
+                        {
+                          opacity: meshMotionAnim.interpolate({ inputRange: [0, 1], outputRange: [0.3, 0.6] }),
+                          transform: [
+                            { translateY: meshMotionAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 15] }) },
+                            { scale: meshMotionAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.1] }) }
+                          ]
+                        }
+                      ]}>
+                        <LinearGradient
+                          colors={[scheme === 'dark' ? '#1E3A8A' : '#EFF6FF', 'transparent']}
+                          style={StyleSheet.absoluteFill}
+                        />
+                      </Animated.View>
+                      <Animated.View style={[
+                        styles.meshBlobTwo,
+                        {
+                          opacity: meshMotionAnim.interpolate({ inputRange: [0, 1], outputRange: [0.2, 0.4] }),
+                          transform: [
+                            { translateY: meshMotionAnim.interpolate({ inputRange: [0, 1], outputRange: [0, -20] }) },
+                            { scale: meshMotionAnim.interpolate({ inputRange: [0, 1], outputRange: [1.2, 1.1] }) }
+                          ]
+                        }
+                      ]}>
+                        <LinearGradient
+                          colors={[scheme === 'dark' ? '#4F46E5' : '#FDF4FF', 'transparent']}
+                          style={StyleSheet.absoluteFill}
+                        />
+                      </Animated.View>
                     </View>
 
-                    <TextInput
-                      multiline
-                      numberOfLines={4}
-                      placeholder="Apa yang ingin Anda diskusikan?"
-                      placeholderTextColor={colors.subtle}
-                      style={{
-                        backgroundColor: scheme === 'dark' ? 'rgba(255,255,255,0.05)' : '#F8FAFC',
-                        borderRadius: 16, padding: 16, height: 120, textAlignVertical: 'top',
-                        color: colors.text, fontSize: 16
-                      }}
-                      value={newPostContent}
-                      onChangeText={setNewPostContent}
-                    />
+                    {/* Image-Matched Header with Glassmorphism */}
+                    <View style={[styles.modalHeaderPremium, { borderBottomColor: `${colors.primary}10` }]}>
+                      <TouchableOpacity onPress={() => setCreatePostModalVisible(false)} style={styles.headerActionBtn}>
+                        <Text style={[styles.modalCancelText, { color: colors.subtle }]}>Batal</Text>
+                      </TouchableOpacity>
+                      <Text style={[styles.modalTitleSimple, { color: colors.text }]}>Buat Postingan</Text>
+                      <Animated.View style={{ transform: [{ scale: buttonScaleAnim }] }}>
+                        <TouchableOpacity
+                          onPress={handleCreatePost}
+                          disabled={posting || !isPostValid}
+                          activeOpacity={0.7}
+                          style={[
+                            styles.modalPostButtonPremium,
+                            {
+                              backgroundColor: !isPostValid
+                                ? `${colors.primary}15`
+                                : `${colors.primary}`
+                            }
+                          ]}
+                        >
+                          {posting ? (
+                            <Animated.View style={{
+                              transform: [{
+                                rotate: loaderRotateAnim.interpolate({
+                                  inputRange: [0, 1],
+                                  outputRange: ['0deg', '360deg']
+                                })
+                              }]
+                            }}>
+                              <Feather name="loader" size={16} color={colors.surface} />
+                            </Animated.View>
+                          ) : (
+                            <Text style={[
+                              styles.modalPostButtonTextPremium,
+                              { color: !isPostValid ? `${colors.primary}40` : '#FFFFFF' }
+                            ]}>Unggah</Text>
+                          )}
+                        </TouchableOpacity>
+                      </Animated.View>
+                    </View>
 
-                    <TouchableOpacity
-                      onPress={handleCreatePost}
-                      disabled={posting}
-                      style={{
-                        backgroundColor: colors.primary, borderRadius: 16,
-                        paddingVertical: 16, alignItems: 'center', marginTop: 8
-                      }}
-                    >
-                      <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 16 }}>
-                        {posting ? 'Mengirim...' : 'Kirim'}
-                      </Text>
-                    </TouchableOpacity>
+                    <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
+                      <View style={styles.modalComposeArea}>
+                        {/* User Identity Row - Rounded Square Avatar */}
+                        <View style={styles.composerUserInfo}>
+                          <View style={[styles.postAvatarSquare, { backgroundColor: `${colors.primary}12` }]}>
+                            <LinearGradient
+                              colors={[`${colors.primary}20`, `${colors.primary}05`]}
+                              style={StyleSheet.absoluteFill}
+                            />
+                            <Feather name="user" size={24} color={colors.primary} />
+                          </View>
+                          <View>
+                            <Text style={[styles.composerUserNameBold, { color: colors.text }]}>
+                              {user?.displayName || 'Budi Santoso'}
+                            </Text>
+                            <TouchableOpacity style={styles.composerCategoryRow}>
+                              <Text style={[styles.composerCategoryTextBlue, { color: colors.primary }]}>{selectedCategory}</Text>
+                              <Feather name="chevron-down" size={14} color={colors.primary} />
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+
+                        {/* Large Premium Title Input with Focus Animation */}
+                        <Animated.View style={{
+                          transform: [{
+                            translateY: titleFocusAnim.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [0, -4]
+                            })
+                          }]
+                        }}>
+                          <TextInput
+                            placeholder="Judul Diskusi"
+                            placeholderTextColor={`${colors.subtle}35`}
+                            maxLength={100}
+                            style={[styles.composerTitleInputLarge, { color: colors.text }]}
+                            value={newPostTitle}
+                            onFocus={handleTitleFocus}
+                            onBlur={handleTitleBlur}
+                            onChangeText={setNewPostTitle}
+                          />
+                        </Animated.View>
+
+                        {/* Fluid Content Input */}
+                        <Animated.View style={[
+                          styles.composerBodyWrapper,
+                          {
+                            backgroundColor: contentFocusAnim.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: ['rgba(0,0,0,0)', `${colors.primary}05`]
+                            }),
+                            borderRadius: 16,
+                            padding: 4
+                          }
+                        ]}>
+                          <TextInput
+                            multiline
+                            placeholder="Apa yang ingin Anda bagikan atau tanyakan hari ini?"
+                            placeholderTextColor={`${colors.subtle}35`}
+                            maxLength={2000}
+                            style={[styles.composerBodyInputFluid, { color: colors.text }]}
+                            onFocus={handleContentFocus}
+                            onBlur={handleContentBlur}
+                            value={newPostContent}
+                            onChangeText={setNewPostContent}
+                          />
+                        </Animated.View>
+
+                        <View style={styles.characterCountRow}>
+                          <Text style={[styles.characterCountText, { color: newPostContent.length >= 1900 ? '#EF4444' : colors.subtle }]}>
+                            {newPostContent.length}/2000 karakter
+                          </Text>
+                          {newPostContent.length > 0 && (
+                            <TouchableOpacity onPress={() => setNewPostContent('')}>
+                              <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '700' }}>Hapus Semua</Text>
+                            </TouchableOpacity>
+                          )}
+                        </View>
+
+                        {/* Premium Media Tool Bar */}
+                        <View style={styles.mediaToolBar}>
+                          <TouchableOpacity style={[styles.mediaToolBtn, { backgroundColor: `${colors.primary}08` }]}>
+                            <Feather name="image" size={18} color={colors.primary} />
+                          </TouchableOpacity>
+                          <TouchableOpacity style={[styles.mediaToolBtn, { backgroundColor: '#F0FDF4' }]}>
+                            <Feather name="bar-chart-2" size={18} color="#16A34A" />
+                          </TouchableOpacity>
+                          <TouchableOpacity style={[styles.mediaToolBtn, { backgroundColor: '#FEF2F2' }]}>
+                            <Feather name="link" size={18} color="#DC2626" />
+                          </TouchableOpacity>
+                          <TouchableOpacity style={[styles.mediaToolBtn, { backgroundColor: '#F5F3FF' }]}>
+                            <Feather name="map-pin" size={18} color="#7C3AED" />
+                          </TouchableOpacity>
+                        </View>
+
+                        {/* PILH KATEGORI Section */}
+                        <View style={{ marginTop: 24, paddingBottom: 60 }}>
+                          <Text style={[styles.composerCategoryLabel, { color: colors.subtle }]}>PILIH KATEGORI</Text>
+                          <View style={styles.composerCategoryChipsGrid}>
+                            {['Umum', ...availableTags].map((cat) => {
+                              const isSelected = selectedCategory === cat;
+                              return (
+                                <TouchableOpacity
+                                  key={cat}
+                                  onPress={() => {
+                                    setSelectedCategory(cat);
+                                    triggerChipPop();
+                                  }}
+                                  activeOpacity={0.6}
+                                >
+                                  <Animated.View
+                                    style={[
+                                      styles.composerPillChip,
+                                      {
+                                        backgroundColor: isSelected ? `${colors.primary}12` : 'rgba(0,0,0,0.02)',
+                                        transform: isSelected ? [{ scale: chipPopAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.05] }) }] : [{ scale: 1 }]
+                                      }
+                                    ]}
+                                  >
+                                    <Text style={[
+                                      styles.composerPillChipText,
+                                      { color: isSelected ? colors.primary : colors.subtle }
+                                    ]}>
+                                      {cat}
+                                    </Text>
+                                  </Animated.View>
+                                </TouchableOpacity>
+                              );
+                            })}
+                          </View>
+                        </View>
+                      </View>
+                    </ScrollView>
                   </View>
                 </KeyboardAvoidingView>
               </View>
@@ -1207,9 +1469,14 @@ const styles = StyleSheet.create({
   },
   categoryCard: {
     borderRadius: 18,
-    borderWidth: 1,
+    borderWidth: 0,
     padding: 16,
     gap: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
   },
   categoryHeader: {
     flexDirection: 'row',
@@ -1258,5 +1525,365 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 14,
     lineHeight: 20,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 27, 58, 0.4)',
+    justifyContent: 'flex-end',
+  },
+  modalKeyboardAvoid: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  createPostContainer: {
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    height: '90%',
+    paddingTop: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
+  },
+  modalCloseButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  modalPostButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  modalPostButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  modalScrollContent: {
+    padding: 24,
+    gap: 24,
+  },
+  modalSection: {
+    gap: 12,
+  },
+  modalLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0F1B3A',
+  },
+  categoryScroll: {
+    gap: 10,
+    paddingRight: 20,
+  },
+  categoryTag: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 14,
+    borderWidth: 0,
+  },
+  categoryTagText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  modalInput: {
+    borderRadius: 16,
+    borderWidth: 0,
+    padding: 16,
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  modalInputContent: {
+    height: 180,
+    textAlignVertical: 'top',
+  },
+  charCounter: {
+    fontSize: 12,
+    alignSelf: 'flex-end',
+    fontWeight: '600',
+    marginTop: -8,
+  },
+  tipsBox: {
+    borderRadius: 20,
+    borderWidth: 2,
+    borderLeftWidth: 4,
+    borderLeftColor: '#F59E0B',
+    padding: 20,
+    gap: 12,
+    marginBottom: 40,
+  },
+  tipsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  tipsTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#92400E',
+  },
+  tipsList: {
+    gap: 6,
+  },
+  tipsItem: {
+    fontSize: 13,
+    color: '#92400E',
+    fontWeight: '500',
+    lineHeight: 18,
+  },
+  // New Modern Social Styles
+  postCard: {
+    borderRadius: 24,
+    borderWidth: 0,
+    padding: 20,
+    gap: 14,
+    marginBottom: 4,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+  },
+  postCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  postAuthorGroup: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'center',
+  },
+  postAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  postAvatarText: {
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  postAuthorNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  postAuthorName: {
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+  },
+  postCategoryBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginLeft: 4,
+  },
+  postCategoryText: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  postTime: {
+    fontSize: 12,
+    marginTop: 1,
+    opacity: 0.8,
+  },
+  postContentArea: {
+    gap: 8,
+  },
+  postDisplayTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    letterSpacing: -0.4,
+    lineHeight: 24,
+  },
+  postBodyText: {
+    fontSize: 15,
+    lineHeight: 24,
+    opacity: 0.9,
+  },
+  postInteractionBar: {
+    flexDirection: 'row',
+    gap: 18,
+    marginTop: 4,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.03)',
+  },
+  interactionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  interactionText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  modalHeaderPremium: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 8,
+    paddingBottom: 20,
+    borderBottomWidth: 1.5,
+  },
+  headerActionBtn: {
+    padding: 4,
+  },
+  modalCancelText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalTitleSimple: {
+    fontSize: 17,
+    fontWeight: '900',
+    letterSpacing: -0.3,
+  },
+  modalPostButtonPremium: {
+    paddingHorizontal: 22,
+    paddingVertical: 10,
+    borderRadius: 100,
+  },
+  modalPostButtonTextPremium: {
+    fontSize: 15,
+    fontWeight: '900',
+    letterSpacing: 0.2,
+  },
+  modalComposeArea: {
+    padding: 24,
+    zIndex: 2,
+  },
+  composerMeshDecor: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: 'hidden',
+    zIndex: 0,
+  },
+  meshBlobOne: {
+    position: 'absolute',
+    top: -50,
+    right: -50,
+    width: 250,
+    height: 250,
+    borderRadius: 125,
+  },
+  meshBlobTwo: {
+    position: 'absolute',
+    bottom: 50,
+    left: -50,
+    width: 250,
+    height: 250,
+    borderRadius: 125,
+  },
+  composerUserInfo: {
+    flexDirection: 'row',
+    gap: 16,
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  postAvatarSquare: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    position: 'relative',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+  },
+  composerUserNameBold: {
+    fontSize: 18,
+    fontWeight: '600',
+    letterSpacing: -0.4,
+  },
+  composerCategoryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+  },
+  composerCategoryTextBlue: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  composerTitleInputLarge: {
+    fontSize: 32,
+    fontWeight: '600',
+    paddingVertical: 12,
+    letterSpacing: -1,
+  },
+  composerBodyInputFluid: {
+    fontSize: 18,
+    lineHeight: 28,
+    minHeight: 180,
+    textAlignVertical: 'top',
+    paddingVertical: 12,
+  },
+  composerBodyWrapper: {
+    marginVertical: 12,
+  },
+  characterCountRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+    marginTop: 4,
+  },
+  characterCountText: {
+    fontSize: 11,
+    fontWeight: '600',
+    opacity: 0.6,
+  },
+  mediaToolBar: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 16,
+    paddingVertical: 8,
+  },
+  mediaToolBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  composerCategoryLabel: {
+    fontSize: 12,
+    fontWeight: '900',
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+    marginBottom: 20,
+    opacity: 0.5,
+  },
+  composerCategoryChipsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  composerPillChip: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 14,
+  },
+  composerPillChipText: {
+    fontSize: 15,
+    fontWeight: '800',
   },
 });

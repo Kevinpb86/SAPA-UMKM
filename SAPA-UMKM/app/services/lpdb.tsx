@@ -144,25 +144,31 @@ export default function LpdbServiceFormScreen() {
         style={styles.flexOne}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <LinearGradient
-            colors={colors.hero}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.hero}
-          >
-            <TouchableOpacity
-              accessibilityRole="button"
-              onPress={() => router.back()}
-              style={styles.backButton}
+          <View style={styles.heroWrapper}>
+            <LinearGradient
+              colors={colors.hero}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.hero}
             >
-              <Feather name="arrow-left" size={18} color="#FFFFFF" />
-              <Text style={styles.backText}>Kembali</Text>
-            </TouchableOpacity>
-            <Text style={styles.heroTitle}>Form Pengajuan Dana Bergulir LPDB</Text>
-            <Text style={styles.heroSubtitle}>
-              Ajukan dukungan permodalan untuk koperasi atau UMKM siap ekspansi dengan melengkapi data berikut.
-            </Text>
-          </LinearGradient>
+              <TouchableOpacity
+                accessibilityRole="button"
+                onPress={() => router.back()}
+                style={styles.backButton}
+              >
+                <Feather name="arrow-left" size={18} color="#FFFFFF" />
+                <Text style={styles.backText}>Kembali</Text>
+              </TouchableOpacity>
+              <Text style={styles.heroTitle}>Form Pengajuan Dana Bergulir LPDB</Text>
+              <Text style={styles.heroSubtitle}>
+                Ajukan dukungan permodalan untuk koperasi atau UMKM siap ekspansi dengan melengkapi data berikut.
+              </Text>
+            </LinearGradient>
+            <LinearGradient
+              colors={scheme === 'dark' ? ['#5B21B633', 'transparent'] : ['#F5F3FF', 'transparent']}
+              style={styles.meshGradient}
+            />
+          </View>
 
           <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <SectionHeader
@@ -174,13 +180,14 @@ export default function LpdbServiceFormScreen() {
             <View style={styles.fieldGroup}>
               <LabeledInput
                 label="Nama Lembaga / Koperasi"
+                icon="layers"
                 placeholder="Nama lengkap lembaga"
                 value={form.institutionName}
                 onChangeText={value => handleChange('institutionName', value)}
                 colors={colors}
               />
               <View style={styles.inputWrapper}>
-                <Text style={[styles.inputLabel, { color: colors.subtle }]}>Bentuk Badan Hukum</Text>
+                <Text style={[styles.inputLabel, { color: colors.text }]}>Bentuk Badan Hukum</Text>
                 <View style={styles.pillGroup}>
                   {legalEntityOptions.map(option => {
                     const active = option === form.legalEntity;
@@ -192,8 +199,12 @@ export default function LpdbServiceFormScreen() {
                         style={[
                           styles.pill,
                           {
-                            borderColor: active ? colors.accent : colors.border,
-                            backgroundColor: active ? `${colors.accent}1A` : colors.card,
+                            backgroundColor: `${colors.subtle}08`,
+                            borderColor: 'transparent',
+                          },
+                          active && {
+                            borderColor: colors.accent,
+                            backgroundColor: `${colors.accent}15`,
                           },
                         ]}
                       >
@@ -212,6 +223,7 @@ export default function LpdbServiceFormScreen() {
               </View>
               <LabeledInput
                 label="Berdiri Sejak"
+                icon="calendar"
                 placeholder="Contoh: 2012"
                 value={form.establishedSince}
                 onChangeText={value => handleChange('establishedSince', value)}
@@ -219,6 +231,7 @@ export default function LpdbServiceFormScreen() {
               />
               <LabeledInput
                 label="Alamat Kantor"
+                icon="map-pin"
                 placeholder="Alamat lengkap operasional"
                 value={form.address}
                 onChangeText={value => handleChange('address', value)}
@@ -238,6 +251,7 @@ export default function LpdbServiceFormScreen() {
             <View style={styles.fieldGroup}>
               <LabeledInput
                 label="Nama Penanggung Jawab"
+                icon="user"
                 placeholder="Nama lengkap PIC"
                 value={form.contactPerson}
                 onChangeText={value => handleChange('contactPerson', value)}
@@ -245,6 +259,7 @@ export default function LpdbServiceFormScreen() {
               />
               <LabeledInput
                 label="Nomor Telepon"
+                icon="phone"
                 placeholder="08xxxxxxxxxx"
                 keyboardType="phone-pad"
                 value={form.phone}
@@ -253,6 +268,7 @@ export default function LpdbServiceFormScreen() {
               />
               <LabeledInput
                 label="Email Aktif"
+                icon="mail"
                 placeholder="contoh: kontak@lembaga.id"
                 keyboardType="email-address"
                 value={form.email}
@@ -272,6 +288,7 @@ export default function LpdbServiceFormScreen() {
             <View style={styles.fieldGroup}>
               <LabeledInput
                 label="Fokus Usaha / Bidang Layanan"
+                icon="briefcase"
                 placeholder="Contoh: Produksi pangan olahan, jasa simpan pinjam"
                 value={form.businessFocus}
                 onChangeText={value => handleChange('businessFocus', value)}
@@ -280,6 +297,7 @@ export default function LpdbServiceFormScreen() {
               />
               <LabeledInput
                 label="Nilai Dana Dimohon"
+                icon="dollar-sign"
                 placeholder="Contoh: Rp 500.000.000"
                 value={form.requestedFund}
                 onChangeText={value => handleChange('requestedFund', value)}
@@ -287,6 +305,7 @@ export default function LpdbServiceFormScreen() {
               />
               <LabeledInput
                 label="Rencana Penggunaan Dana"
+                icon="file-text"
                 placeholder="Uraikan alokasi dana: modal kerja, investasi alat, ekspansi pasar, dsb."
                 value={form.fundUsagePlan}
                 onChangeText={value => handleChange('fundUsagePlan', value)}
@@ -295,6 +314,7 @@ export default function LpdbServiceFormScreen() {
               />
               <LabeledInput
                 label="Ringkasan Agunan / Jaminan (opsional)"
+                icon="shield"
                 placeholder="Contoh: Sertifikat tanah, aset bergerak, rekening escrow"
                 value={form.collateralSummary}
                 onChangeText={value => handleChange('collateralSummary', value)}
@@ -303,6 +323,7 @@ export default function LpdbServiceFormScreen() {
               />
               <LabeledInput
                 label="Tautan Laporan Keuangan (opsional)"
+                icon="link"
                 placeholder="Contoh: https://drive.google.com/xxxx"
                 value={form.financialStatementLink}
                 onChangeText={value => handleChange('financialStatementLink', value)}
@@ -314,13 +335,17 @@ export default function LpdbServiceFormScreen() {
               accessibilityRole="button"
               onPress={handleSubmit}
               disabled={submitting}
-              style={[
-                styles.submitButton,
-                { backgroundColor: colors.accent, opacity: submitting ? 0.6 : 1 },
-              ]}
+              style={styles.submitWrapper}
             >
-              <Text style={styles.submitText}>{submitting ? 'Mengirim...' : 'Kirim Pengajuan LPDB'}</Text>
-              <Feather name="send" size={16} color="#FFFFFF" />
+              <LinearGradient
+                colors={submitting ? [`${colors.accent}80`, `${colors.accent}60`] : [`${colors.accent}`, '#4F46E5']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.submitButton}
+              >
+                <Text style={styles.submitText}>{submitting ? 'Mengirim...' : 'Kirim Pengajuan LPDB'}</Text>
+                <Feather name={submitting ? 'loader' : 'send'} size={16} color="#FFFFFF" />
+              </LinearGradient>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -352,6 +377,7 @@ function SectionHeader({ colors, title, subtitle, icon }: SectionHeaderProps) {
 
 type LabeledInputProps = {
   label: string;
+  icon: React.ComponentProps<typeof Feather>['name'];
   placeholder: string;
   value: string;
   onChangeText: (value: string) => void;
@@ -362,6 +388,7 @@ type LabeledInputProps = {
 
 function LabeledInput({
   label,
+  icon,
   placeholder,
   value,
   onChangeText,
@@ -369,27 +396,40 @@ function LabeledInput({
   multiline,
   keyboardType = 'default',
 }: LabeledInputProps) {
+  const [isFocused, setIsFocused] = useState(false);
   return (
     <View style={styles.inputWrapper}>
-      <Text style={[styles.inputLabel, { color: colors.subtle }]}>{label}</Text>
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor={`${colors.subtle}80`}
-        multiline={multiline}
-        keyboardType={keyboardType}
-        style={[
-          styles.input,
-          {
-            borderColor: colors.border,
-            backgroundColor: colors.card,
-            color: colors.text,
-            minHeight: multiline ? 96 : 50,
-            textAlignVertical: multiline ? 'top' : 'center',
-          },
-        ]}
-      />
+      <Text style={[styles.inputLabel, { color: colors.text }]}>{label}</Text>
+      <View style={[
+        styles.inputInner,
+        {
+          backgroundColor: isFocused ? colors.card : `${colors.subtle}08`,
+          borderColor: isFocused ? colors.accent : 'transparent',
+          alignItems: multiline ? 'flex-start' : 'center',
+          paddingTop: multiline ? 12 : 0,
+        }
+      ]}>
+        <View style={multiline ? { marginTop: 4 } : null}>
+          <Feather name={icon} size={18} color={isFocused ? colors.accent : colors.subtle} />
+        </View>
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          placeholderTextColor={`${colors.subtle}60`}
+          multiline={multiline}
+          keyboardType={keyboardType}
+          style={[
+            styles.input,
+            {
+              color: colors.text,
+              minHeight: multiline ? 96 : 48,
+            },
+            multiline && { paddingTop: 0, paddingBottom: 12 },
+            Platform.OS === 'web' && ({ outlineStyle: 'none' } as any)
+          ]}
+        />
+      </View>
     </View>
   );
 }
@@ -405,10 +445,27 @@ const styles = StyleSheet.create({
     padding: 24,
     gap: 20,
   },
-  hero: {
+  heroWrapper: {
     borderRadius: 28,
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+  },
+  hero: {
     padding: 24,
     gap: 16,
+    zIndex: 1,
+  },
+  meshGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.5,
   },
   backButton: {
     alignSelf: 'flex-start',
@@ -416,42 +473,49 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.35)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.4)',
     paddingHorizontal: 14,
-    paddingVertical: 6,
-    backgroundColor: 'rgba(30, 16, 54, 0.28)',
+    paddingVertical: 8,
+    backgroundColor: 'rgba(30, 16, 54, 0.25)',
   },
   backText: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   heroTitle: {
     color: '#FFFFFF',
     fontSize: 26,
-    fontWeight: '800',
+    fontWeight: '900',
+    letterSpacing: -0.5,
   },
   heroSubtitle: {
     color: 'rgba(242, 236, 255, 0.88)',
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 22,
+    fontWeight: '500',
   },
   card: {
-    borderRadius: 24,
-    borderWidth: 1,
-    padding: 22,
-    gap: 20,
+    borderRadius: 32,
+    borderWidth: 0,
+    padding: 24,
+    gap: 24,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 15,
   },
   sectionHeader: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 14,
     alignItems: 'center',
   },
   sectionIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 16,
+    width: 48,
+    height: 48,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -460,29 +524,41 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   sectionTitle: {
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: -0.3,
   },
   sectionSubtitle: {
     fontSize: 13,
     lineHeight: 18,
+    fontWeight: '500',
+    opacity: 0.7,
   },
   fieldGroup: {
-    gap: 16,
+    gap: 20,
   },
   inputWrapper: {
-    gap: 8,
+    gap: 10,
   },
   inputLabel: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 4,
+  },
+  inputInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+    paddingHorizontal: 16,
   },
   input: {
-    borderRadius: 14,
-    borderWidth: 1,
-    paddingHorizontal: 16,
-    paddingVertical: Platform.OS === 'ios' ? 14 : 12,
+    flex: 1,
     fontSize: 15,
+    fontWeight: '400',
+    paddingHorizontal: 12,
+    paddingVertical: 14,
   },
   pillGroup: {
     flexDirection: 'row',
@@ -490,28 +566,36 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   pill: {
-    borderRadius: 999,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
   pillText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
+  },
+  submitWrapper: {
+    marginTop: 8,
   },
   submitButton: {
-    alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    borderRadius: 999,
-    paddingHorizontal: 20,
-    paddingVertical: 13,
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 18,
+    borderRadius: 20,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
   },
   submitText: {
     color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
 });
 

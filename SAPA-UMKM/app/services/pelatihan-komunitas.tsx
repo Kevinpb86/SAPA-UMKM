@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -15,7 +16,6 @@ import {
   useColorScheme,
   View,
 } from 'react-native';
-import { Feather } from '@expo/vector-icons';
 
 const palette = {
   light: {
@@ -42,25 +42,23 @@ const skillOptions = ['Pemasaran Digital', 'Keuangan UMKM', 'Branding Produk', '
 const scheduleOptions = ['Akhir Pekan', 'Hari Kerja Pagi', 'Hari Kerja Malam'];
 
 type TrainingForm = {
-  participantName: string;
-  community: string;
-  location: string;
+  fullName: string;
   email: string;
   phone: string;
-  skillFocus: string;
-  schedulePreference: string;
-  notes: string;
+  businessName: string;
+  trainingInterest: string;
+  reason: string;
+  expectations: string;
 };
 
 const defaultForm: TrainingForm = {
-  participantName: '',
-  community: '',
-  location: '',
+  fullName: '',
   email: '',
   phone: '',
-  skillFocus: skillOptions[0],
-  schedulePreference: scheduleOptions[0],
-  notes: '',
+  businessName: '',
+  trainingInterest: '',
+  reason: '',
+  expectations: '',
 };
 
 export default function CommunityTrainingScreen() {
@@ -78,7 +76,7 @@ export default function CommunityTrainingScreen() {
   const resetForm = () => setForm(defaultForm);
 
   const validateForm = () => {
-    const requiredFields: Array<keyof TrainingForm> = ['participantName', 'community', 'location', 'phone'];
+    const requiredFields: Array<keyof TrainingForm> = ['fullName', 'phone', 'businessName', 'trainingInterest'];
     for (const field of requiredFields) {
       if (!form[field].trim()) return false;
     }
@@ -111,27 +109,31 @@ export default function CommunityTrainingScreen() {
         style={styles.flexOne}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <LinearGradient
-            colors={colors.hero}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.hero}
-          >
-            <TouchableOpacity
-              accessibilityRole="button"
-              onPress={() => router.back()}
-              style={styles.backButton}
+          <View style={styles.heroWrapper}>
+            <LinearGradient
+              colors={colors.hero}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.hero}
             >
-              <Feather name="arrow-left" size={18} color="#FFFFFF" />
-              <Text style={styles.backText}>Kembali</Text>
-            </TouchableOpacity>
-            <Text style={styles.heroKicker}>Pelatihan Anggota Komunitas</Text>
-            <Text style={styles.heroTitle}>Tingkatkan Kapasitas Bersama Mentor Lokal</Text>
-            <Text style={styles.heroSubtitle}>
-              Ikuti pelatihan berbasis komunitas untuk memperkuat keterampilan usaha, memperluas jejaring, dan saling
-              berbagi praktik terbaik antar anggota.
-            </Text>
-          </LinearGradient>
+              <TouchableOpacity
+                accessibilityRole="button"
+                onPress={() => router.back()}
+                style={styles.backButton}
+              >
+                <Feather name="arrow-left" size={18} color="#FFFFFF" />
+                <Text style={styles.backText}>Kembali</Text>
+              </TouchableOpacity>
+              <Text style={styles.heroTitle}>Pendaftaran Pelatihan Komunitas</Text>
+              <Text style={styles.heroSubtitle}>
+                Tingkatkan kompetensi dan perluas jejaring usaha Anda melalui rangkaian pelatihan eksklusif SAPA UMKM.
+              </Text>
+            </LinearGradient>
+            <LinearGradient
+              colors={scheme === 'dark' ? ['#05966933', 'transparent'] : ['#ECFDF5', 'transparent']}
+              style={styles.meshGradient}
+            />
+          </View>
 
           <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.sectionHeader}>
@@ -169,28 +171,16 @@ export default function CommunityTrainingScreen() {
 
             <View style={styles.fieldGroup}>
               <LabeledInput
-                label="Nama Peserta"
-                placeholder="Nama lengkap"
-                value={form.participantName}
-                onChangeText={value => handleChange('participantName', value)}
+                label="Nama Lengkap Calon Peserta"
+                icon="user"
+                placeholder="Nama sesuai identitas"
+                value={form.fullName}
+                onChangeText={value => handleChange('fullName', value)}
                 colors={colors}
               />
               <LabeledInput
-                label="Komunitas / Kelompok UMKM"
-                placeholder="Nama komunitas atau koperasi"
-                value={form.community}
-                onChangeText={value => handleChange('community', value)}
-                colors={colors}
-              />
-              <LabeledInput
-                label="Lokasi / Kabupaten Kota"
-                placeholder="Contoh: Kabupaten Banyuwangi"
-                value={form.location}
-                onChangeText={value => handleChange('location', value)}
-                colors={colors}
-              />
-              <LabeledInput
-                label="Email (opsional)"
+                label="Email Aktif"
+                icon="mail"
                 placeholder="contoh: peserta@umkm.id"
                 keyboardType="email-address"
                 value={form.email}
@@ -199,84 +189,47 @@ export default function CommunityTrainingScreen() {
               />
               <LabeledInput
                 label="Nomor Telepon / WhatsApp"
+                icon="phone"
                 placeholder="08xxxxxxxxxx"
                 keyboardType="phone-pad"
                 value={form.phone}
                 onChangeText={value => handleChange('phone', value)}
                 colors={colors}
               />
-            </View>
-
-            <View style={styles.inputWrapper}>
-              <Text style={[styles.inputLabel, { color: colors.subtle }]}>Fokus Keterampilan</Text>
-              <View style={styles.pillGroup}>
-                {skillOptions.map(option => {
-                  const active = option === form.skillFocus;
-                  return (
-                    <TouchableOpacity
-                      key={option}
-                      accessibilityRole="button"
-                      onPress={() => handleChange('skillFocus', option)}
-                      style={[
-                        styles.pill,
-                        {
-                          borderColor: active ? colors.accent : colors.border,
-                          backgroundColor: active ? `${colors.accent}1A` : colors.card,
-                        },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.pillText,
-                          { color: active ? colors.accent : colors.subtle },
-                        ]}
-                      >
-                        {option}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </View>
-
-            <View style={styles.inputWrapper}>
-              <Text style={[styles.inputLabel, { color: colors.subtle }]}>Preferensi Jadwal</Text>
-              <View style={styles.pillGroup}>
-                {scheduleOptions.map(option => {
-                  const active = option === form.schedulePreference;
-                  return (
-                    <TouchableOpacity
-                      key={option}
-                      accessibilityRole="button"
-                      onPress={() => handleChange('schedulePreference', option)}
-                      style={[
-                        styles.pill,
-                        {
-                          borderColor: active ? colors.accent : colors.border,
-                          backgroundColor: active ? `${colors.accent}1A` : colors.card,
-                        },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.pillText,
-                          { color: active ? colors.accent : colors.subtle },
-                        ]}
-                      >
-                        {option}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
+              <LabeledInput
+                label="Nama Usaha / Brand"
+                icon="tag"
+                placeholder="Nama brand atau usaha saat ini"
+                value={form.businessName}
+                onChangeText={value => handleChange('businessName', value)}
+                colors={colors}
+              />
             </View>
 
             <View style={styles.fieldGroup}>
               <LabeledInput
-                label="Catatan Tambahan (opsional)"
-                placeholder="Kebutuhan khusus, jumlah peserta yang ikut, dsb."
-                value={form.notes}
-                onChangeText={value => handleChange('notes', value)}
+                label="Pilih Pelatihan yang Diminati"
+                icon="book-open"
+                placeholder="Pemasaran Digital, Keuangan, Ekspor, dsb."
+                value={form.trainingInterest}
+                onChangeText={value => handleChange('trainingInterest', value)}
+                colors={colors}
+              />
+              <LabeledInput
+                label="Alasan Mengikuti Pelatihan"
+                icon="help-circle"
+                placeholder="Apa yang ingin Anda pelajari atau perbaiki dari usaha Anda?"
+                value={form.reason}
+                onChangeText={value => handleChange('reason', value)}
+                colors={colors}
+                multiline
+              />
+              <LabeledInput
+                label="Ekspektasi Hasil Pelatihan"
+                icon="target"
+                placeholder="Apa target konkret Anda setelah mengikuti pelatihan ini?"
+                value={form.expectations}
+                onChangeText={value => handleChange('expectations', value)}
                 colors={colors}
                 multiline
               />
@@ -286,13 +239,17 @@ export default function CommunityTrainingScreen() {
               accessibilityRole="button"
               onPress={handleSubmit}
               disabled={submitting}
-              style={[
-                styles.submitButton,
-                { backgroundColor: colors.accent, opacity: submitting ? 0.6 : 1 },
-              ]}
+              style={styles.submitWrapper}
             >
-              <Text style={styles.submitText}>{submitting ? 'Mengirim...' : 'Daftar Pelatihan'}</Text>
-              <Feather name="send" size={16} color="#FFFFFF" />
+              <LinearGradient
+                colors={submitting ? [`${colors.accent}80`, `${colors.accent}60`] : [`${colors.accent}`, '#059669']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.submitButton}
+              >
+                <Text style={styles.submitText}>{submitting ? 'Mengirim...' : 'Daftar Sekarang'}</Text>
+                <Feather name={submitting ? 'loader' : 'send'} size={16} color="#FFFFFF" />
+              </LinearGradient>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -303,6 +260,7 @@ export default function CommunityTrainingScreen() {
 
 type LabeledInputProps = {
   label: string;
+  icon: React.ComponentProps<typeof Feather>['name'];
   placeholder: string;
   value: string;
   onChangeText: (value: string) => void;
@@ -313,6 +271,7 @@ type LabeledInputProps = {
 
 function LabeledInput({
   label,
+  icon,
   placeholder,
   value,
   onChangeText,
@@ -320,27 +279,42 @@ function LabeledInput({
   multiline,
   keyboardType = 'default',
 }: LabeledInputProps) {
+  const [isFocused, setIsFocused] = useState(false);
   return (
     <View style={styles.inputWrapper}>
-      <Text style={[styles.inputLabel, { color: colors.subtle }]}>{label}</Text>
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor={`${colors.subtle}80`}
-        multiline={multiline}
-        keyboardType={keyboardType}
-        style={[
-          styles.input,
-          {
-            borderColor: colors.border,
-            backgroundColor: colors.card,
-            color: colors.text,
-            minHeight: multiline ? 96 : 48,
-            textAlignVertical: multiline ? 'top' : 'center',
-          },
-        ]}
-      />
+      <Text style={[styles.inputLabel, { color: colors.text }]}>{label}</Text>
+      <View style={[
+        styles.inputInner,
+        {
+          backgroundColor: isFocused ? colors.card : `${colors.subtle}08`,
+          borderColor: isFocused ? colors.accent : 'transparent',
+          alignItems: multiline ? 'flex-start' : 'center',
+          paddingTop: multiline ? 12 : 0,
+        }
+      ]}>
+        <View style={multiline ? { marginTop: 4 } : null}>
+          <Feather name={icon} size={18} color={isFocused ? colors.accent : colors.subtle} />
+        </View>
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          placeholder={placeholder}
+          placeholderTextColor={`${colors.subtle}60`}
+          multiline={multiline}
+          keyboardType={keyboardType}
+          style={[
+            styles.input,
+            {
+              color: colors.text,
+              minHeight: multiline ? 96 : 48,
+            },
+            multiline && { paddingTop: 0, paddingBottom: 12 },
+            Platform.OS === 'web' && ({ outlineStyle: 'none' } as any)
+          ]}
+        />
+      </View>
     </View>
   );
 }
@@ -371,10 +345,27 @@ const styles = StyleSheet.create({
     padding: 24,
     gap: 20,
   },
-  hero: {
+  heroWrapper: {
     borderRadius: 28,
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+  },
+  hero: {
     padding: 24,
     gap: 16,
+    zIndex: 1,
+  },
+  meshGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.5,
   },
   backButton: {
     alignSelf: 'flex-start',
@@ -382,38 +373,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.35)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.4)',
     paddingHorizontal: 14,
-    paddingVertical: 6,
-    backgroundColor: 'rgba(39, 16, 75, 0.28)',
+    paddingVertical: 8,
+    backgroundColor: 'rgba(6, 78, 59, 0.25)',
   },
   backText: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '600',
-  },
-  heroKicker: {
-    color: 'rgba(245, 237, 255, 0.92)',
-    fontSize: 13,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
+    fontWeight: '700',
   },
   heroTitle: {
     color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: '800',
+    fontSize: 26,
+    fontWeight: '900',
+    letterSpacing: -0.5,
   },
   heroSubtitle: {
-    color: 'rgba(249, 245, 255, 0.9)',
+    color: 'rgba(236, 253, 245, 0.9)',
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 22,
+    fontWeight: '500',
   },
   card: {
-    borderRadius: 24,
-    borderWidth: 1,
-    padding: 22,
-    gap: 18,
+    borderRadius: 32,
+    borderWidth: 0,
+    padding: 24,
+    gap: 24,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 15,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -445,50 +437,52 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   fieldGroup: {
-    gap: 16,
+    gap: 20,
   },
   inputWrapper: {
-    gap: 8,
-  },
-  inputLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  input: {
-    borderRadius: 14,
-    borderWidth: 1,
-    paddingHorizontal: 16,
-    paddingVertical: Platform.OS === 'ios' ? 14 : 12,
-    fontSize: 15,
-  },
-  pillGroup: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: 10,
   },
-  pill: {
-    borderRadius: 999,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 4,
   },
-  pillText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  submitButton: {
-    alignSelf: 'flex-start',
+  inputInner: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    borderRadius: 999,
-    paddingHorizontal: 20,
-    paddingVertical: 13,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+    paddingHorizontal: 16,
+  },
+  input: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '400',
+    paddingHorizontal: 12,
+    paddingVertical: 14,
+  },
+  submitWrapper: {
+    marginTop: 8,
+  },
+  submitButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 18,
+    borderRadius: 20,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
   },
   submitText: {
     color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
 });
 

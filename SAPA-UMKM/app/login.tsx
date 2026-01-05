@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
   },
   formCard: {
     borderRadius: 32,
-    borderWidth: 1,
+    borderWidth: 0,
     padding: 24,
     gap: 24,
     elevation: 8,
@@ -477,7 +477,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     borderRadius: 18,
-    borderWidth: 1.5,
+    borderWidth: 0,
     paddingHorizontal: 16,
     height: 56,
   },
@@ -535,10 +535,11 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
     borderRadius: 18,
-    borderWidth: 1.5,
+    borderWidth: 0,
     paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.02)',
   },
   secondaryButtonText: {
     fontSize: 15,

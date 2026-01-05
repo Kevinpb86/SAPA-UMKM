@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
-import { LinearGradient } from 'expo-linear-gradient';
-import { StatusBar } from 'expo-status-bar';
-import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   SafeAreaView,
@@ -105,7 +105,7 @@ export default function ServicesScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}> 
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.heroSection}>
@@ -233,8 +233,8 @@ export default function ServicesScreen() {
                       backgroundColor: isActive
                         ? category.accent
                         : scheme === 'dark'
-                        ? 'rgba(255,255,255,0.08)'
-                        : colors.pill,
+                          ? 'rgba(255,255,255,0.08)'
+                          : colors.pill,
                     },
                   ]}
                 >
@@ -454,7 +454,7 @@ const styles = StyleSheet.create({
   },
   heroHighlightValue: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   heroHighlightLabel: {
     fontSize: 12,
@@ -539,7 +539,7 @@ const styles = StyleSheet.create({
   },
   categoryChipLabel: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '500',
     flexShrink: 1,
   },
   sectionCard: {
@@ -581,7 +581,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   sectionSummary: {
     fontSize: 14,

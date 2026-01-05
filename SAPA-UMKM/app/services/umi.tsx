@@ -140,25 +140,31 @@ export default function UmiServiceFormScreen() {
         style={styles.flexOne}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <LinearGradient
-            colors={colors.hero}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.hero}
-          >
-            <TouchableOpacity
-              accessibilityRole="button"
-              onPress={() => router.back()}
-              style={styles.backButton}
+          <View style={styles.heroWrapper}>
+            <LinearGradient
+              colors={colors.hero}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.hero}
             >
-              <Feather name="arrow-left" size={18} color="#FFFFFF" />
-              <Text style={styles.backText}>Kembali</Text>
-            </TouchableOpacity>
-            <Text style={styles.heroTitle}>Form Pendaftaran Program UMi</Text>
-            <Text style={styles.heroSubtitle}>
-              Program Ultra Mikro untuk tambahan modal usaha harian dengan proses penyaluran cepat.
-            </Text>
-          </LinearGradient>
+              <TouchableOpacity
+                accessibilityRole="button"
+                onPress={() => router.back()}
+                style={styles.backButton}
+              >
+                <Feather name="arrow-left" size={18} color="#FFFFFF" />
+                <Text style={styles.backText}>Kembali</Text>
+              </TouchableOpacity>
+              <Text style={styles.heroTitle}>Form Pendaftaran Program UMi</Text>
+              <Text style={styles.heroSubtitle}>
+                Program Ultra Mikro untuk tambahan modal usaha harian dengan proses penyaluran cepat.
+              </Text>
+            </LinearGradient>
+            <LinearGradient
+              colors={scheme === 'dark' ? ['#0369A133', 'transparent'] : ['#F0F9FF', 'transparent']}
+              style={styles.meshGradient}
+            />
+          </View>
 
           <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <SectionHeader
@@ -170,6 +176,7 @@ export default function UmiServiceFormScreen() {
             <View style={styles.fieldGroup}>
               <LabeledInput
                 label="Nama Lengkap Pemohon"
+                icon="user"
                 placeholder="Sesuai identitas"
                 value={form.ownerName}
                 onChangeText={value => handleChange('ownerName', value)}
@@ -177,6 +184,7 @@ export default function UmiServiceFormScreen() {
               />
               <LabeledInput
                 label="NIK (Nomor Induk Kependudukan)"
+                icon="credit-card"
                 placeholder="16 digit NIK"
                 keyboardType="number-pad"
                 value={form.nik}
@@ -185,6 +193,7 @@ export default function UmiServiceFormScreen() {
               />
               <LabeledInput
                 label="Nomor Telepon / WhatsApp"
+                icon="phone"
                 placeholder="08xxxxxxxxxx"
                 keyboardType="phone-pad"
                 value={form.phone}
@@ -193,6 +202,7 @@ export default function UmiServiceFormScreen() {
               />
               <LabeledInput
                 label="Email Aktif (opsional)"
+                icon="mail"
                 placeholder="contoh: pelaku@umkm.id"
                 keyboardType="email-address"
                 value={form.email}
@@ -212,6 +222,7 @@ export default function UmiServiceFormScreen() {
             <View style={styles.fieldGroup}>
               <LabeledInput
                 label="Nama Usaha"
+                icon="tag"
                 placeholder="Nama toko atau brand"
                 value={form.businessName}
                 onChangeText={value => handleChange('businessName', value)}
@@ -219,6 +230,7 @@ export default function UmiServiceFormScreen() {
               />
               <LabeledInput
                 label="Jenis Usaha"
+                icon="briefcase"
                 placeholder="Contoh: Kuliner, jasa laundry, warung kelontong"
                 value={form.businessType}
                 onChangeText={value => handleChange('businessType', value)}
@@ -226,6 +238,7 @@ export default function UmiServiceFormScreen() {
               />
               <LabeledInput
                 label="Alamat / Lokasi Usaha"
+                icon="map-pin"
                 placeholder="Alamat lengkap atau kecamatan"
                 value={form.businessAddress}
                 onChangeText={value => handleChange('businessAddress', value)}
@@ -234,6 +247,7 @@ export default function UmiServiceFormScreen() {
               />
               <LabeledInput
                 label="Omzet Rata-rata per Bulan (opsional)"
+                icon="trending-up"
                 placeholder="Contoh: Rp 8.000.000"
                 value={form.monthlyRevenue}
                 onChangeText={value => handleChange('monthlyRevenue', value)}
@@ -252,6 +266,7 @@ export default function UmiServiceFormScreen() {
             <View style={styles.fieldGroup}>
               <LabeledInput
                 label="Kebutuhan Dana"
+                icon="dollar-sign"
                 placeholder="Contoh: Rp 10.000.000"
                 value={form.fundingNeed}
                 onChangeText={value => handleChange('fundingNeed', value)}
@@ -259,6 +274,7 @@ export default function UmiServiceFormScreen() {
               />
               <LabeledInput
                 label="Rencana Penggunaan Dana"
+                icon="file-text"
                 placeholder="Contoh: Modal stok bahan baku, promosi daring"
                 value={form.fundUsage}
                 onChangeText={value => handleChange('fundUsage', value)}
@@ -267,6 +283,7 @@ export default function UmiServiceFormScreen() {
               />
               <LabeledInput
                 label="Rencana Pengembalian"
+                icon="calendar"
                 placeholder="Contoh: Cicilan mingguan dari penjualan harian"
                 value={form.repaymentPlan}
                 onChangeText={value => handleChange('repaymentPlan', value)}
@@ -279,13 +296,17 @@ export default function UmiServiceFormScreen() {
               accessibilityRole="button"
               onPress={handleSubmit}
               disabled={submitting}
-              style={[
-                styles.submitButton,
-                { backgroundColor: colors.accent, opacity: submitting ? 0.6 : 1 },
-              ]}
+              style={styles.submitWrapper}
             >
-              <Text style={styles.submitText}>{submitting ? 'Mengirim...' : 'Kirim Pengajuan UMi'}</Text>
-              <Feather name="send" size={16} color="#FFFFFF" />
+              <LinearGradient
+                colors={submitting ? [`${colors.accent}80`, `${colors.accent}60`] : [`${colors.accent}`, '#0284C7']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.submitButton}
+              >
+                <Text style={styles.submitText}>{submitting ? 'Mengirim...' : 'Kirim Pengajuan UMi'}</Text>
+                <Feather name={submitting ? 'loader' : 'send'} size={16} color="#FFFFFF" />
+              </LinearGradient>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -317,6 +338,7 @@ function SectionHeader({ colors, title, subtitle, icon }: SectionHeaderProps) {
 
 type LabeledInputProps = {
   label: string;
+  icon: React.ComponentProps<typeof Feather>['name'];
   placeholder: string;
   value: string;
   onChangeText: (value: string) => void;
@@ -327,6 +349,7 @@ type LabeledInputProps = {
 
 function LabeledInput({
   label,
+  icon,
   placeholder,
   value,
   onChangeText,
@@ -334,27 +357,40 @@ function LabeledInput({
   multiline,
   keyboardType = 'default',
 }: LabeledInputProps) {
+  const [isFocused, setIsFocused] = useState(false);
   return (
     <View style={styles.inputWrapper}>
-      <Text style={[styles.inputLabel, { color: colors.subtle }]}>{label}</Text>
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor={`${colors.subtle}80`}
-        multiline={multiline}
-        keyboardType={keyboardType}
-        style={[
-          styles.input,
-          {
-            borderColor: colors.border,
-            backgroundColor: colors.card,
-            color: colors.text,
-            minHeight: multiline ? 96 : 50,
-            textAlignVertical: multiline ? 'top' : 'center',
-          },
-        ]}
-      />
+      <Text style={[styles.inputLabel, { color: colors.text }]}>{label}</Text>
+      <View style={[
+        styles.inputInner,
+        {
+          backgroundColor: isFocused ? colors.card : `${colors.subtle}08`,
+          borderColor: isFocused ? colors.accent : 'transparent',
+          alignItems: multiline ? 'flex-start' : 'center',
+          paddingTop: multiline ? 12 : 0,
+        }
+      ]}>
+        <View style={multiline ? { marginTop: 4 } : null}>
+          <Feather name={icon} size={18} color={isFocused ? colors.accent : colors.subtle} />
+        </View>
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          placeholderTextColor={`${colors.subtle}60`}
+          multiline={multiline}
+          keyboardType={keyboardType}
+          style={[
+            styles.input,
+            {
+              color: colors.text,
+              minHeight: multiline ? 96 : 48,
+            },
+            multiline && { paddingTop: 0, paddingBottom: 12 },
+            Platform.OS === 'web' && ({ outlineStyle: 'none' } as any)
+          ]}
+        />
+      </View>
     </View>
   );
 }
@@ -370,10 +406,27 @@ const styles = StyleSheet.create({
     padding: 24,
     gap: 20,
   },
-  hero: {
+  heroWrapper: {
     borderRadius: 28,
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+  },
+  hero: {
     padding: 24,
     gap: 16,
+    zIndex: 1,
+  },
+  meshGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.5,
   },
   backButton: {
     alignSelf: 'flex-start',
@@ -381,42 +434,49 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.35)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.4)',
     paddingHorizontal: 14,
-    paddingVertical: 6,
-    backgroundColor: 'rgba(8, 47, 73, 0.28)',
+    paddingVertical: 8,
+    backgroundColor: 'rgba(8, 47, 73, 0.25)',
   },
   backText: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   heroTitle: {
     color: '#FFFFFF',
     fontSize: 26,
-    fontWeight: '800',
+    fontWeight: '900',
+    letterSpacing: -0.5,
   },
   heroSubtitle: {
     color: 'rgba(224, 242, 254, 0.9)',
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 22,
+    fontWeight: '500',
   },
   card: {
-    borderRadius: 24,
-    borderWidth: 1,
-    padding: 22,
-    gap: 20,
+    borderRadius: 32,
+    borderWidth: 0,
+    padding: 24,
+    gap: 24,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 15,
   },
   sectionHeader: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 14,
     alignItems: 'center',
   },
   sectionIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 16,
+    width: 48,
+    height: 48,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -425,43 +485,63 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   sectionTitle: {
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: -0.3,
   },
   sectionSubtitle: {
     fontSize: 13,
     lineHeight: 18,
+    fontWeight: '500',
+    opacity: 0.7,
   },
   fieldGroup: {
-    gap: 16,
+    gap: 20,
   },
   inputWrapper: {
-    gap: 8,
+    gap: 10,
   },
   inputLabel: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 4,
   },
-  input: {
-    borderRadius: 14,
-    borderWidth: 1,
-    paddingHorizontal: 16,
-    paddingVertical: Platform.OS === 'ios' ? 14 : 12,
-    fontSize: 15,
-  },
-  submitButton: {
-    alignSelf: 'flex-start',
+  inputInner: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    borderRadius: 999,
-    paddingHorizontal: 20,
-    paddingVertical: 13,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+    paddingHorizontal: 16,
+  },
+  input: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '400',
+    paddingHorizontal: 12,
+    paddingVertical: 14,
+  },
+  submitWrapper: {
+    marginTop: 8,
+  },
+  submitButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 18,
+    borderRadius: 20,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
   },
   submitText: {
     color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
 });
 
