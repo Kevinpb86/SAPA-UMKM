@@ -168,36 +168,34 @@ export default function NibApplyScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.flexOne}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={[styles.card, { backgroundColor: colors.card }]}>
+          <View style={[styles.card, { backgroundColor: '#1D4ED8', borderColor: 'rgba(255,255,255,0.1)' }]}>
             {/* Animated Mesh Background Section */}
             <View style={styles.meshContainer}>
+              <Animated.View style={[styles.meshOverlay, { transform: [{ rotate: meshRotate }, { scale: 1.5 }] }]}>
+                <View style={[styles.meshCircle, { top: -80, right: -40, width: 260, height: 260, backgroundColor: 'rgba(255,255,255,0.12)' }]} />
+                <View style={[styles.meshCircle, { bottom: -120, left: -60, width: 320, height: 320, backgroundColor: 'rgba(255,255,255,0.08)' }]} />
+              </Animated.View>
 
               {/* Decorative Floating Symbols */}
               <Animated.View style={[styles.floatingDeco, { top: '20%', right: '10%', transform: [{ translateY: floatY }] }]}>
-                <Feather name="globe" size={80} color={colors.accent} style={{ opacity: 0.03 }} />
+                <Feather name="globe" size={100} color="#FFFFFF" style={{ opacity: 0.08 }} />
               </Animated.View>
               <Animated.View style={[styles.floatingDeco, { bottom: '30%', left: '5%', transform: [{ translateY: Animated.multiply(floatY, -0.8) }] }]}>
-                <Feather name="award" size={100} color={colors.accent} style={{ opacity: 0.02 }} />
+                <Feather name="award" size={120} color="#FFFFFF" style={{ opacity: 0.06 }} />
               </Animated.View>
             </View>
 
-            <TouchableOpacity
-              accessibilityRole="button"
-              onPress={() => router.back()}
-              style={[styles.backButton, { backgroundColor: `${colors.accent}12` }]}>
-              <Feather name="arrow-left" size={18} color={colors.accent} />
-              <Text style={[styles.backText, { color: colors.accent }]}>Kembali</Text>
-            </TouchableOpacity>
 
             <View style={styles.header}>
-              <View style={[styles.headerIconWrapper, { backgroundColor: `${colors.accent}15` }]}>
-                <Feather name="award" size={32} color={colors.accent} />
-                <Animated.View style={[styles.shieldPulse, { backgroundColor: colors.accent, opacity: meshAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.1, 0.3, 0.1] }) }]} />
+              <View style={[styles.headerIconWrapper, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+                <Feather name="file-text" size={32} color="#FFFFFF" />
+                <Animated.View style={[styles.shieldPulse, { backgroundColor: '#FFFFFF', opacity: meshAnim.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.1, 0.3, 0.1] }) }]} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.title, { color: colors.text }]}>Sertifikasi NIB</Text>
-                <Text style={[styles.subtitle, { color: colors.subtle }]}>
-                  Dapatkan legalitas usaha Anda dalam hitungan menit. Proses digital resmi & terintegrasi OSS.
+                <Text style={[styles.heroKicker, { color: 'rgba(255,255,255,0.7)' }]}>PENGAJUAN & PEMBARUAN IZIN USAHA</Text>
+                <Text style={[styles.title, { color: '#FFFFFF', fontSize: 26, fontWeight: '800' }]}>Nomor Induk Berusaha (NIB)</Text>
+                <Text style={[styles.subtitle, { color: 'rgba(255,255,255,0.85)', lineHeight: 22, marginTop: 4 }]}>
+                  Dapatkan legalitas usaha secara resmi melalui penerbitan NIB daring. Lengkapi data, unggah dokumen, dan pantau proses secara real-time.
                 </Text>
               </View>
             </View>
@@ -205,19 +203,21 @@ export default function NibApplyScreen() {
             {/* Trust Badges Row */}
             <Animated.View style={[styles.trustRow, { opacity: entryAnim, transform: [{ translateY: entryAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }] }]}>
               <View style={styles.trustBadge}>
-                <Feather name="check-circle" size={12} color="#10B981" />
-                <Text style={[styles.trustText, { color: colors.subtle }]}>Verifikasi OSS</Text>
+                <Feather name="check-circle" size={12} color="#FFFFFF" />
+                <Text style={[styles.trustText, { color: '#FFFFFF', opacity: 0.9 }]}>Verifikasi OSS</Text>
               </View>
               <View style={styles.trustBadge}>
-                <Feather name="unlock" size={12} color="#6366F1" />
-                <Text style={[styles.trustText, { color: colors.subtle }]}>Enkripsi Data</Text>
+                <Feather name="unlock" size={12} color="#FFFFFF" />
+                <Text style={[styles.trustText, { color: '#FFFFFF', opacity: 0.9 }]}>Enkripsi Data</Text>
               </View>
               <View style={styles.trustBadge}>
-                <Feather name="award" size={12} color="#F59E0B" />
-                <Text style={[styles.trustText, { color: colors.subtle }]}>Layanan Resmi</Text>
+                <Feather name="award" size={12} color="#FFFFFF" />
+                <Text style={[styles.trustText, { color: '#FFFFFF', opacity: 0.9 }]}>Layanan Resmi</Text>
               </View>
             </Animated.View>
+          </View>
 
+          <View style={[styles.card, { backgroundColor: colors.card, marginTop: 16 }]}>
             <View style={styles.section}>
               <View style={styles.sectionHeaderRow}>
                 <Feather name="user" size={20} color={colors.accent} />
@@ -270,7 +270,9 @@ export default function NibApplyScreen() {
                 />
               </View>
             </View>
+          </View>
 
+          <View style={[styles.card, { backgroundColor: colors.card, marginTop: 16 }]}>
             <View style={styles.section}>
               <View style={styles.sectionHeaderRow}>
                 <Feather name="briefcase" size={20} color={colors.accent} />
@@ -321,42 +323,49 @@ export default function NibApplyScreen() {
                   colors={colors}
                 />
               </View>
-            </View>
 
-            <View style={styles.modalActions}>
-              <TouchableOpacity
-                accessibilityRole="button"
-                onPress={() => router.back()}
-                style={[styles.secondaryButton, { backgroundColor: scheme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)' }]}
-              >
-                <Text style={[styles.secondaryButtonText, { color: colors.subtle }]}>Batal</Text>
-              </TouchableOpacity>
+              <View style={[styles.modalActions, { marginTop: 8 }]}>
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  onPress={() => router.back()}
+                  style={[
+                    styles.secondaryButton,
+                    {
+                      backgroundColor: scheme === 'dark' ? 'rgba(255,255,255,0.08)' : '#FFFFFF',
+                      borderColor: scheme === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)',
+                      borderWidth: 1,
+                    }
+                  ]}
+                >
+                  <Text style={[styles.secondaryButtonText, { color: colors.text, opacity: 0.7 }]}>Batal</Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                accessibilityRole="button"
-                onPress={handleSubmit}
-                disabled={isSubmitting}
-                activeOpacity={0.8}
-                style={styles.modalSubmitWrapper}
-              >
-                <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
-                  <LinearGradient
-                    colors={isSubmitting ? [`${colors.accent}CC`, `${colors.accent}CC`] : [`${colors.accent}`, `${colors.accent}EE`]}
-                    style={styles.modalSubmitBtn}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                  >
-                    <Text style={styles.submitText}>{isSubmitting ? 'Memproses...' : 'Kirim Permohonan'}</Text>
-                    {isSubmitting ? (
-                      <Animated.View style={{ transform: [{ rotate: meshRotate }] }}>
-                        <Feather name="loader" size={18} color="#FFFFFF" />
-                      </Animated.View>
-                    ) : (
-                      <Feather name="send" size={18} color="#FFFFFF" />
-                    )}
-                  </LinearGradient>
-                </Animated.View>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  onPress={handleSubmit}
+                  disabled={isSubmitting}
+                  activeOpacity={0.8}
+                  style={styles.modalSubmitWrapper}
+                >
+                  <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
+                    <LinearGradient
+                      colors={isSubmitting ? [`${colors.accent}CC`, `${colors.accent}CC`] : [`${colors.accent}`, `${colors.accent}EE`]}
+                      style={styles.modalSubmitBtn}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                    >
+                      <Text style={styles.submitText}>{isSubmitting ? 'Memproses...' : 'Kirim Permohonan'}</Text>
+                      {isSubmitting ? (
+                        <Animated.View style={{ transform: [{ rotate: meshRotate }] }}>
+                          <Feather name="loader" size={18} color="#FFFFFF" />
+                        </Animated.View>
+                      ) : (
+                        <Feather name="send" size={18} color="#FFFFFF" />
+                      )}
+                    </LinearGradient>
+                  </Animated.View>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </ScrollView>
@@ -564,19 +573,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 200,
   },
-  backButton: {
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    borderRadius: 99,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  backText: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
   header: {
     gap: 16,
     paddingVertical: 10,
@@ -591,6 +587,14 @@ const styles = StyleSheet.create({
     bottom: 0,
     zIndex: -1,
     overflow: 'hidden',
+  },
+  meshOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: -1,
   },
   meshCircle: {
     position: 'absolute',
@@ -637,16 +641,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  heroKicker: {
+    color: 'rgba(29, 78, 216, 0.7)',
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+    marginBottom: 4,
+  },
   title: {
     fontSize: 26,
     fontWeight: '700',
     letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: 15,
-    lineHeight: 22,
-    fontWeight: '500',
-    opacity: 0.8,
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '400',
   },
   section: {
     gap: 20,

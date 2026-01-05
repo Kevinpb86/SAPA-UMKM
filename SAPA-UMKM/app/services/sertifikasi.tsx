@@ -2,14 +2,17 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect, useRef } from 'react';
 import {
+  Animated,
+  Easing,
   SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   useColorScheme,
-  View,
+  View
 } from 'react-native';
 
 const palette = {
@@ -44,37 +47,130 @@ export default function SertifikasiServiceScreen() {
   const colors = scheme === 'dark' ? palette.dark : palette.light;
   const router = useRouter();
 
+  // Elite Animation System
+  const meshAnim = useRef(new Animated.Value(0)).current;
+  const floatAnim = useRef(new Animated.Value(0)).current;
+  const entryAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Mesh loop
+    Animated.loop(
+      Animated.timing(meshAnim, {
+        toValue: 1,
+        duration: 20000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    ).start();
+
+    // Floating loop
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatAnim, {
+          toValue: 1,
+          duration: 4000,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(floatAnim, {
+          toValue: 0,
+          duration: 4000,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    // Master entry
+    Animated.spring(entryAnim, {
+      toValue: 1,
+      tension: 20,
+      friction: 8,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  const meshRotate = meshAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  const floatY = floatAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -25],
+  });
+
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.heroWrapper}>
+        <Animated.View
+          style={[
+            styles.heroContainer,
+            {
+              opacity: entryAnim,
+              transform: [{ translateY: entryAnim.interpolate({ inputRange: [0, 1], outputRange: [-20, 0] }) }]
+            }
+          ]}
+        >
           <LinearGradient
             colors={colors.hero}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.hero}
           >
-            <TouchableOpacity
-              accessibilityRole="button"
-              onPress={() => router.back()}
-              style={styles.backButton}
-            >
-              <Feather name="arrow-left" size={18} color="#FFFFFF" />
-              <Text style={styles.backText}>Kembali</Text>
-            </TouchableOpacity>
+            {/* Animated Mesh Overlay */}
+            <Animated.View style={[styles.meshOverlay, { transform: [{ rotate: meshRotate }, { scale: 1.4 }] }]}>
+              <View style={[styles.meshCircle, { top: -60, left: -60, width: 220, height: 220, backgroundColor: 'rgba(255,255,255,0.06)' }]} />
+              <View style={[styles.meshCircle, { bottom: -100, right: -20, width: 280, height: 280, backgroundColor: 'rgba(255,255,255,0.04)' }]} />
+            </Animated.View>
 
-            <Text style={styles.heroKicker}>Pengajuan Sertifikasi</Text>
-            <Text style={styles.heroTitle}>Halal, SNI, dan Standar Lainnya</Text>
-            <Text style={styles.heroSubtitle}>
-              Pastikan produk Anda memenuhi standar kualitas dengan sertifikasi resmi. Pantau seluruh proses dari satu halaman terpadu.
-            </Text>
+            {/* Business Floating Icons */}
+            <Animated.View style={[styles.floatingIcon, { top: '15%', right: '8%', transform: [{ translateY: floatY }] }]}>
+              <Feather name="award" size={80} color="#FFFFFF" style={{ opacity: 0.05 }} />
+            </Animated.View>
+            <Animated.View style={[styles.floatingIcon, { bottom: '10%', left: '4%', transform: [{ translateY: Animated.multiply(floatY, -0.7) }] }]}>
+              <Feather name="shield" size={100} color="#FFFFFF" style={{ opacity: 0.04 }} />
+            </Animated.View>
+
+            <View style={styles.heroContent}>
+              <Text style={styles.heroKicker}>Pengajuan Sertifikasi</Text>
+              <View style={styles.heroTitleRow}>
+                <View style={styles.heroTitleIcon}>
+                  <Feather name="award" size={24} color="#FFFFFF" />
+                </View>
+                <Text style={styles.heroTitle}>Halal, SNI, dan Standar Lainnya</Text>
+              </View>
+              <Text style={styles.heroSubtitle}>
+                Pastikan produk Anda memenuhi standar kualitas dengan sertifikasi resmi. Pantau seluruh proses dari satu halaman terpadu.
+              </Text>
+            </View>
           </LinearGradient>
-          <LinearGradient
-            colors={scheme === 'dark' ? ['#065F4633', 'transparent'] : ['#F3FBF8', 'transparent']}
-            style={styles.meshGradient}
-          />
-        </View>
+        </Animated.View>
+
+        {/* Official Trust Indicators */}
+        <Animated.View
+          style={[
+            styles.trustBanner,
+            {
+              opacity: entryAnim,
+              transform: [{ scale: entryAnim.interpolate({ inputRange: [0, 1], outputRange: [0.95, 1] }) }]
+            }
+          ]}
+        >
+          <View style={styles.trustItem}>
+            <Feather name="award" size={14} color="#0F766E" />
+            <Text style={[styles.trustText, { color: colors.subtle }]}>Lembaga Resmi</Text>
+          </View>
+          <View style={styles.trustItem}>
+            <Feather name="activity" size={14} color="#10B981" />
+            <Text style={[styles.trustText, { color: colors.subtle }]}>Audit Terpadu</Text>
+          </View>
+          <View style={styles.trustItem}>
+            <Feather name="eye" size={14} color="#34D399" />
+            <Text style={[styles.trustText, { color: colors.subtle }]}>Pantau Real-time</Text>
+          </View>
+        </Animated.View>
 
         <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <View style={styles.cardHeader}>
@@ -99,21 +195,27 @@ export default function SertifikasiServiceScreen() {
             ))}
           </View>
 
-          <TouchableOpacity
-            accessibilityRole="button"
-            onPress={() => router.push('/services/sertifikasi/cek')}
-            style={styles.submitWrapper}
-          >
-            <LinearGradient
-              colors={[`${colors.accent}`, '#10B981']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.primaryButton}
+          <View style={styles.footerRow}>
+            <TouchableOpacity
+              accessibilityRole="button"
+              onPress={() => router.back()}
+              activeOpacity={0.7}
+              style={[styles.secondaryButton, { borderColor: colors.border }]}
+            >
+              <Feather name="chevron-left" size={18} color={colors.subtle} />
+              <Text style={[styles.secondaryButtonText, { color: colors.subtle }]}>Kembali</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              accessibilityRole="button"
+              onPress={() => router.push('/services/sertifikasi/cek')}
+              activeOpacity={0.85}
+              style={[styles.primaryButton, { backgroundColor: colors.accent, flex: 2 }]}
             >
               <Text style={styles.primaryButtonText}>Cek Sertifikasi</Text>
-              <Feather name="external-link" size={16} color="#FFFFFF" />
-            </LinearGradient>
-          </TouchableOpacity>
+              <Feather name="external-link" size={18} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -125,140 +227,204 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 24,
+    padding: 20,
     gap: 20,
   },
-  heroWrapper: {
-    borderRadius: 28,
+  heroContainer: {
+    marginTop: 8,
+    borderRadius: 32,
     overflow: 'hidden',
-    elevation: 4,
+    elevation: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.15,
-    shadowRadius: 10,
+    shadowRadius: 20,
   },
   hero: {
-    padding: 24,
-    gap: 16,
-    zIndex: 1,
+    padding: 20,
+    minHeight: 240,
+    justifyContent: 'center',
   },
-  meshGradient: {
+  meshOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    opacity: 0.5,
+    zIndex: -1,
   },
-  backButton: {
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  meshCircle: {
+    position: 'absolute',
     borderRadius: 999,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.4)',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    backgroundColor: 'rgba(8, 34, 30, 0.25)',
   },
-  backText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
+  floatingIcon: {
+    position: 'absolute',
+    zIndex: -1,
+  },
+  heroContent: {
+    gap: 8,
+    marginTop: 0,
   },
   heroKicker: {
-    color: 'rgba(209, 250, 229, 0.9)',
-    fontSize: 13,
-    letterSpacing: 1,
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 12,
+    fontWeight: '700',
     textTransform: 'uppercase',
-    fontWeight: '800',
+    letterSpacing: 1.5,
+  },
+  heroTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  heroTitleIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   heroTitle: {
     color: '#FFFFFF',
     fontSize: 26,
-    fontWeight: '900',
+    fontWeight: '700',
     letterSpacing: -0.5,
+    flex: 1,
   },
   heroSubtitle: {
-    color: 'rgba(236, 253, 245, 0.92)',
+    color: 'rgba(255, 255, 255, 0.85)',
     fontSize: 14,
     lineHeight: 22,
-    fontWeight: '500',
+    fontWeight: '400',
+  },
+  trustBanner: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderRadius: 20,
+    backgroundColor: 'rgba(124, 58, 237, 0.05)',
+    marginHorizontal: 4,
+    marginTop: 12,
+  },
+  trustItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  trustText: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.2,
   },
   card: {
-    borderRadius: 32,
-    borderWidth: 0,
-    padding: 24,
-    gap: 24,
-    elevation: 4,
+    borderRadius: 36,
+    borderWidth: 1,
+    padding: 30,
+    gap: 32,
+    elevation: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08,
-    shadowRadius: 15,
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.12,
+    shadowRadius: 32,
+    marginVertical: 4,
+    overflow: 'hidden',
   },
   cardHeader: {
     flexDirection: 'row',
-    gap: 14,
+    gap: 18,
     alignItems: 'center',
   },
   cardIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
+    width: 60,
+    height: 60,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
   },
   cardHeaderCopy: {
     flex: 1,
-    gap: 4,
+    gap: 6,
   },
   cardTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    letterSpacing: -0.3,
+    fontSize: 20,
+    fontWeight: '700',
+    letterSpacing: -0.4,
   },
   cardSubtitle: {
-    fontSize: 13,
+    fontSize: 14,
     lineHeight: 20,
-    fontWeight: '500',
-    opacity: 0.7,
+    fontWeight: '400',
+    opacity: 0.8,
+  },
+  pulseCircle: {
+    position: 'absolute',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    zIndex: -1,
   },
   checklist: {
-    gap: 12,
+    gap: 16,
   },
   checklistRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 14,
     alignItems: 'flex-start',
   },
   checklistText: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 15,
     lineHeight: 22,
-    fontWeight: '500',
-    opacity: 0.8,
+    fontWeight: '400',
   },
-  submitWrapper: {
+  footerRow: {
+    flexDirection: 'row',
+    gap: 12,
     marginTop: 8,
+    alignItems: 'center',
+  },
+  secondaryButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderRadius: 20,
+    paddingVertical: 18,
+    borderWidth: 1.5,
+    backgroundColor: 'transparent',
+  },
+  secondaryButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
   primaryButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
-    paddingVertical: 18,
+    gap: 12,
     borderRadius: 20,
-    elevation: 8,
+    paddingVertical: 18,
+    elevation: 6,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
   },
   primaryButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+    fontWeight: '700',
+    letterSpacing: 0.2,
   },
 });

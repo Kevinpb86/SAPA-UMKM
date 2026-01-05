@@ -93,17 +93,17 @@ export default function MerekServiceScreen() {
   const entryAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Secondary pulse/mesh loop
+    // Hero mesh loop
     Animated.loop(
       Animated.timing(meshAnim, {
         toValue: 1,
-        duration: 15000,
-        easing: Easing.bezier(0.4, 0, 0.2, 1),
+        duration: 20000,
+        easing: Easing.linear,
         useNativeDriver: true,
       })
     ).start();
 
-    // Floating loop for business symbols
+    // Floating icons loop
     Animated.loop(
       Animated.sequence([
         Animated.timing(floatAnim, {
@@ -121,18 +121,23 @@ export default function MerekServiceScreen() {
       ])
     ).start();
 
-    // Subtle entry sequence
+    // Master entry
     Animated.spring(entryAnim, {
       toValue: 1,
-      tension: 15,
+      tension: 20,
       friction: 8,
       useNativeDriver: true,
     }).start();
   }, []);
 
+  const meshRotate = meshAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
   const floatY = floatAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, -20],
+    outputRange: [0, -25],
   });
 
   const handleChange = <K extends keyof BrandForm>(key: K, value: BrandForm[K]) => {
@@ -217,52 +222,69 @@ export default function MerekServiceScreen() {
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Animated Background Icons */}
-        <View style={StyleSheet.absoluteFill} pointerEvents="none">
-          <Animated.View style={[styles.floatingIcon, { top: '15%', right: '10%', transform: [{ translateY: floatY }] }]}>
-            <Feather name="tag" size={100} color={colors.accent} style={{ opacity: 0.03 }} />
-          </Animated.View>
-          <Animated.View style={[styles.floatingIcon, { top: '45%', left: '5%', transform: [{ translateY: Animated.multiply(floatY, -1.2) }] }]}>
-            <Feather name="award" size={120} color={colors.accent} style={{ opacity: 0.02 }} />
-          </Animated.View>
-          <Animated.View style={[styles.floatingIcon, { bottom: '20%', right: '15%', transform: [{ translateY: Animated.multiply(floatY, 0.8) }] }]}>
-            <Feather name="globe" size={90} color={colors.accent} style={{ opacity: 0.02 }} />
-          </Animated.View>
-        </View>
-
-        <LinearGradient
-          colors={colors.hero}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.hero}
+        <Animated.View
+          style={[
+            styles.heroContainer,
+            {
+              opacity: entryAnim,
+              transform: [{ translateY: entryAnim.interpolate({ inputRange: [0, 1], outputRange: [-20, 0] }) }]
+            }
+          ]}
         >
-          <TouchableOpacity
-            accessibilityRole="button"
-            onPress={() => router.back()}
-            style={styles.backButton}
+          <LinearGradient
+            colors={colors.hero}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.hero}
           >
-            <Feather name="arrow-left" size={18} color="#FFFFFF" />
-            <Text style={styles.backButtonText}>Kembali</Text>
-          </TouchableOpacity>
+            {/* Animated Mesh Overlay */}
+            <Animated.View style={[styles.meshOverlay, { transform: [{ rotate: meshRotate }, { scale: 1.4 }] }]}>
+              <View style={[styles.meshCircle, { top: -60, left: -60, width: 220, height: 220, backgroundColor: 'rgba(255,255,255,0.06)' }]} />
+              <View style={[styles.meshCircle, { bottom: -100, right: -20, width: 280, height: 280, backgroundColor: 'rgba(255,255,255,0.04)' }]} />
+            </Animated.View>
 
-          <Text style={[styles.heroKicker, { fontWeight: '500' }]}>Registrasi & Manajemen Merek Produk</Text>
-          <Text style={[styles.heroTitle, { fontWeight: '700' }]}>Lindungi Identitas Brand Anda</Text>
-          <Text style={[styles.heroSubtitle, { fontWeight: '400' }]}>
-            Daftarkan merek dagang untuk melindungi reputasi usaha dan bangun kepercayaan pelanggan dengan bukti legalitas yang jelas.
-          </Text>
-        </LinearGradient>
+            {/* Business Floating Icons */}
+            <Animated.View style={[styles.floatingIcon, { top: '15%', right: '8%', transform: [{ translateY: floatY }] }]}>
+              <Feather name="tag" size={80} color="#FFFFFF" style={{ opacity: 0.05 }} />
+            </Animated.View>
+            <Animated.View style={[styles.floatingIcon, { bottom: '10%', left: '4%', transform: [{ translateY: Animated.multiply(floatY, -0.7) }] }]}>
+              <Feather name="award" size={100} color="#FFFFFF" style={{ opacity: 0.04 }} />
+            </Animated.View>
 
-        <Animated.View style={[styles.trustRow, { opacity: entryAnim, transform: [{ translateY: entryAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }] }]}>
-          <View style={styles.trustBadge}>
-            <Feather name="shield" size={12} color={colors.accent} />
+            <View style={styles.heroContent}>
+              <Text style={styles.heroKicker}>Registrasi & Manajemen Merek Produk</Text>
+              <View style={styles.heroTitleRow}>
+                <View style={styles.heroTitleIcon}>
+                  <Feather name="award" size={24} color="#FFFFFF" />
+                </View>
+                <Text style={styles.heroTitle}>Lindungi Identitas Brand Anda</Text>
+              </View>
+              <Text style={styles.heroSubtitle}>
+                Daftarkan merek dagang untuk melindungi reputasi usaha dan bangun kepercayaan pelanggan dengan bukti legalitas yang jelas.
+              </Text>
+            </View>
+          </LinearGradient>
+        </Animated.View>
+
+        <Animated.View
+          style={[
+            styles.trustBanner,
+            {
+              opacity: entryAnim,
+              transform: [{ scale: entryAnim.interpolate({ inputRange: [0, 1], outputRange: [0.95, 1] }) }]
+            }
+          ]}
+        >
+          <View style={styles.trustItem}>
+            <Feather name="shield" size={14} color="#6D28D9" />
             <Text style={[styles.trustText, { color: colors.subtle }]}>DJKI Terintegrasi</Text>
           </View>
-          <View style={styles.trustBadge}>
-            <Feather name="lock" size={12} color="#10B981" />
+          <View style={styles.trustItem}>
+            <Feather name="lock" size={14} color="#10B981" />
             <Text style={[styles.trustText, { color: colors.subtle }]}>Proteksi Hukum</Text>
           </View>
-          <View style={styles.trustBadge}>
-            <Feather name="eye" size={12} color="#6366F1" />
+          <View style={styles.trustItem}>
+            <Feather name="eye" size={14} color="#6366F1" />
             <Text style={[styles.trustText, { color: colors.subtle }]}>Pantau 24/7</Text>
           </View>
         </Animated.View>
@@ -290,13 +312,27 @@ export default function MerekServiceScreen() {
             ))}
           </View>
 
-          <TouchableOpacity
-            accessibilityRole="button"
-            onPress={() => setModalVisible(true)}
-            style={[styles.primaryButton, { backgroundColor: colors.accent }]}>
-            <Text style={[styles.primaryButtonText, { fontWeight: '600' }]}>Kelola Merek Sekarang</Text>
-            <Feather name="external-link" size={16} color="#FFFFFF" />
-          </TouchableOpacity>
+          <View style={styles.footerRow}>
+            <TouchableOpacity
+              accessibilityRole="button"
+              onPress={() => router.back()}
+              activeOpacity={0.7}
+              style={[styles.secondaryButton, { borderColor: colors.border }]}
+            >
+              <Feather name="chevron-left" size={18} color={colors.subtle} />
+              <Text style={[styles.secondaryButtonText, { color: colors.subtle }]}>Kembali</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              accessibilityRole="button"
+              onPress={() => setModalVisible(true)}
+              activeOpacity={0.85}
+              style={[styles.primaryButton, { backgroundColor: colors.accent, flex: 2 }]}
+            >
+              <Text style={styles.primaryButtonText}>Kelola Merek</Text>
+              <Feather name="external-link" size={18} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
 
@@ -596,9 +632,16 @@ export default function MerekServiceScreen() {
                     resetForm();
                     setModalVisible(false);
                   }}
-                  style={[styles.secondaryButton, { backgroundColor: `${colors.subtle}08`, borderColor: 'transparent' }]}
+                  style={[
+                    styles.secondaryButton,
+                    {
+                      backgroundColor: scheme === 'dark' ? 'rgba(255,255,255,0.08)' : '#FFFFFF',
+                      borderColor: scheme === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)',
+                      borderWidth: 1,
+                    }
+                  ]}
                 >
-                  <Text style={[styles.secondaryButtonText, { color: colors.subtle, fontWeight: '600' }]}>Batal</Text>
+                  <Text style={[styles.secondaryButtonText, { color: colors.text, opacity: 0.7 }]}>Batal</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   accessibilityRole="button"
@@ -715,23 +758,92 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 24,
+    padding: 20,
     paddingBottom: 40,
     gap: 20,
+  },
+  heroContainer: {
+    marginTop: 8,
+    borderRadius: 32,
+    overflow: 'hidden',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+  },
+  hero: {
+    padding: 20,
+    minHeight: 240,
+    justifyContent: 'center',
+  },
+  meshOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: -1,
+  },
+  meshCircle: {
+    position: 'absolute',
+    borderRadius: 999,
   },
   floatingIcon: {
     position: 'absolute',
     zIndex: -1,
   },
-  trustRow: {
+  heroContent: {
+    gap: 8,
+    marginTop: 0,
+  },
+  heroKicker: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+  },
+  heroTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  heroTitleIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  heroTitle: {
+    color: '#FFFFFF',
+    fontSize: 26,
+    fontWeight: '700',
+    letterSpacing: -0.5,
+    flex: 1,
+  },
+  heroSubtitle: {
+    color: 'rgba(255, 255, 255, 0.85)',
+    fontSize: 14,
+    lineHeight: 22,
+    fontWeight: '400',
+  },
+  trustBanner: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderRadius: 20,
     backgroundColor: 'rgba(124, 58, 237, 0.05)',
-    borderRadius: 16,
-    padding: 12,
-    marginTop: -8,
+    marginHorizontal: 4,
+    marginTop: 12,
   },
-  trustBadge: {
+  trustItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
@@ -739,7 +851,52 @@ const styles = StyleSheet.create({
   trustText: {
     fontSize: 11,
     fontWeight: '600',
-    opacity: 0.7,
+    letterSpacing: 0.2,
+  },
+  card: {
+    borderRadius: 36,
+    borderWidth: 1,
+    padding: 30,
+    gap: 32,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.12,
+    shadowRadius: 32,
+    marginVertical: 4,
+    overflow: 'hidden',
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    gap: 18,
+    alignItems: 'center',
+  },
+  cardIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+  },
+  cardHeaderCopy: {
+    flex: 1,
+    gap: 6,
+  },
+  cardTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    letterSpacing: -0.4,
+  },
+  cardSubtitle: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '400',
+    opacity: 0.8,
   },
   pulseCircle: {
     position: 'absolute',
@@ -748,106 +905,59 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     zIndex: -1,
   },
-  hero: {
-    borderRadius: 28,
-    padding: 24,
-    gap: 16,
-  },
-  backButton: {
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.35)',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    backgroundColor: 'rgba(30, 24, 54, 0.25)',
-  },
-  backButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  heroKicker: {
-    color: 'rgba(240, 235, 255, 0.9)',
-    fontSize: 13,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  heroTitle: {
-    color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: '800',
-  },
-  heroSubtitle: {
-    color: 'rgba(244, 240, 255, 0.9)',
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  card: {
-    borderRadius: 32,
-    borderWidth: 1,
-    padding: 24,
-    gap: 24,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.12,
-    shadowRadius: 24,
-    overflow: 'hidden',
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    gap: 14,
-    alignItems: 'center',
-  },
-  cardIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cardHeaderCopy: {
-    flex: 1,
-    gap: 4,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  cardSubtitle: {
-    fontSize: 13,
-    lineHeight: 18,
-  },
   highlightList: {
-    gap: 12,
+    gap: 16,
   },
   highlightItem: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 14,
     alignItems: 'flex-start',
   },
   highlightText: {
     flex: 1,
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: '400',
   },
-  primaryButton: {
-    alignSelf: 'flex-start',
+  footerRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+    alignItems: 'center',
+  },
+  secondaryButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 8,
-    borderRadius: 999,
-    paddingHorizontal: 18,
-    paddingVertical: 12,
+    borderRadius: 20,
+    paddingVertical: 18,
+    borderWidth: 1.5,
+    backgroundColor: 'transparent',
+  },
+  secondaryButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  primaryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    borderRadius: 20,
+    paddingVertical: 18,
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
   },
   primaryButtonText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '700',
+    letterSpacing: 0.2,
   },
   modalOverlay: {
     flex: 1,
@@ -1017,17 +1127,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     marginTop: 8,
-  },
-  secondaryButton: {
-    flex: 1,
-    height: 52,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  secondaryButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
   },
   modalSubmitWrapper: {
     flex: 2,
