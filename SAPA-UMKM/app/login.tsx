@@ -129,53 +129,236 @@ export default function LoginScreen() {
         style={styles.flexOne}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <LinearGradient
-            colors={['#1E3A8A', '#2563EB', '#3B82F6', '#60A5FA']}
+            colors={['#1E40AF', '#2563EB', '#3B82F6', '#60A5FA', '#93C5FD']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.hero}
           >
-            <View style={styles.heroOverlayOne} />
-            <View style={styles.heroOverlayTwo} />
-            <View style={styles.heroOverlayThree} />
+            {/* Multiple Decorative Blobs */}
+            <View style={{
+              position: 'absolute',
+              top: -80,
+              right: -60,
+              width: 280,
+              height: 280,
+              borderRadius: 140,
+              backgroundColor: 'rgba(255, 255, 255, 0.08)',
+            }} />
+            <View style={{
+              position: 'absolute',
+              top: 40,
+              right: 20,
+              width: 160,
+              height: 160,
+              borderRadius: 80,
+              backgroundColor: 'rgba(255, 255, 255, 0.06)',
+            }} />
+            <View style={{
+              position: 'absolute',
+              bottom: -40,
+              left: -30,
+              width: 200,
+              height: 200,
+              borderRadius: 100,
+              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+            }} />
+            <View style={{
+              position: 'absolute',
+              bottom: 60,
+              right: 40,
+              width: 100,
+              height: 100,
+              borderRadius: 50,
+              backgroundColor: 'rgba(255, 255, 255, 0.04)',
+            }} />
 
+            {/* Glassmorphic Back Button */}
             <TouchableOpacity
               accessibilityRole="button"
               onPress={() => router.back()}
-              style={styles.heroBackButton}
+              style={{
+                alignSelf: 'flex-start',
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 8,
+                borderRadius: 16,
+                borderWidth: 1.5,
+                borderColor: 'rgba(255,255,255,0.4)',
+                paddingHorizontal: 18,
+                paddingVertical: 10,
+                backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.15,
+                shadowRadius: 12,
+                elevation: 4,
+              }}
             >
               <Feather name="arrow-left" size={18} color="#FFFFFF" />
-              <Text style={styles.heroBackText}>Kembali</Text>
+              <Text style={{ color: '#FFFFFF', fontSize: 15, letterSpacing: -0.2 }}>Kembali</Text>
             </TouchableOpacity>
 
-            <View style={styles.heroHeader}>
-              <View style={styles.heroTag}>
-                <Feather name="shield" size={16} color="#FFFFFF" />
-                <Text style={styles.heroTagText}>Portal SAPA UMKM</Text>
+            {/* Premium Header Content */}
+            <View style={{ gap: 16, marginTop: 8 }}>
+              {/* Glassmorphic Badge */}
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 10,
+                backgroundColor: 'rgba(255,255,255,0.20)',
+                alignSelf: 'flex-start',
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+                borderRadius: 16,
+                borderWidth: 1.5,
+                borderColor: 'rgba(255,255,255,0.3)',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.1,
+                shadowRadius: 8,
+              }}>
+                <View style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 10,
+                  backgroundColor: 'rgba(255,255,255,0.25)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  <Feather name="shield" size={16} color="#FFFFFF" />
+                </View>
+                <Text style={{
+                  color: '#FFFFFF',
+                  fontSize: 13,
+                  letterSpacing: 0.8,
+                  textTransform: 'uppercase',
+                }}>Portal SAPA UMKM</Text>
               </View>
-              <Text style={styles.heroTitle}>Selamat Datang Kembali</Text>
-              <Text style={styles.heroSubtitle}>
+
+              {/* Title with Text Shadow */}
+              <Text style={{
+                color: '#FFFFFF',
+                fontSize: 32,
+                letterSpacing: -0.8,
+                lineHeight: 38,
+                textShadowColor: 'rgba(0, 0, 0, 0.3)',
+                textShadowOffset: { width: 0, height: 2 },
+                textShadowRadius: 8,
+              }}>Selamat Datang Kembali</Text>
+
+              {/* Subtitle */}
+              <Text style={{
+                color: 'rgba(255, 255, 255, 0.95)',
+                fontSize: 15,
+                lineHeight: 23,
+                letterSpacing: -0.1,
+              }}>
                 Akses layanan perizinan, program bantuan, komunitas, dan pelatihan UMKM dalam satu ekosistem digital terpadu.
               </Text>
             </View>
 
-            <View style={styles.heroChecklist}>
-              <View style={styles.heroChecklistItem}>
-                <View style={styles.checkInnerIcon}>
-                  <Feather name="lock" size={14} color="#FFFFFF" />
+            {/* Ultra-Premium Glassmorphic Chips */}
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 8 }}>
+              {/* Chip 1 */}
+              <View style={{
+                flexDirection: 'row',
+                gap: 10,
+                alignItems: 'center',
+                backgroundColor: 'rgba(255,255,255,0.18)',
+                borderRadius: 18,
+                paddingHorizontal: 14,
+                paddingVertical: 12,
+                borderWidth: 1.5,
+                borderColor: 'rgba(255,255,255,0.35)',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 6 },
+                shadowOpacity: 0.12,
+                shadowRadius: 12,
+                elevation: 5,
+              }}>
+                <View style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 10,
+                  backgroundColor: 'rgba(255,255,255,0.25)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  <Feather name="lock" size={16} color="#FFFFFF" />
                 </View>
-                <Text style={styles.heroChecklistText}>Akses Aman</Text>
+                <Text style={{
+                  color: '#FFFFFF',
+                  fontSize: 13,
+                  letterSpacing: -0.2,
+                }}>Akses Aman</Text>
               </View>
-              <View style={styles.heroChecklistItem}>
-                <View style={styles.checkInnerIcon}>
-                  <Feather name="trending-up" size={14} color="#FFFFFF" />
+
+              {/* Chip 2 */}
+              <View style={{
+                flexDirection: 'row',
+                gap: 10,
+                alignItems: 'center',
+                backgroundColor: 'rgba(255,255,255,0.18)',
+                borderRadius: 18,
+                paddingHorizontal: 14,
+                paddingVertical: 12,
+                borderWidth: 1.5,
+                borderColor: 'rgba(255,255,255,0.35)',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 6 },
+                shadowOpacity: 0.12,
+                shadowRadius: 12,
+                elevation: 5,
+              }}>
+                <View style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 10,
+                  backgroundColor: 'rgba(255,255,255,0.25)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  <Feather name="trending-up" size={16} color="#FFFFFF" />
                 </View>
-                <Text style={styles.heroChecklistText}>Pantau Usaha</Text>
+                <Text style={{
+                  color: '#FFFFFF',
+                  fontSize: 13,
+                  letterSpacing: -0.2,
+                }}>Pantau Usaha</Text>
               </View>
-              <View style={styles.heroChecklistItem}>
-                <View style={styles.checkInnerIcon}>
-                  <Feather name="users" size={14} color="#FFFFFF" />
+
+              {/* Chip 3 */}
+              <View style={{
+                flexDirection: 'row',
+                gap: 10,
+                alignItems: 'center',
+                backgroundColor: 'rgba(255,255,255,0.18)',
+                borderRadius: 18,
+                paddingHorizontal: 14,
+                paddingVertical: 12,
+                borderWidth: 1.5,
+                borderColor: 'rgba(255,255,255,0.35)',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 6 },
+                shadowOpacity: 0.12,
+                shadowRadius: 12,
+                elevation: 5,
+              }}>
+                <View style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 10,
+                  backgroundColor: 'rgba(255,255,255,0.25)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  <Feather name="users" size={16} color="#FFFFFF" />
                 </View>
-                <Text style={styles.heroChecklistText}>Komunitas</Text>
+                <Text style={{
+                  color: '#FFFFFF',
+                  fontSize: 13,
+                  letterSpacing: -0.2,
+                }}>Komunitas</Text>
               </View>
             </View>
           </LinearGradient>
@@ -195,19 +378,26 @@ export default function LoginScreen() {
               <View style={[
                 styles.inputWrapper,
                 {
-                  borderColor: focusedField === 'email' ? colors.focus : colors.border,
-                  backgroundColor: colors.input
+                  backgroundColor: focusedField === 'email' ? 'rgba(59,130,246,0.12)' : 'rgba(59,130,246,0.08)',
+                  borderWidth: 2.5,
+                  borderColor: focusedField === 'email' ? '#3B82F6' : '#FFFFFF',
+                  borderRadius: 16,
+                  shadowColor: '#3B82F6',
+                  shadowOffset: { width: 0, height: 6 },
+                  shadowOpacity: focusedField === 'email' ? 0.12 : 0.02,
+                  shadowRadius: 20,
+                  elevation: focusedField === 'email' ? 8 : 3,
                 }
               ]}>
                 <Feather
                   name="mail"
                   size={18}
-                  color={focusedField === 'email' ? colors.focus : colors.subtle}
+                  color={focusedField === 'email' ? '#3B82F6' : 'rgba(59,130,246,0.9)'}
                   style={styles.inputIcon}
                 />
                 <TextInput
                   placeholder="name@company.com"
-                  placeholderTextColor={`${colors.subtle}60`}
+                  placeholderTextColor={`${colors.subtle}80`}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   value={form.email}
@@ -224,19 +414,26 @@ export default function LoginScreen() {
               <View style={[
                 styles.inputWrapper,
                 {
-                  borderColor: focusedField === 'password' ? colors.focus : colors.border,
-                  backgroundColor: colors.input
+                  backgroundColor: focusedField === 'password' ? 'rgba(139,92,246,0.12)' : 'rgba(139,92,246,0.08)',
+                  borderWidth: 2.5,
+                  borderColor: focusedField === 'password' ? '#8B5CF6' : '#FFFFFF',
+                  borderRadius: 16,
+                  shadowColor: '#8B5CF6',
+                  shadowOffset: { width: 0, height: 6 },
+                  shadowOpacity: focusedField === 'password' ? 0.12 : 0.02,
+                  shadowRadius: 20,
+                  elevation: focusedField === 'password' ? 8 : 3,
                 }
               ]}>
                 <Feather
                   name="lock"
                   size={18}
-                  color={focusedField === 'password' ? colors.focus : colors.subtle}
+                  color={focusedField === 'password' ? '#8B5CF6' : 'rgba(139,92,246,0.9)'}
                   style={styles.inputIcon}
                 />
                 <TextInput
                   placeholder="••••••••"
-                  placeholderTextColor={`${colors.subtle}60`}
+                  placeholderTextColor={`${colors.subtle}80`}
                   secureTextEntry={!passwordVisible}
                   value={form.password}
                   onFocus={() => setFocusedField('password')}

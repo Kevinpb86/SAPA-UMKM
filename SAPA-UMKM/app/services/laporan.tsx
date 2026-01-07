@@ -4,9 +4,11 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Alert,
+  Animated,
+  Easing,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
@@ -78,6 +80,59 @@ export default function BusinessReportScreen() {
   const [form, setForm] = useState<ReportForm>(defaultForm);
   const [submitting, setSubmitting] = useState(false);
 
+  // Animations
+  const meshAnim = useRef(new Animated.Value(0)).current;
+  const floatAnim = useRef(new Animated.Value(0)).current;
+  const entryAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Mesh rotation
+    Animated.loop(
+      Animated.timing(meshAnim, {
+        toValue: 1,
+        duration: 25000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    ).start();
+
+    // Floating loop
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatAnim, {
+          toValue: 1,
+          duration: 4000,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(floatAnim, {
+          toValue: 0,
+          duration: 4000,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    // Fade-in entry
+    Animated.spring(entryAnim, {
+      toValue: 1,
+      tension: 20,
+      friction: 8,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  const meshRotate = meshAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  const floatY = floatAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -15],
+  });
+
   const handleChange = <K extends keyof ReportForm>(key: K, value: ReportForm[K]) => {
     setForm(prev => ({ ...prev, [key]: value }));
   };
@@ -131,182 +186,207 @@ export default function BusinessReportScreen() {
         style={styles.flexOne}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.heroWrapper}>
+          <Animated.View
+            style={[
+              styles.heroContainer,
+              {
+                opacity: entryAnim,
+                transform: [{ translateY: entryAnim.interpolate({ inputRange: [0, 1], outputRange: [-20, 0] }) }]
+              }
+            ]}
+          >
             <LinearGradient
               colors={colors.hero}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.hero}
             >
-              <TouchableOpacity
-                accessibilityRole="button"
-                onPress={() => router.back()}
-                style={styles.backButton}
-              >
-                <Feather name="arrow-left" size={18} color="#FFFFFF" />
-                <Text style={styles.backText}>Kembali</Text>
-              </TouchableOpacity>
-              <Text style={styles.heroKicker}>Pelaporan Kegiatan Usaha</Text>
-              <Text style={styles.heroTitle}>Pantau Perkembangan Usaha Setiap Bulan</Text>
-              <Text style={styles.heroSubtitle}>
-                Kirim ringkasan kinerja usaha, aktivitas utama, serta kebutuhan dukungan agar pemerintah dapat
-                memberikan pendampingan yang tepat.
-              </Text>
+              <Animated.View style={[styles.meshOverlay, { transform: [{ rotate: meshRotate }, { scale: 1.5 }] }]}>
+                <View style={[styles.meshCircle, { top: -80, right: -40, width: 260, height: 260, backgroundColor: 'rgba(255,255,255,0.12)' }]} />
+                <View style={[styles.meshCircle, { bottom: -120, left: -60, width: 320, height: 320, backgroundColor: 'rgba(255,255,255,0.08)' }]} />
+              </Animated.View>
+
+              <Animated.View style={[styles.floatingIcon, { top: '20%', right: '10%', transform: [{ translateY: floatY }] }]}>
+                <Feather name="bar-chart-2" size={90} color="#FFFFFF" style={{ opacity: 0.1 }} />
+              </Animated.View>
+
+              <View style={styles.heroContent}>
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  onPress={() => router.back()}
+                  style={styles.backButton}
+                >
+                  <Feather name="arrow-left" size={18} color="#FFFFFF" />
+                  <Text style={styles.backText}>Kembali</Text>
+                </TouchableOpacity>
+                <Text style={styles.heroKicker}>PELAPORAN USAHA</Text>
+                <Text style={styles.heroTitle}>Laporan Rutin</Text>
+                <Text style={styles.heroSubtitle}>
+                  Pantau perkembangan usaha Anda dan sampaikan kebutuhan dukungan secara rutin untuk mendapat bimbingan tepat sasaran.
+                </Text>
+              </View>
             </LinearGradient>
-            <LinearGradient
-              colors={scheme === 'dark' ? ['#0EA5E933', 'transparent'] : ['#F0F9FF', 'transparent']}
-              style={styles.meshGradient}
-            />
-          </View>
+          </Animated.View>
 
           <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.sectionHeader}>
-              <View style={[styles.iconWrapper, { backgroundColor: `${colors.accent}15` }]}>
-                <Feather name="bar-chart-2" size={18} color={colors.accent} />
+              <View style={[styles.iconWrapper, { backgroundColor: `${colors.accent}12` }]}>
+                <Feather name="calendar" size={18} color={colors.accent} />
               </View>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Ringkasan Laporan</Text>
-            </View>
-            <Text style={[styles.sectionBody, { color: colors.subtle }]}>
-              Laporan ini membantu pemerintah memetakan perkembangan UMKM dan menilai kebutuhan dukungan lanjutan.
-              Isi data finansial secara ringkas dan tuliskan aktivitas kunci setiap bulan.
-            </Text>
-            <View style={styles.highlights}>
-              <InfoBadge
-                colors={colors}
-                icon="calendar"
-                title="Jatuh tempo"
-                description="Kirim maksimal setiap tanggal 5 bulan berikutnya."
-              />
-              <InfoBadge
-                colors={colors}
-                icon="activity"
-                title="Data utama"
-                description="Omzet, biaya utama, aktivitas, dan rencana bulan depan."
-              />
-              <InfoBadge
-                colors={colors}
-                icon="help-circle"
-                title="Bantuan"
-                description="Sampaikan kebutuhan asistensi agar tim dapat menindaklanjuti."
-              />
-            </View>
-          </View>
-
-          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={styles.sectionHeader}>
-              <View style={[styles.iconWrapper, { backgroundColor: `${colors.accent}15` }]}>
-                <Feather name="edit-3" size={18} color={colors.accent} />
-              </View>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Form Laporan Bulanan</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Informasi Dasar</Text>
             </View>
 
-            <View style={styles.inputWrapper}>
-              <Text style={[styles.inputLabel, { color: colors.text }]}>Periode Pelaporan</Text>
-              <View style={styles.pillGroup}>
-                {monthOptions.map(option => {
-                  const active = option === form.period;
+            <View style={styles.periodPickerWrapper}>
+              <Text style={[styles.inputLabel, { color: colors.subtle }]}>Periode Pelaporan</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.periodScroll}
+              >
+                {monthOptions.map(month => {
+                  const isActive = form.period === month;
                   return (
                     <TouchableOpacity
-                      key={option}
+                      key={month}
                       accessibilityRole="button"
-                      onPress={() => handleChange('period', option)}
+                      onPress={() => handleChange('period', month)}
                       style={[
-                        styles.pill,
+                        styles.periodChip,
                         {
-                          backgroundColor: `${colors.subtle}08`,
-                          borderColor: 'transparent',
-                        },
-                        active && {
-                          borderColor: colors.accent,
-                          backgroundColor: `${colors.accent}15`,
-                        },
+                          borderColor: isActive ? colors.accent : colors.border,
+                          backgroundColor: isActive ? `${colors.accent}15` : colors.card,
+                        }
                       ]}
                     >
-                      <Text
-                        style={[
-                          styles.pillText,
-                          { color: active ? colors.accent : colors.subtle },
-                        ]}
-                      >
-                        {option}
+                      <Text style={[styles.periodChipText, { color: isActive ? colors.accent : colors.subtle }]}>
+                        {month}
                       </Text>
                     </TouchableOpacity>
                   );
                 })}
-              </View>
+              </ScrollView>
             </View>
+          </View>
 
+          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.sectionHeader}>
+              <View style={[styles.iconWrapper, { backgroundColor: `${colors.accent}12` }]}>
+                <Feather name="dollar-sign" size={18} color={colors.accent} />
+              </View>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Kinerja Keuangan</Text>
+            </View>
             <View style={styles.fieldGroup}>
               <LabeledInput
-                label="Omzet/Bulan"
-                icon="dollar-sign"
-                placeholder="Contoh: Rp 35.000.000"
+                label="Estimasi Omzet (Pendapatan)"
+                icon="trending-up"
+                placeholder="cth: 15.000.000"
+                keyboardType="number-pad"
                 value={form.revenue}
                 onChangeText={value => handleChange('revenue', value)}
                 colors={colors}
               />
               <LabeledInput
-                label="Pengeluaran Utama"
-                icon="shopping-cart"
-                placeholder="Contoh: Rp 18.000.000"
+                label="Estimasi Pengeluaran"
+                icon="trending-down"
+                placeholder="cth: 8.000.000"
+                keyboardType="number-pad"
                 value={form.expenses}
                 onChangeText={value => handleChange('expenses', value)}
                 colors={colors}
               />
+            </View>
+          </View>
+
+          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.sectionHeader}>
+              <View style={[styles.iconWrapper, { backgroundColor: `${colors.accent}12` }]}>
+                <Feather name="activity" size={18} color={colors.accent} />
+              </View>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Aktivitas & Tantangan</Text>
+            </View>
+
+            <View style={styles.fieldGroup}>
               <LabeledInput
-                label="Aktivitas Kunci Bulan Ini"
-                icon="activity"
-                placeholder="Tuliskan promosi, produksi, kemitraan, dsb."
+                label="Aktivitas Utama Bulan Ini"
+                icon="check-square"
+                placeholder="cth: Peluncuran produk baru, Pendaftaran NIB"
+                multiline
                 value={form.keyActivities}
                 onChangeText={value => handleChange('keyActivities', value)}
                 colors={colors}
-                multiline
               />
               <LabeledInput
                 label="Pencapaian Penting"
                 icon="award"
-                placeholder="Contoh: Tambah 5 reseller baru, produk baru diluncurkan"
+                placeholder="Sebutkan hal positif yang diraih"
+                multiline
                 value={form.achievements}
                 onChangeText={value => handleChange('achievements', value)}
                 colors={colors}
-                multiline
               />
               <LabeledInput
-                label="Kendala yang Dihadapi"
-                icon="alert-octagon"
-                placeholder="Contoh: Terbatasnya bahan baku, peralatan rusak"
+                label="Hambatan / Kendala"
+                icon="alert-circle"
+                placeholder="Apa kesulitan utama yang dihadapi?"
+                multiline
                 value={form.challenges}
                 onChangeText={value => handleChange('challenges', value)}
                 colors={colors}
-                multiline
-              />
-              <LabeledInput
-                label="Kebutuhan Dukungan (opsional)"
-                icon="help-circle"
-                placeholder="Pendampingan pemasaran, akses pembiayaan, pelatihan, dll."
-                value={form.supportRequested}
-                onChangeText={value => handleChange('supportRequested', value)}
-                colors={colors}
-                multiline
               />
             </View>
+          </View>
 
-            <TouchableOpacity
-              accessibilityRole="button"
-              onPress={handleSubmit}
-              disabled={submitting}
-              style={styles.submitWrapper}
-            >
-              <LinearGradient
-                colors={submitting ? [`${colors.accent}80`, `${colors.accent}60`] : [`${colors.accent}`, '#2563EB']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.submitButton}
+          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.sectionHeader}>
+              <View style={[styles.iconWrapper, { backgroundColor: `${colors.accent}12` }]}>
+                <Feather name="help-circle" size={18} color={colors.accent} />
+              </View>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Dukungan Tambahan</Text>
+            </View>
+            <LabeledInput
+              label="Kebutuhan Dukungan Pemerintah"
+              icon="message-circle"
+              placeholder="Sebutkan jenis dukungan yang paling Anda butuhkan saat ini"
+              multiline
+              value={form.supportRequested}
+              onChangeText={value => handleChange('supportRequested', value)}
+              colors={colors}
+            />
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                accessibilityRole="button"
+                onPress={() => router.back()}
+                style={[
+                  styles.secondaryButton,
+                  {
+                    backgroundColor: scheme === 'dark' ? 'rgba(255,255,255,0.08)' : '#FFFFFF',
+                    borderColor: colors.border,
+                    borderWidth: 1,
+                  }
+                ]}
               >
-                <Text style={styles.submitText}>{submitting ? 'Mengirim...' : 'Upload Laporan Bulanan'}</Text>
-                <Feather name={submitting ? 'loader' : 'send'} size={16} color="#FFFFFF" />
-              </LinearGradient>
-            </TouchableOpacity>
+                <Text style={[styles.secondaryButtonText, { color: colors.text }]}>Batal</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                accessibilityRole="button"
+                onPress={handleSubmit}
+                disabled={submitting}
+                activeOpacity={0.8}
+                style={styles.modalSubmitWrapper}
+              >
+                <LinearGradient
+                  colors={submitting ? [`${colors.accent}CC`, `${colors.accent}CC`] : [`${colors.accent}`, `${colors.accent}EE`]}
+                  style={styles.modalSubmitBtn}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  <Text style={styles.submitText}>{submitting ? 'Memproses...' : 'Kirim Laporan'}</Text>
+                  <Feather name={submitting ? 'loader' : 'send'} size={18} color="#FFFFFF" />
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -322,6 +402,7 @@ type LabeledInputProps = {
   onChangeText: (value: string) => void;
   colors: typeof palette.light;
   multiline?: boolean;
+  keyboardType?: 'default' | 'number-pad' | 'decimal-pad' | 'numeric' | 'email-address' | 'phone-pad';
 };
 
 function LabeledInput({
@@ -332,29 +413,56 @@ function LabeledInput({
   onChangeText,
   colors,
   multiline,
+  keyboardType = 'default',
 }: LabeledInputProps) {
+  const scheme = useColorScheme();
   const [isFocused, setIsFocused] = useState(false);
+  const focusAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(focusAnim, {
+      toValue: isFocused ? 1 : 0,
+      duration: 250,
+      useNativeDriver: false,
+    }).start();
+  }, [isFocused]);
+
+  const borderColor = focusAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [scheme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', colors.accent],
+  });
+
+  const backgroundColor = focusAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [scheme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', `${colors.accent}04`],
+  });
+
   return (
     <View style={styles.inputWrapper}>
-      <Text style={[styles.inputLabel, { color: colors.text }]}>{label}</Text>
-      <View style={[
+      <Text style={[styles.inputLabel, { color: colors.subtle, opacity: isFocused ? 1 : 0.8 }]}>{label}</Text>
+      <Animated.View style={[
         styles.inputInner,
         {
-          backgroundColor: isFocused ? colors.card : `${colors.subtle}08`,
-          borderColor: isFocused ? colors.accent : 'transparent',
-          alignItems: multiline ? 'flex-start' : 'center',
-          paddingTop: multiline ? 12 : 0,
+          backgroundColor,
+          borderColor,
+          transform: [{ scale: focusAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.015] }) }],
+          shadowColor: colors.accent,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: focusAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 0.2] }),
+          shadowRadius: focusAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 8] }),
+          elevation: focusAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 4] }),
         }
       ]}>
-        <View style={multiline ? { marginTop: 4 } : null}>
+        <View style={[styles.inputIcon, { top: multiline ? 16 : 14 }]}>
           <Feather name={icon} size={18} color={isFocused ? colors.accent : colors.subtle} />
         </View>
         <TextInput
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor={`${colors.subtle}50`}
+          placeholderTextColor={`${colors.subtle}80`}
           multiline={multiline}
+          keyboardType={keyboardType}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           style={[
@@ -362,12 +470,13 @@ function LabeledInput({
             {
               color: colors.text,
               minHeight: multiline ? 96 : 48,
+              paddingLeft: 48,
+              textAlignVertical: multiline ? 'top' : 'center',
             },
-            multiline && { paddingTop: 0, paddingBottom: 12 },
             Platform.OS === 'web' && ({ outlineStyle: 'none' } as any)
           ]}
         />
-      </View>
+      </Animated.View>
     </View>
   );
 }
@@ -395,34 +504,47 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
+  scrollContent: {
+    padding: 20,
+    gap: 20,
+  },
   flexOne: {
     flex: 1,
   },
-  scrollContent: {
-    padding: 24,
-    gap: 20,
-  },
-  heroWrapper: {
-    borderRadius: 28,
+  heroContainer: {
+    borderRadius: 32,
     overflow: 'hidden',
-    elevation: 4,
+    elevation: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.15,
-    shadowRadius: 10,
+    shadowRadius: 24,
   },
   hero: {
     padding: 24,
-    gap: 16,
-    zIndex: 1,
+    minHeight: 240,
+    justifyContent: 'flex-end',
+    overflow: 'hidden',
   },
-  meshGradient: {
+  meshOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    opacity: 0.5,
+    zIndex: -1,
+  },
+  meshCircle: {
+    position: 'absolute',
+    borderRadius: 999,
+  },
+  floatingIcon: {
+    position: 'absolute',
+    zIndex: 0,
+  },
+  heroContent: {
+    gap: 8,
+    zIndex: 2,
   },
   backButton: {
     alignSelf: 'flex-start',
@@ -434,7 +556,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.4)',
     paddingHorizontal: 14,
     paddingVertical: 8,
-    backgroundColor: 'rgba(15, 23, 42, 0.25)',
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    marginBottom: 8,
   },
   backText: {
     color: '#FFFFFF',
@@ -442,32 +565,33 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   heroKicker: {
-    color: 'rgba(224, 242, 254, 0.9)',
-    fontSize: 13,
-    letterSpacing: 1,
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 12,
+    fontWeight: '700',
     textTransform: 'uppercase',
-    fontWeight: '800',
+    letterSpacing: 1.5,
+    marginBottom: 4,
   },
   heroTitle: {
     color: '#FFFFFF',
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: '900',
     letterSpacing: -0.5,
   },
   heroSubtitle: {
-    color: 'rgba(235, 248, 255, 0.9)',
+    color: 'rgba(255, 255, 255, 0.85)',
     fontSize: 14,
     lineHeight: 22,
     fontWeight: '500',
+    marginTop: 4,
   },
   card: {
     borderRadius: 32,
-    borderWidth: 0,
     padding: 24,
     gap: 24,
     elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.08,
     shadowRadius: 15,
   },
@@ -488,78 +612,53 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: -0.3,
   },
-  sectionBody: {
-    fontSize: 14,
-    lineHeight: 22,
-    fontWeight: '500',
-    opacity: 0.7,
-  },
-  highlights: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  periodPickerWrapper: {
     gap: 12,
   },
-  badge: {
-    flex: 1,
-    minWidth: 150,
-    borderRadius: 18,
-    borderWidth: 1.5,
-    padding: 16,
+  periodScroll: {
     gap: 10,
+    paddingRight: 20,
   },
-  badgeIcon: {
-    width: 40,
-    height: 40,
+  periodChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderWidth: 1.5,
   },
-  badgeTitle: {
-    fontSize: 14,
-    fontWeight: '800',
+  periodChipText: {
+    fontSize: 13,
+    fontWeight: '700',
   },
-  badgeDescription: {
-    fontSize: 12,
-    lineHeight: 18,
-    fontWeight: '500',
-    opacity: 0.7,
+  fieldGroup: {
+    gap: 20,
   },
   inputWrapper: {
     gap: 10,
   },
   inputLabel: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
     marginLeft: 4,
   },
   inputInner: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 16,
+    borderRadius: 20,
     borderWidth: 1.5,
-    borderColor: 'transparent',
     paddingHorizontal: 16,
+    overflow: 'hidden',
   },
-  fieldGroup: {
-    gap: 20,
+  inputIcon: {
+    position: 'absolute',
+    left: 16,
+    zIndex: 1,
   },
   input: {
     flex: 1,
     fontSize: 15,
-    fontWeight: '400',
+    fontWeight: '500',
     paddingHorizontal: 12,
     paddingVertical: 14,
-  },
-  pillGroup: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  pill: {
-    borderRadius: 12,
-    borderWidth: 1.5,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
   },
   pillText: {
     fontSize: 13,
@@ -581,12 +680,67 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 12,
   },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+    alignItems: 'center',
+  },
+  secondaryButton: {
+    flex: 1,
+    height: 56,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  secondaryButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  modalSubmitWrapper: {
+    flex: 2,
+  },
+  modalSubmitBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    height: 56,
+    borderRadius: 20,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+  },
   submitText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    gap: 12,
+  },
+  badgeIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  badgeDescription: {
+    fontSize: 12,
+    fontWeight: '500',
+    opacity: 0.8,
   },
 });
-
-

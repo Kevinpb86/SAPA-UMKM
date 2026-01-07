@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   card: {
-    borderRadius: 36,
+    borderRadius: 32,
     borderWidth: 1,
     padding: 30,
     gap: 32,

@@ -2,9 +2,11 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Alert,
+  Animated,
+  Easing,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
@@ -69,6 +71,59 @@ export default function CommunityTrainingScreen() {
   const [form, setForm] = useState<TrainingForm>(defaultForm);
   const [submitting, setSubmitting] = useState(false);
 
+  // Animations
+  const meshAnim = useRef(new Animated.Value(0)).current;
+  const floatAnim = useRef(new Animated.Value(0)).current;
+  const entryAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Mesh rotation
+    Animated.loop(
+      Animated.timing(meshAnim, {
+        toValue: 1,
+        duration: 20000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    ).start();
+
+    // Floating loop
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatAnim, {
+          toValue: 1,
+          duration: 4000,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(floatAnim, {
+          toValue: 0,
+          duration: 4000,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    // Fade-in entry
+    Animated.spring(entryAnim, {
+      toValue: 1,
+      tension: 20,
+      friction: 8,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  const meshRotate = meshAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  const floatY = floatAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -15],
+  });
+
   const handleChange = <K extends keyof TrainingForm>(key: K, value: TrainingForm[K]) => {
     setForm(prev => ({ ...prev, [key]: value }));
   };
@@ -109,31 +164,47 @@ export default function CommunityTrainingScreen() {
         style={styles.flexOne}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.heroWrapper}>
+          <Animated.View
+            style={[
+              styles.heroContainer,
+              {
+                opacity: entryAnim,
+                transform: [{ translateY: entryAnim.interpolate({ inputRange: [0, 1], outputRange: [-20, 0] }) }]
+              }
+            ]}
+          >
             <LinearGradient
               colors={colors.hero}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.hero}
             >
-              <TouchableOpacity
-                accessibilityRole="button"
-                onPress={() => router.back()}
-                style={styles.backButton}
-              >
-                <Feather name="arrow-left" size={18} color="#FFFFFF" />
-                <Text style={styles.backText}>Kembali</Text>
-              </TouchableOpacity>
-              <Text style={styles.heroTitle}>Pendaftaran Pelatihan Komunitas</Text>
-              <Text style={styles.heroSubtitle}>
-                Tingkatkan kompetensi dan perluas jejaring usaha Anda melalui rangkaian pelatihan eksklusif SAPA UMKM.
-              </Text>
+              <Animated.View style={[styles.meshOverlay, { transform: [{ rotate: meshRotate }, { scale: 1.5 }] }]}>
+                <View style={[styles.meshCircle, { top: -80, right: -40, width: 260, height: 260, backgroundColor: 'rgba(255,255,255,0.08)' }]} />
+                <View style={[styles.meshCircle, { bottom: -120, left: -60, width: 320, height: 320, backgroundColor: 'rgba(255,255,255,0.05)' }]} />
+              </Animated.View>
+
+              <Animated.View style={[styles.floatingIcon, { top: '15%', right: '10%', transform: [{ translateY: floatY }] }]}>
+                <Feather name="users" size={80} color="#FFFFFF" style={{ opacity: 0.1 }} />
+              </Animated.View>
+
+              <View style={styles.heroContent}>
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  onPress={() => router.back()}
+                  style={styles.backButton}
+                >
+                  <Feather name="arrow-left" size={18} color="#FFFFFF" />
+                  <Text style={styles.backText}>Kembali</Text>
+                </TouchableOpacity>
+                <Text style={styles.heroKicker}>KOMUNITAS UMKM</Text>
+                <Text style={styles.heroTitle}>Pelatihan Komunitas</Text>
+                <Text style={styles.heroSubtitle}>
+                  Tingkatkan kompetensi bisnis Anda melalui program pelatihan terstruktur bersama para ahli dan praktisi UMKM berpengalaman.
+                </Text>
+              </View>
             </LinearGradient>
-            <LinearGradient
-              colors={scheme === 'dark' ? ['#05966933', 'transparent'] : ['#ECFDF5', 'transparent']}
-              style={styles.meshGradient}
-            />
-          </View>
+          </Animated.View>
 
           <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.sectionHeader}>
@@ -235,22 +306,40 @@ export default function CommunityTrainingScreen() {
               />
             </View>
 
-            <TouchableOpacity
-              accessibilityRole="button"
-              onPress={handleSubmit}
-              disabled={submitting}
-              style={styles.submitWrapper}
-            >
-              <LinearGradient
-                colors={submitting ? [`${colors.accent}80`, `${colors.accent}60`] : [`${colors.accent}`, '#059669']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.submitButton}
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                accessibilityRole="button"
+                onPress={() => router.back()}
+                style={[
+                  styles.secondaryButton,
+                  {
+                    backgroundColor: scheme === 'dark' ? 'rgba(255,255,255,0.08)' : '#FFFFFF',
+                    borderColor: colors.border,
+                    borderWidth: 1,
+                  }
+                ]}
               >
-                <Text style={styles.submitText}>{submitting ? 'Mengirim...' : 'Daftar Sekarang'}</Text>
-                <Feather name={submitting ? 'loader' : 'send'} size={16} color="#FFFFFF" />
-              </LinearGradient>
-            </TouchableOpacity>
+                <Text style={[styles.secondaryButtonText, { color: colors.text }]}>Batal</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                accessibilityRole="button"
+                onPress={handleSubmit}
+                disabled={submitting}
+                activeOpacity={0.8}
+                style={styles.modalSubmitWrapper}
+              >
+                <LinearGradient
+                  colors={submitting ? [`${colors.accent}CC`, `${colors.accent}CC`] : [`${colors.accent}`, `${colors.accent}EE`]}
+                  style={styles.modalSubmitBtn}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  <Text style={styles.submitText}>{submitting ? 'Memproses...' : 'Kirim Pendaftaran'}</Text>
+                  <Feather name={submitting ? 'loader' : 'send'} size={18} color="#FFFFFF" />
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -279,42 +368,68 @@ function LabeledInput({
   multiline,
   keyboardType = 'default',
 }: LabeledInputProps) {
+  const scheme = useColorScheme();
   const [isFocused, setIsFocused] = useState(false);
+  const focusAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(focusAnim, {
+      toValue: isFocused ? 1 : 0,
+      duration: 250,
+      useNativeDriver: false,
+    }).start();
+  }, [isFocused]);
+
+  const borderColor = focusAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [scheme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', colors.accent],
+  });
+
+  const backgroundColor = focusAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [scheme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', `${colors.accent}04`],
+  });
+
   return (
     <View style={styles.inputWrapper}>
-      <Text style={[styles.inputLabel, { color: colors.text }]}>{label}</Text>
-      <View style={[
+      <Text style={[styles.inputLabel, { color: colors.subtle, opacity: isFocused ? 1 : 0.8 }]}>{label}</Text>
+      <Animated.View style={[
         styles.inputInner,
         {
-          backgroundColor: isFocused ? colors.card : `${colors.subtle}08`,
-          borderColor: isFocused ? colors.accent : 'transparent',
-          alignItems: multiline ? 'flex-start' : 'center',
-          paddingTop: multiline ? 12 : 0,
+          backgroundColor,
+          borderColor,
+          transform: [{ scale: focusAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.015] }) }],
+          shadowColor: colors.accent,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: focusAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 0.2] }),
+          shadowRadius: focusAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 8] }),
+          elevation: focusAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 4] }),
         }
       ]}>
-        <View style={multiline ? { marginTop: 4 } : null}>
+        <View style={[styles.inputIcon, { top: multiline ? 16 : 14 }]}>
           <Feather name={icon} size={18} color={isFocused ? colors.accent : colors.subtle} />
         </View>
         <TextInput
           value={value}
           onChangeText={onChangeText}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
           placeholder={placeholder}
-          placeholderTextColor={`${colors.subtle}60`}
+          placeholderTextColor={`${colors.subtle}80`}
           multiline={multiline}
           keyboardType={keyboardType}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
           style={[
             styles.input,
             {
               color: colors.text,
               minHeight: multiline ? 96 : 48,
+              paddingLeft: 48,
+              textAlignVertical: multiline ? 'top' : 'center',
             },
-            multiline && { paddingTop: 0, paddingBottom: 12 },
             Platform.OS === 'web' && ({ outlineStyle: 'none' } as any)
           ]}
         />
-      </View>
+      </Animated.View>
     </View>
   );
 }
@@ -342,30 +457,43 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 24,
+    padding: 20,
     gap: 20,
   },
-  heroWrapper: {
-    borderRadius: 28,
+  heroContainer: {
+    borderRadius: 32,
     overflow: 'hidden',
-    elevation: 4,
+    elevation: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.15,
-    shadowRadius: 10,
+    shadowRadius: 24,
   },
   hero: {
     padding: 24,
-    gap: 16,
-    zIndex: 1,
+    minHeight: 240,
+    justifyContent: 'flex-end',
+    overflow: 'hidden',
   },
-  meshGradient: {
+  meshOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    opacity: 0.5,
+    zIndex: -1,
+  },
+  meshCircle: {
+    position: 'absolute',
+    borderRadius: 999,
+  },
+  floatingIcon: {
+    position: 'absolute',
+    zIndex: 0,
+  },
+  heroContent: {
+    gap: 8,
+    zIndex: 2,
   },
   backButton: {
     alignSelf: 'flex-start',
@@ -377,28 +505,37 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.4)',
     paddingHorizontal: 14,
     paddingVertical: 8,
-    backgroundColor: 'rgba(6, 78, 59, 0.25)',
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    marginBottom: 8,
   },
   backText: {
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '700',
   },
+  heroKicker: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+    marginBottom: 4,
+  },
   heroTitle: {
     color: '#FFFFFF',
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: '900',
     letterSpacing: -0.5,
   },
   heroSubtitle: {
-    color: 'rgba(236, 253, 245, 0.9)',
+    color: 'rgba(255, 255, 255, 0.85)',
     fontSize: 14,
     lineHeight: 22,
     fontWeight: '500',
+    marginTop: 4,
   },
   card: {
     borderRadius: 32,
-    borderWidth: 0,
     padding: 24,
     gap: 24,
     elevation: 4,
@@ -413,28 +550,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconWrapper: {
-    width: 44,
-    height: 44,
-    borderRadius: 16,
+    width: 48,
+    height: 48,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '800',
+    letterSpacing: -0.3,
   },
   sectionBody: {
-    gap: 12,
+    gap: 16,
   },
   infoRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 12,
     alignItems: 'flex-start',
   },
   infoText: {
     flex: 1,
     fontSize: 14,
     lineHeight: 20,
+    fontWeight: '500',
+    opacity: 0.8,
   },
   fieldGroup: {
     gap: 20,
@@ -444,45 +584,67 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
     marginLeft: 4,
   },
   inputInner: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 16,
+    borderRadius: 20,
     borderWidth: 1.5,
-    borderColor: 'transparent',
     paddingHorizontal: 16,
+    overflow: 'hidden',
+  },
+  inputIcon: {
+    position: 'absolute',
+    left: 16,
+    zIndex: 1,
   },
   input: {
     flex: 1,
     fontSize: 15,
-    fontWeight: '400',
+    fontWeight: '500',
     paddingHorizontal: 12,
     paddingVertical: 14,
   },
-  submitWrapper: {
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
     marginTop: 8,
+    alignItems: 'center',
   },
-  submitButton: {
+  secondaryButton: {
+    flex: 1,
+    height: 56,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  secondaryButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  modalSubmitWrapper: {
+    flex: 2,
+  },
+  modalSubmitBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    paddingVertical: 18,
+    height: 56,
     borderRadius: 20,
-    elevation: 8,
+    elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
-    shadowRadius: 12,
+    shadowRadius: 8,
   },
   submitText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
 });
 

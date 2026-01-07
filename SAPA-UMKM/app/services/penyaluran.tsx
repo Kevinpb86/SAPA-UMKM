@@ -2,8 +2,10 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Animated,
+  Easing,
   FlatList,
   Platform,
   SafeAreaView,
@@ -62,6 +64,59 @@ export default function ProgramDistributionScreen() {
   const [selectedStatus, setSelectedStatus] = useState<ProgramStatus | 'Semua'>('Semua');
   const [expandedProgramId, setExpandedProgramId] = useState<string | null>(null);
 
+  // Animations
+  const meshAnim = useRef(new Animated.Value(0)).current;
+  const floatAnim = useRef(new Animated.Value(0)).current;
+  const entryAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Mesh rotation
+    Animated.loop(
+      Animated.timing(meshAnim, {
+        toValue: 1,
+        duration: 20000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    ).start();
+
+    // Floating loop
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatAnim, {
+          toValue: 1,
+          duration: 4000,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(floatAnim, {
+          toValue: 0,
+          duration: 4000,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    // Fade-in entry
+    Animated.spring(entryAnim, {
+      toValue: 1,
+      tension: 20,
+      friction: 8,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  const meshRotate = meshAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  const floatY = floatAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -15],
+  });
+
   const filteredPrograms = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
 
@@ -100,124 +155,143 @@ export default function ProgramDistributionScreen() {
       <TouchableOpacity
         accessibilityRole="button"
         onPress={() => handleExpandProgram(item.id)}
+        activeOpacity={0.9}
         style={[
           styles.programCard,
           {
+            backgroundColor: isExpanded ? `${colors.accent}05` : colors.card,
             borderColor: isExpanded ? colors.accent : colors.border,
-            backgroundColor: isExpanded ? `${colors.accent}0F` : colors.card,
           },
         ]}
-        activeOpacity={0.92}
       >
         <View style={styles.programHeader}>
-          <View style={styles.programHeaderLeft}>
-            <View style={[styles.programBadge, { backgroundColor: `${colors.accent}16` }]}>
-              <Feather name="layers" size={16} color={colors.accent} />
-              <Text style={[styles.programBadgeText, { color: colors.accent }]}>{item.type}</Text>
-            </View>
-            <View style={styles.programHeading}>
-              <Text style={[styles.programName, { color: colors.text }]}>{item.name}</Text>
-              <Text style={[styles.programProvider, { color: colors.subtle }]}>{item.provider}</Text>
-            </View>
+          <View style={[styles.typeBadge, { backgroundColor: `${colors.accent}15` }]}>
+            <Text style={[styles.typeText, { color: colors.accent }]}>{item.type}</Text>
           </View>
-          <Feather
-            name={isExpanded ? 'chevron-up' : 'chevron-down'}
-            size={18}
-            color={colors.subtle}
-          />
+          <View style={styles.statusRow}>
+            <View style={[styles.statusDot, { backgroundColor: item.status === 'Pendaftaran dibuka' ? '#10B981' : '#6B7280' }]} />
+            <Text style={[styles.statusText, { color: colors.subtle }]}>{item.status}</Text>
+          </View>
         </View>
 
-        <Text style={[styles.programSummary, { color: colors.text }]} numberOfLines={isExpanded ? undefined : 3}>
-          {item.summary}
-        </Text>
-
-        <View style={styles.programMetaRow}>
-          <ProgramStatusPill status={item.status} colors={colors} />
-          {item.financingRange && <MetaInfo colors={colors} icon="briefcase" text={item.financingRange} />}
-          {item.rateInfo && <MetaInfo colors={colors} icon="percent" text={item.rateInfo} />}
-        </View>
-
-        <View style={styles.programMetaRow}>
-          <MetaInfo colors={colors} icon="pie-chart" text={item.quotaInfo} />
-          {item.nextDeadline && (
-            <MetaInfo colors={colors} icon="calendar" text={`Deadline: ${item.nextDeadline}`} />
-          )}
+        <View style={styles.programContent}>
+          <Text style={[styles.programName, { color: colors.text }]}>{item.name}</Text>
+          <Text style={[styles.providerText, { color: colors.subtle, opacity: 0.8 }]}>Oleh: {item.provider}</Text>
+          <Text
+            style={[styles.programSummary, { color: colors.subtle }]}
+            numberOfLines={isExpanded ? undefined : 3}
+          >
+            {item.summary}
+          </Text>
         </View>
 
         {isExpanded && (
-          <View style={styles.programDetail}>
-            <SectionTitle colors={colors} icon="gift" title="Keunggulan Program" />
-            <View style={styles.benefitGrid}>
-              {item.benefits.map(benefit => (
-                <View key={benefit.id} style={[styles.benefitCard, { borderColor: colors.border }]}>
-                  <View style={[styles.benefitIcon, { backgroundColor: `${colors.accent}16` }]}>
-                    <Feather name={benefit.icon} size={16} color={colors.accent} />
-                  </View>
-                  <Text style={[styles.benefitTitle, { color: colors.text }]}>{benefit.title}</Text>
-                  <Text style={[styles.benefitDescription, { color: colors.subtle }]}>
-                    {benefit.description}
-                  </Text>
-                </View>
-              ))}
-            </View>
-
-            <SectionTitle colors={colors} icon="check-circle" title="Persyaratan Inti" />
-            <View style={styles.requirementsList}>
-              {item.requirements.map(requirement => (
-                <View key={requirement} style={styles.requirementRow}>
-                  <Feather name="check" size={14} color={colors.accent} />
-                  <Text style={[styles.requirementText, { color: colors.text }]}>{requirement}</Text>
-                </View>
-              ))}
-            </View>
-
-            <SectionTitle colors={colors} icon="calendar" title="Tahapan Penyaluran" />
-            <View style={styles.timelineList}>
-              {item.timeline.map(step => (
-                <TimelineItemRow key={step.id} step={step} colors={colors} />
-              ))}
-            </View>
-
-            <SectionTitle colors={colors} icon="file-text" title="Referensi & Formulir" />
-            <View style={styles.resourceList}>
-              {item.resources.map(resource => (
-                <TouchableOpacity
-                  key={resource.id}
-                  accessibilityRole="button"
-                  style={[styles.resourceCard, { borderColor: colors.border }]}
-                  onPress={() => router.push('/services/penyaluran/resources')}
-                >
-                  <View style={[styles.resourceIcon, { backgroundColor: `${colors.accent}16` }]}>
-                    <Feather name="download" size={16} color={colors.accent} />
-                  </View>
-                  <View style={styles.resourceTextWrapper}>
-                    <Text style={[styles.resourceLabel, { color: colors.text }]}>{resource.label}</Text>
-                    <Text style={[styles.resourceType, { color: colors.subtle }]}>{resource.type}</Text>
-                  </View>
-                  <Feather name="external-link" size={14} color={colors.accent} />
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <SectionTitle colors={colors} icon="life-buoy" title="Kontak & Pendampingan" />
-            <View style={[styles.contactCard, { borderColor: colors.border }]}>
-              <View style={styles.contactRow}>
-                <Feather name="mail" size={16} color={colors.accent} />
-                <Text style={[styles.contactText, { color: colors.text }]}>{item.contact.email}</Text>
+          <View style={styles.expandedDetails}>
+            <View style={styles.detailRow}>
+              <Feather name="calendar" size={16} color={colors.accent} />
+              <View>
+                <Text style={[styles.detailLabel, { color: colors.subtle }]}>Batas Pendaftaran</Text>
+                <Text style={[styles.detailValue, { color: colors.text }]}>{item.nextDeadline || 'N/A'}</Text>
               </View>
-              <View style={styles.contactRow}>
-                <Feather name="phone" size={16} color={colors.accent} />
-                <Text style={[styles.contactText, { color: colors.text }]}>{item.contact.phone}</Text>
+            </View>
+            <TouchableOpacity
+              accessibilityRole="button"
+              onPress={() => item.applyUrl && router.push(item.applyUrl as any)}
+              style={styles.applyBtn}
+            >
+              <LinearGradient
+                colors={[colors.accent, `${colors.accent}EE`]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.applyGradient}
+              >
+                <Text style={styles.applyBtnText}>Daftar Program</Text>
+                <Feather name="arrow-right" size={16} color="#FFFFFF" />
+              </LinearGradient>
+            </TouchableOpacity>
+            <View style={styles.programDetail}>
+              <SectionTitle colors={colors} icon="gift" title="Keunggulan Program" />
+              <View style={styles.benefitGrid}>
+                {item.benefits.map(benefit => (
+                  <View key={benefit.id} style={[styles.benefitItem, { borderColor: colors.border }]}>
+                    <View style={[styles.benefitIcon, { backgroundColor: `${colors.accent}16` }]}>
+                      <Feather name={benefit.icon} size={16} color={colors.accent} />
+                    </View>
+                    <Text style={[styles.benefitTitle, { color: colors.text }]}>{benefit.title}</Text>
+                    <Text style={[styles.benefitDescription, { color: colors.subtle }]}>
+                      {benefit.description}
+                    </Text>
+                  </View>
+                ))}
               </View>
-              {item.contact.notes && (
+
+              <SectionTitle colors={colors} icon="check-circle" title="Persyaratan Inti" />
+              <View style={styles.requirementsList}>
+                {item.requirements.map(requirement => (
+                  <View key={requirement} style={styles.requirementRow}>
+                    <Feather name="check" size={14} color={colors.accent} />
+                    <Text style={[styles.requirementText, { color: colors.text }]}>{requirement}</Text>
+                  </View>
+                ))}
+              </View>
+
+              <SectionTitle colors={colors} icon="calendar" title="Tahapan Penyaluran" />
+              <View style={styles.timelineList}>
+                {item.timeline.map(step => (
+                  <TimelineItemRow key={step.id} step={step} colors={colors} />
+                ))}
+              </View>
+
+              <SectionTitle colors={colors} icon="file-text" title="Referensi & Formulir" />
+              <View style={styles.resourceList}>
+                {item.resources.map(resource => (
+                  <TouchableOpacity
+                    key={resource.id}
+                    accessibilityRole="button"
+                    style={[styles.resourceCard, { borderColor: colors.border }]}
+                    onPress={() => router.push('/services/penyaluran/resources')}
+                  >
+                    <View style={[styles.resourceIcon, { backgroundColor: `${colors.accent}16` }]}>
+                      <Feather name="download" size={16} color={colors.accent} />
+                    </View>
+                    <View style={styles.resourceTextWrapper}>
+                      <Text style={[styles.resourceLabel, { color: colors.text }]}>{resource.label}</Text>
+                      <Text style={[styles.resourceType, { color: colors.subtle }]}>{resource.type}</Text>
+                    </View>
+                    <Feather name="external-link" size={14} color={colors.accent} />
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <SectionTitle colors={colors} icon="life-buoy" title="Kontak & Pendampingan" />
+              <View style={[styles.contactCard, { borderColor: colors.border }]}>
                 <View style={styles.contactRow}>
-                  <Feather name="info" size={16} color={colors.accent} />
-                  <Text style={[styles.contactNotes, { color: colors.subtle }]}>{item.contact.notes}</Text>
+                  <Feather name="mail" size={16} color={colors.accent} />
+                  <Text style={[styles.contactText, { color: colors.text }]}>{item.contact.email}</Text>
                 </View>
-              )}
+                <View style={styles.contactRow}>
+                  <Feather name="phone" size={16} color={colors.accent} />
+                  <Text style={[styles.contactText, { color: colors.text }]}>{item.contact.phone}</Text>
+                </View>
+                {item.contact.notes && (
+                  <View style={styles.contactRow}>
+                    <Feather name="info" size={16} color={colors.accent} />
+                    <Text style={[styles.contactNotes, { color: colors.subtle }]}>{item.contact.notes}</Text>
+                  </View>
+                )}
+              </View>
             </View>
           </View>
         )}
+
+        <View style={styles.programFooter}>
+          <View style={styles.expandBtn}>
+            <Text style={[styles.expandText, { color: colors.accent }]}>
+              {isExpanded ? 'Tutup' : 'Lihat Detail'}
+            </Text>
+            <Feather name={isExpanded ? 'chevron-up' : 'chevron-down'} size={18} color={colors.accent} />
+          </View>
+        </View>
       </TouchableOpacity>
     );
   };
@@ -232,32 +306,47 @@ export default function ProgramDistributionScreen() {
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={
           <>
-            <View style={styles.heroWrapper}>
+            <Animated.View
+              style={[
+                styles.heroContainer,
+                {
+                  opacity: entryAnim,
+                  transform: [{ translateY: entryAnim.interpolate({ inputRange: [0, 1], outputRange: [-20, 0] }) }]
+                }
+              ]}
+            >
               <LinearGradient
                 colors={colors.hero}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.hero}
               >
-                <TouchableOpacity
-                  accessibilityRole="button"
-                  onPress={() => router.back()}
-                  style={styles.backButton}
-                >
-                  <Feather name="arrow-left" size={18} color="#FFFFFF" />
-                  <Text style={styles.backText}>Kembali</Text>
-                </TouchableOpacity>
-                <Text style={styles.heroKicker}>Informasi Penyaluran Program KemenKopUKM</Text>
-                <Text style={styles.heroTitle}>Akses Dana & Dukungan Resmi untuk UMKM</Text>
-                <Text style={styles.heroSubtitle}>
-                  Pantau status penyaluran pembiayaan, bantuan usaha, dan program pendampingan yang disediakan pemerintah.
-                </Text>
+                <Animated.View style={[styles.meshOverlay, { transform: [{ rotate: meshRotate }, { scale: 1.5 }] }]}>
+                  <View style={[styles.meshCircle, { top: -80, right: -40, width: 260, height: 260, backgroundColor: 'rgba(255,255,255,0.12)' }]} />
+                  <View style={[styles.meshCircle, { bottom: -120, left: -60, width: 320, height: 320, backgroundColor: 'rgba(255,255,255,0.08)' }]} />
+                </Animated.View>
+
+                <Animated.View style={[styles.floatingIcon, { top: '20%', right: '10%', transform: [{ translateY: floatY }] }]}>
+                  <Feather name="layers" size={90} color="#FFFFFF" style={{ opacity: 0.1 }} />
+                </Animated.View>
+
+                <View style={styles.heroContent}>
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    onPress={() => router.back()}
+                    style={styles.backButton}
+                  >
+                    <Feather name="arrow-left" size={18} color="#FFFFFF" />
+                    <Text style={styles.backText}>Kembali</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.heroKicker}>MODAL & PROGRAM</Text>
+                  <Text style={styles.heroTitle}>Penyaluran Modal</Text>
+                  <Text style={styles.heroSubtitle}>
+                    Informasi terkini mengenai program penyaluran bantuan, sertifikasi, dan subsidi pemerintah yang dapat dimanfaatkan untuk eskalasi bisnis Anda.
+                  </Text>
+                </View>
               </LinearGradient>
-              <LinearGradient
-                colors={scheme === 'dark' ? ['#2563EB33', 'transparent'] : ['#F0F6FF', 'transparent']}
-                style={styles.meshGradient}
-              />
-            </View>
+            </Animated.View>
 
             <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>Filter & Pencarian</Text>
@@ -469,32 +558,45 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   listContent: {
-    padding: 24,
+    padding: 20,
     gap: 20,
     paddingBottom: 48,
   },
-  heroWrapper: {
-    borderRadius: 28,
+  heroContainer: {
+    borderRadius: 32,
     overflow: 'hidden',
-    elevation: 4,
+    elevation: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.15,
-    shadowRadius: 10,
-    marginBottom: 16,
+    shadowRadius: 24,
+    marginBottom: 8,
   },
   hero: {
     padding: 24,
-    gap: 16,
-    zIndex: 1,
+    minHeight: 240,
+    justifyContent: 'flex-end',
+    overflow: 'hidden',
   },
-  meshGradient: {
+  meshOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    opacity: 0.5,
+    zIndex: -1,
+  },
+  meshCircle: {
+    position: 'absolute',
+    borderRadius: 999,
+  },
+  floatingIcon: {
+    position: 'absolute',
+    zIndex: 0,
+  },
+  heroContent: {
+    gap: 8,
+    zIndex: 2,
   },
   backButton: {
     alignSelf: 'flex-start',
@@ -506,35 +608,37 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.4)',
     paddingHorizontal: 14,
     paddingVertical: 8,
-    backgroundColor: 'rgba(11, 29, 58, 0.25)',
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    marginBottom: 8,
   },
   backText: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   heroKicker: {
-    color: 'rgba(219, 234, 254, 0.92)',
-    fontSize: 13,
-    letterSpacing: 1,
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 12,
+    fontWeight: '700',
     textTransform: 'uppercase',
-    fontWeight: '800',
+    letterSpacing: 1.5,
+    marginBottom: 4,
   },
   heroTitle: {
     color: '#FFFFFF',
-    fontSize: 26,
-    fontWeight: '700',
+    fontSize: 28,
+    fontWeight: '900',
     letterSpacing: -0.5,
   },
   heroSubtitle: {
-    color: 'rgba(230, 241, 255, 0.9)',
+    color: 'rgba(255, 255, 255, 0.85)',
     fontSize: 14,
     lineHeight: 22,
     fontWeight: '500',
+    marginTop: 4,
   },
   card: {
     borderRadius: 32,
-    borderWidth: 0,
     padding: 24,
     gap: 24,
     elevation: 4,
@@ -543,85 +647,131 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 15,
   },
+  searchHeader: {
+    gap: 4,
+  },
+  deadlineList: {
+    gap: 12,
+    marginTop: 16,
+  },
+  deadlineItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  deadlineIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deadlineContent: {
+    flex: 1,
+    gap: 2,
+  },
+  deadlineTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  deadlineDate: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '800',
     letterSpacing: -0.3,
   },
   sectionSubtitle: {
     fontSize: 13,
-    lineHeight: 20,
+    lineHeight: 18,
     fontWeight: '500',
     opacity: 0.7,
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    borderRadius: 18,
-    borderWidth: 1.5,
+    borderRadius: 20,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    height: 52,
   },
   searchInput: {
     flex: 1,
     fontSize: 14,
-    paddingVertical: 0,
+    fontWeight: '500',
+    paddingHorizontal: 12,
+  },
+  filterSection: {
+    gap: 16,
   },
   filterGroup: {
-    gap: 12,
+    gap: 10,
   },
   filterLabel: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '800',
     textTransform: 'uppercase',
-    letterSpacing: 0.6,
+    letterSpacing: 1,
+    opacity: 0.5,
+    marginLeft: 4,
   },
   filterList: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 10,
   },
   filterChip: {
-    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 14,
     borderWidth: 1.5,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
   },
   filterChipText: {
     fontSize: 13,
     fontWeight: '700',
   },
-  deadlineList: {
-    gap: 12,
+  programCard: {
+    borderRadius: 32,
+    padding: 24,
+    gap: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    borderWidth: 1,
   },
-  deadlineItem: {
-    borderRadius: 18,
-    borderWidth: 1.5,
-    padding: 16,
+  programHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 12,
   },
-  deadlineIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
+  typeBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
   },
-  deadlineContent: {
-    flex: 1,
-    gap: 4,
-  },
-  deadlineTitle: {
-    fontSize: 14,
+  typeText: {
+    fontSize: 12,
     fontWeight: '800',
   },
-  deadlineDate: {
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  statusText: {
     fontSize: 12,
-    fontWeight: '600',
-    opacity: 0.7,
+    fontWeight: '700',
   },
   statusBadge: {
     flexDirection: 'row',
@@ -635,54 +785,81 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
   },
-  programCard: {
-    borderRadius: 24,
-    borderWidth: 0,
-    padding: 24,
-    gap: 20,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-  },
-  programHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  programHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-  },
-  programBadge: {
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  programBadgeText: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.4,
-  },
-  programHeading: {
-    flex: 1,
+  programContent: {
     gap: 4,
   },
   programName: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 17,
+    fontWeight: '800',
+    letterSpacing: -0.3,
   },
-  programProvider: {
-    fontSize: 12,
+  providerText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
   programSummary: {
     fontSize: 14,
     lineHeight: 20,
+    marginTop: 4,
+  },
+  programFooter: {
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.05)',
+    paddingTop: 16,
+    marginTop: 8,
+  },
+  expandBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  expandText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  expandedDetails: {
+    gap: 16,
+    paddingVertical: 16,
+    backgroundColor: 'rgba(0,0,0,0.02)',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  detailLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    opacity: 0.6,
+  },
+  detailValue: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  applyBtn: {
+    borderRadius: 18,
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+  },
+  applyGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 14,
+  },
+  applyBtnText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
   programMetaRow: {
     flexDirection: 'row',
@@ -693,26 +870,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: 'rgba(37, 99, 235, 0.08)',
-    maxWidth: '100%',
   },
   metaInfoText: {
     fontSize: 12,
     fontWeight: '600',
-    flexShrink: 1,
   },
   programDetail: {
-    gap: 18,
-    paddingTop: 8,
+    gap: 16,
+    marginTop: 16,
   },
   sectionTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginTop: 8,
   },
   sectionTitleIcon: {
     width: 32,
@@ -722,28 +892,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   sectionTitleText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '800',
-    letterSpacing: -0.2,
   },
   benefitGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: 12,
   },
-  benefitCard: {
-    width: '48%',
-    borderRadius: 18,
-    borderWidth: 1,
-    padding: 14,
-    gap: 8,
+  benefitItem: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'flex-start',
   },
   benefitIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 12,
+    width: 24,
+    height: 24,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  benefitText: {
+    flex: 1,
+    gap: 2,
   },
   benefitTitle: {
     fontSize: 13,

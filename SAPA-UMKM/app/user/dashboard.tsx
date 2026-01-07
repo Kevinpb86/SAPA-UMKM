@@ -197,6 +197,367 @@ const timeline: TimelineItem[] = [
 
 import { fetchSubmissions, updateUserProfile } from '@/lib/api';
 
+type PremiumInteractionButtonProps = {
+  icon: FeatherIconName;
+  count?: number;
+  colors: typeof palette.light;
+  onPress?: () => void;
+};
+
+function PremiumInteractionButton({ icon, count, colors, onPress }: PremiumInteractionButtonProps) {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const [isPressed, setIsPressed] = useState(false);
+
+  const handlePressIn = () => {
+    setIsPressed(true);
+    Animated.spring(scaleAnim, {
+      toValue: 0.9,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    setIsPressed(false);
+    Animated.sequence([
+      Animated.spring(scaleAnim, {
+        toValue: 1.1,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  return (
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <TouchableOpacity
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={0.7}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 6,
+          paddingHorizontal: 12,
+          paddingVertical: 8,
+          borderRadius: 12,
+          backgroundColor: isPressed ? `${colors.primary}08` : 'transparent',
+        }}
+      >
+        <Feather name={icon} size={18} color={isPressed ? colors.primary : colors.subtle} />
+        {count !== undefined && (
+          <Text
+            style={{
+              fontSize: 13,
+              color: isPressed ? colors.primary : colors.subtle,
+            }}
+          >
+            {count}
+          </Text>
+        )}
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
+
+type AnimatedPostCardProps = {
+  post: any;
+  index: number;
+  colors: typeof palette.light;
+  styles: any;
+};
+
+function AnimatedPostCard({ post, index, colors, styles }: AnimatedPostCardProps) {
+  const cardAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const shadowAnim = useRef(new Animated.Value(0)).current;
+  const [isPressed, setIsPressed] = useState(false);
+
+  useEffect(() => {
+    // Staggered entrance animation
+    Animated.spring(cardAnim, {
+      toValue: 1,
+      delay: index * 100,
+      tension: 40,
+      friction: 8,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  const handlePressIn = () => {
+    setIsPressed(true);
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 0.98,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shadowAnim, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: false,
+      }),
+    ]).start();
+  };
+
+  const handlePressOut = () => {
+    setIsPressed(false);
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shadowAnim, {
+        toValue: 0,
+        duration: 150,
+        useNativeDriver: false,
+      }),
+    ]).start();
+  };
+
+  return (
+    <Animated.View
+      style={[
+        {
+          opacity: cardAnim,
+          transform: [
+            { scale: scaleAnim },
+            {
+              translateY: cardAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [20, 0],
+              }),
+            },
+          ],
+        },
+      ]}
+    >
+      <TouchableOpacity
+        activeOpacity={1}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        style={{
+          backgroundColor: colors.surface,
+          borderRadius: 20,
+          overflow: 'hidden',
+          borderWidth: 1,
+          borderColor: colors.border,
+        }}
+      >
+        {/* Premium Card with Left Accent */}
+        <View style={{ flexDirection: 'row' }}>
+          {/* Left Accent Bar */}
+          <Animated.View
+            style={{
+              width: shadowAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [4, 5],
+              }),
+              backgroundColor: colors.primary,
+            }}
+          />
+
+          {/* Main Content Area */}
+          <View style={{ flex: 1, padding: 20 }}>
+            {/* Author Section */}
+            <View style={{ marginBottom: 16 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                {/* Minimalist Avatar */}
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 12,
+                    backgroundColor: `${colors.primary}10`,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginRight: 12,
+                    borderWidth: 1,
+                    borderColor: `${colors.primary}20`,
+                  }}
+                >
+                  <Feather name="user" size={18} color={colors.primary} />
+                </View>
+
+                {/* Author Info */}
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                    <Text
+                      style={{
+                        fontSize: 15,
+                        color: colors.text,
+                        letterSpacing: -0.2,
+                      }}
+                    >
+                      {post.author_name}
+                    </Text>
+                    {post.is_verified && (
+                      <View
+                        style={{
+                          width: 16,
+                          height: 16,
+                          borderRadius: 999,
+                          backgroundColor: colors.primary,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Feather name="check" size={10} color="#FFFFFF" />
+                      </View>
+                    )}
+                  </View>
+                  <Text style={{ fontSize: 12, color: colors.subtle, letterSpacing: 0.3 }}>
+                    {new Date(post.created_at).toLocaleDateString('id-ID', {
+                      day: 'numeric',
+                      month: 'short',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </Text>
+                </View>
+
+                {/* Category Pill */}
+                <View
+                  style={{
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
+                    borderRadius: 12,
+                    backgroundColor: `${colors.primary}08`,
+                    borderWidth: 1,
+                    borderColor: `${colors.primary}15`,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      color: colors.primary,
+                      letterSpacing: 0.8,
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {post.category || 'Umum'}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Content Section */}
+            <View style={{ marginBottom: 16 }}>
+              {post.title && (
+                <Text
+                  style={{
+                    fontSize: 16,
+                    color: colors.text,
+                    lineHeight: 24,
+                    marginBottom: 8,
+                    letterSpacing: -0.3,
+                  }}
+                >
+                  {post.title}
+                </Text>
+              )}
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: colors.text,
+                  lineHeight: 22,
+                  opacity: 0.85,
+                  letterSpacing: -0.1,
+                }}
+                numberOfLines={3}
+              >
+                {post.content}
+              </Text>
+            </View>
+
+            {/* Divider Line */}
+            <View
+              style={{
+                height: 1,
+                backgroundColor: colors.border,
+                marginBottom: 14,
+                opacity: 0.5,
+              }}
+            />
+
+            {/* Interaction Bar */}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 4,
+              }}
+            >
+              <PremiumInteractionButton icon="heart" count={post.likes || 0} colors={colors} />
+              <PremiumInteractionButton icon="message-circle" count={post.comments_count || 0} colors={colors} />
+              <View style={{ flex: 1 }} />
+              <TouchableOpacity
+                style={{
+                  paddingHorizontal: 14,
+                  paddingVertical: 8,
+                  borderRadius: 10,
+                  backgroundColor: `${colors.primary}08`,
+                }}
+              >
+                <Feather name="share-2" size={16} color={colors.primary} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
+        {/* Animated Shadow Overlay */}
+        <Animated.View
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: shadowAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0, 3],
+            }),
+            backgroundColor: colors.primary,
+            opacity: shadowAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0, 0.05],
+            }),
+          }}
+        />
+      </TouchableOpacity>
+
+      {/* External Shadow Effect */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          borderRadius: 20,
+          backgroundColor: 'transparent',
+          elevation: shadowAnim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [4, 12],
+          }),
+          shadowColor: colors.primary,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: shadowAnim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0.1, 0.25],
+          }),
+          shadowRadius: shadowAnim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [8, 16],
+          }),
+          zIndex: -1,
+        }}
+      />
+    </Animated.View>
+  );
+}
+
 export default function UserDashboardScreen() {
   const scheme = useColorScheme();
   const colors = scheme === 'dark' ? palette.dark : palette.light;
@@ -486,60 +847,358 @@ export default function UserDashboardScreen() {
           end={{ x: 1, y: 1 }}
           style={styles.hero}
         >
-          <View style={styles.heroDecorationOne} />
-          <View style={styles.heroDecorationTwo} />
+          {/* Enhanced Decorative Elements */}
+          <View
+            style={{
+              position: 'absolute',
+              top: -100,
+              right: -80,
+              width: 280,
+              height: 280,
+              borderRadius: 999,
+              backgroundColor: 'rgba(255, 255, 255, 0.06)',
+            }}
+          />
+          <View
+            style={{
+              position: 'absolute',
+              bottom: -120,
+              left: -60,
+              width: 250,
+              height: 250,
+              borderRadius: 999,
+              backgroundColor: 'rgba(255, 255, 255, 0.04)',
+            }}
+          />
 
-          <View style={styles.heroTopBar}>
-            <View style={styles.heroUserInfo}>
-              <View style={styles.heroAvatar}>
-                <Feather name="user" size={24} color="#FFFFFF" />
-              </View>
-              <View>
-                <Text style={styles.heroUserLabel}>Akun</Text>
-                <Text style={styles.heroUserName}>{accountLabel}</Text>
-              </View>
-            </View>
-            <TouchableOpacity
-              accessibilityRole="button"
-              onPress={handleLogout}
-              style={styles.logoutButton}
+          {/* Top Bar with Glassmorphic User Card */}
+          <View style={{ marginBottom: 24 }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
             >
-              <Feather name="log-out" size={16} color={colors.primary} />
-              <Text style={styles.logoutButtonText}>Logout</Text>
-            </TouchableOpacity>
+              {/* Premium User Info Card */}
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                  borderRadius: 20,
+                  padding: 8,
+                  paddingRight: 16,
+                  borderWidth: 1,
+                  borderColor: 'rgba(255, 255, 255, 0.15)',
+                }}
+              >
+                <View
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 14,
+                    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginRight: 12,
+                    borderWidth: 1.5,
+                    borderColor: 'rgba(255, 255, 255, 0.25)',
+                  }}
+                >
+                  <Feather name="user" size={22} color="#FFFFFF" />
+                </View>
+                <View>
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      color: 'rgba(255, 255, 255, 0.75)',
+                      letterSpacing: 0.5,
+                      textTransform: 'uppercase',
+                      marginBottom: 2,
+                    }}
+                  >
+                    Akun
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 15,
+                      color: '#FFFFFF',
+                      letterSpacing: -0.2,
+                    }}
+                  >
+                    {accountLabel}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Premium Logout Button */}
+              <TouchableOpacity
+                accessibilityRole="button"
+                onPress={handleLogout}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 8,
+                  paddingHorizontal: 16,
+                  paddingVertical: 12,
+                  borderRadius: 14,
+                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                  borderWidth: 1,
+                  borderColor: 'rgba(255, 255, 255, 0.1)',
+                }}
+              >
+                <View
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: 8,
+                    backgroundColor: `${colors.primary}12`,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Feather name="log-out" size={14} color={colors.primary} />
+                </View>
+                <Text
+                  style={{
+                    fontSize: 14,
+                    color: colors.primary,
+                    letterSpacing: -0.1,
+                  }}
+                >
+                  Logout
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
-          <View style={styles.heroHeader}>
-            <View style={styles.heroHeadline}>
-              <Text style={styles.heroGreeting}>Selamat datang kembali 👋</Text>
-              <Text style={styles.heroTitle}>Dashboard UMKM Anda</Text>
-            </View>
-            <Text style={styles.heroSubtitle}>
-              Kelola legalitas, akses bantuan pemerintah, dan ikuti pelatihan untuk menumbuhkan usaha secara berkelanjutan.
+          {/* Hero Content with Enhanced Typography */}
+          <View style={{ marginBottom: 28 }}>
+            <Text
+              style={{
+                fontSize: 15,
+                color: 'rgba(255, 255, 255, 0.85)',
+                marginBottom: 8,
+                letterSpacing: 0.2,
+              }}
+            >
+              Selamat datang kembali 👋
+            </Text>
+            <Text
+              style={{
+                fontSize: 28,
+                color: '#FFFFFF',
+                marginBottom: 12,
+                letterSpacing: -0.8,
+                lineHeight: 34,
+              }}
+            >
+              Dashboard UMKM Anda
+            </Text>
+            <Text
+              style={{
+                fontSize: 14,
+                color: 'rgba(255, 255, 255, 0.8)',
+                lineHeight: 22,
+                letterSpacing: 0.1,
+              }}
+            >
+              Kelola dokumen legalitas usaha, akses berbagai program bantuan dan pembiayaan dari pemerintah, ikuti pelatihan dan sertifikasi profesional, serta terhubung dengan komunitas UMKM untuk menumbuhkan dan mengembangkan usaha Anda secara berkelanjutan.
             </Text>
           </View>
 
-          <View style={styles.heroStatsRow}>
+          {/* Ultra-Premium Stat Cards */}
+          <View
+            style={{
+              gap: 12,
+            }}
+          >
             {statBadges.map((badge, index) => (
               <View
                 key={badge.label}
-                style={[
-                  styles.statCard,
-                  {
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    borderColor: 'rgba(255, 255, 255, 0.1)',
-                    borderWidth: 1,
-                  }
-                ]}
+                style={{
+                  position: 'relative',
+                }}
               >
+                {/* Multi-Layer Shadow for Depth */}
                 <View
-                  style={[styles.statIconWrapper, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}
+                  style={{
+                    position: 'absolute',
+                    top: 4,
+                    left: 2,
+                    right: -2,
+                    bottom: -4,
+                    borderRadius: 18,
+                    backgroundColor: 'rgba(0, 0, 0, 0.15)',
+                    zIndex: -2,
+                  }}
+                />
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: 2,
+                    left: 1,
+                    right: -1,
+                    bottom: -2,
+                    borderRadius: 18,
+                    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                    zIndex: -1,
+                  }}
+                />
+
+                {/* Main Card Container */}
+                <View
+                  style={{
+                    borderRadius: 18,
+                    overflow: 'hidden',
+                    borderWidth: 1.5,
+                    borderColor: 'rgba(255, 255, 255, 0.25)',
+                  }}
                 >
-                  <Feather name={badge.icon} size={20} color="#FFFFFF" />
-                </View>
-                <View>
-                  <Text style={styles.statValue}>{badge.value}</Text>
-                  <Text style={styles.statLabel}>{badge.label}</Text>
+                  {/* Gradient Background */}
+                  <LinearGradient
+                    colors={[
+                      'rgba(255, 255, 255, 0.18)',
+                      'rgba(255, 255, 255, 0.14)',
+                      'rgba(255, 255, 255, 0.10)',
+                    ]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={{
+                      padding: 18,
+                      paddingRight: 16,
+                      position: 'relative',
+                    }}
+                  >
+                    {/* Shimmer Top Accent */}
+                    <View
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: 2,
+                        backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                      }}
+                    />
+
+                    {/* Content Row */}
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 16,
+                      }}
+                    >
+                      {/* Glowing Icon Container */}
+                      <View
+                        style={{
+                          position: 'relative',
+                        }}
+                      >
+                        {/* Outer Glow */}
+                        <View
+                          style={{
+                            position: 'absolute',
+                            top: -3,
+                            left: -3,
+                            right: -3,
+                            bottom: -3,
+                            borderRadius: 18,
+                            backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                          }}
+                        />
+                        {/* Icon Background with Gradient */}
+                        <LinearGradient
+                          colors={['rgba(255, 255, 255, 0.25)', 'rgba(255, 255, 255, 0.18)']}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
+                          style={{
+                            width: 56,
+                            height: 56,
+                            borderRadius: 15,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderWidth: 2,
+                            borderColor: 'rgba(255, 255, 255, 0.3)',
+                          }}
+                        >
+                          <Feather name={badge.icon} size={26} color="#FFFFFF" />
+                        </LinearGradient>
+                      </View>
+
+                      {/* Content Area */}
+                      <View style={{ flex: 1 }}>
+                        {/* Number with Glow */}
+                        <Text
+                          style={{
+                            fontSize: 34,
+                            color: '#FFFFFF',
+                            letterSpacing: -1.2,
+                            marginBottom: 2,
+                            textShadowColor: 'rgba(255, 255, 255, 0.3)',
+                            textShadowOffset: { width: 0, height: 0 },
+                            textShadowRadius: 8,
+                          }}
+                        >
+                          {badge.value}
+                        </Text>
+
+                        {/* Label */}
+                        <Text
+                          style={{
+                            fontSize: 13,
+                            color: 'rgba(255, 255, 255, 0.88)',
+                            letterSpacing: 0.3,
+                            lineHeight: 17,
+                            marginBottom: 8,
+                          }}
+                        >
+                          {badge.label}
+                        </Text>
+
+                        {/* Progress Bar */}
+                        <View
+                          style={{
+                            height: 4,
+                            backgroundColor: 'rgba(0, 0, 0, 0.15)',
+                            borderRadius: 2,
+                            overflow: 'hidden',
+                          }}
+                        >
+                          <View
+                            style={{
+                              width: `${parseInt(badge.value) * 12}%`,
+                              height: '100%',
+                              backgroundColor: '#FFFFFF',
+                              borderRadius: 2,
+                              shadowColor: '#FFFFFF',
+                              shadowOffset: { width: 0, height: 0 },
+                              shadowOpacity: 0.6,
+                              shadowRadius: 4,
+                            }}
+                          />
+                        </View>
+                      </View>
+
+                      {/* Premium Arrow Button */}
+                      <View
+                        style={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: 11,
+                          backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderWidth: 1,
+                          borderColor: 'rgba(255, 255, 255, 0.2)',
+                        }}
+                      >
+                        <Feather name="arrow-right" size={18} color="rgba(255, 255, 255, 0.9)" />
+                      </View>
+                    </View>
+                  </LinearGradient>
                 </View>
               </View>
             ))}
@@ -755,81 +1414,197 @@ export default function UserDashboardScreen() {
 
         {activeTab === 'community' && (
           <View style={{ gap: 24 }}>
-            <View style={[styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <View>
-                  <Text style={[styles.sectionTitle, { color: colors.text }]}>Komunitas UMKM</Text>
-                  <Text style={[styles.sectionSubtitle, { color: colors.subtle }]}>
-                    Diskusi dan berbagi pengalaman dengan sesama pelaku usaha.
-                  </Text>
+            {/* Premium Gradient Header Card */}
+            <View
+              style={{
+                borderRadius: 28,
+                overflow: 'hidden',
+                marginBottom: 8,
+                elevation: 8,
+                shadowColor: colors.primary,
+                shadowOffset: { width: 0, height: 8 },
+                shadowOpacity: 0.15,
+                shadowRadius: 20,
+              }}
+            >
+              <View
+                style={{
+                  padding: 24,
+                  paddingBottom: 28,
+                  position: 'relative',
+                  backgroundColor: scheme === 'dark' ? colors.surface : '#FFFFFF',
+                }}
+              >
+                {/* Subtle Decorative Elements */}
+                <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden' }}>
+                  <View
+                    style={{
+                      position: 'absolute',
+                      top: -60,
+                      right: -40,
+                      width: 180,
+                      height: 180,
+                      borderRadius: 999,
+                      backgroundColor: `${colors.primary}03`,
+                    }}
+                  />
+                  <View
+                    style={{
+                      position: 'absolute',
+                      bottom: -80,
+                      left: -50,
+                      width: 200,
+                      height: 200,
+                      borderRadius: 999,
+                      backgroundColor: `${colors.primary}02`,
+                    }}
+                  />
                 </View>
-                <TouchableOpacity
-                  onPress={() => setCreatePostModalVisible(true)}
+
+                {/* Header Content */}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', zIndex: 2 }}>
+                  <View style={{ flex: 1 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 10 }}>
+                      <View
+                        style={{
+                          width: 44,
+                          height: 44,
+                          borderRadius: 14,
+                          backgroundColor: `${colors.primary}12`,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderWidth: 1.5,
+                          borderColor: `${colors.primary}20`,
+                        }}
+                      >
+                        <Feather name="users" size={22} color={colors.primary} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text
+                          style={{
+                            fontSize: 24,
+                            color: colors.text,
+                            letterSpacing: -0.5,
+                          }}
+                        >
+                          Komunitas UMKM
+                        </Text>
+                      </View>
+                    </View>
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        color: colors.subtle,
+                        lineHeight: 20,
+                      }}
+                    >
+                      Diskusi dan berbagi pengalaman dengan sesama pelaku usaha.
+                    </Text>
+                  </View>
+
+                  {/* Premium Create Post Button */}
+                  <TouchableOpacity
+                    onPress={() => setCreatePostModalVisible(true)}
+                    activeOpacity={0.8}
+                    style={{
+                      width: 52,
+                      height: 52,
+                      borderRadius: 16,
+                      backgroundColor: colors.primary,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      elevation: 6,
+                      shadowColor: colors.primary,
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: 0.25,
+                      shadowRadius: 12,
+                      marginLeft: 12,
+                    }}
+                  >
+                    <Feather name="plus" size={26} color="#FFFFFF" />
+                  </TouchableOpacity>
+                </View>
+
+                {/* Stats Bar */}
+                <View
                   style={{
-                    backgroundColor: colors.primary,
-                    width: 44, height: 44, borderRadius: 12,
-                    alignItems: 'center', justifyContent: 'center'
+                    flexDirection: 'row',
+                    gap: 12,
+                    marginTop: 20,
+                    paddingTop: 20,
+                    borderTopWidth: 1,
+                    borderTopColor: colors.border,
                   }}
                 >
-                  <Feather name="plus" size={24} color="#FFFFFF" />
-                </TouchableOpacity>
+                  <View style={{ flex: 1, alignItems: 'center' }}>
+                    <Text style={{ fontSize: 20, color: colors.text }}>
+                      {posts.length}
+                    </Text>
+                    <Text style={{ fontSize: 12, color: colors.subtle }}>Diskusi</Text>
+                  </View>
+                  <View
+                    style={{
+                      width: 1,
+                      backgroundColor: colors.border,
+                    }}
+                  />
+                  <View style={{ flex: 1, alignItems: 'center' }}>
+                    <Text style={{ fontSize: 20, color: colors.text }}>24</Text>
+                    <Text style={{ fontSize: 12, color: colors.subtle }}>Anggota</Text>
+                  </View>
+                  <View
+                    style={{
+                      width: 1,
+                      backgroundColor: colors.border,
+                    }}
+                  />
+                  <View style={{ flex: 1, alignItems: 'center' }}>
+                    <Text style={{ fontSize: 20, color: colors.text }}>48</Text>
+                    <Text style={{ fontSize: 12, color: colors.subtle }}>Aktif</Text>
+                  </View>
+                </View>
               </View>
+            </View>
 
+            {/* Posts Container */}
+            <View>
               {posts.length === 0 ? (
-                <View style={[styles.emptyState, { backgroundColor: scheme === 'dark' ? 'rgba(255,255,255,0.03)' : '#F8FAFC' }]}>
-                  <Feather name="message-square" size={48} color={colors.subtle} style={{ opacity: 0.5, marginBottom: 16 }} />
-                  <Text style={[styles.emptyStateText, { color: colors.subtle }]}>
-                    Belum ada diskusi. Mulailah percakapan!
+                <View
+                  style={[
+                    styles.emptyState,
+                    {
+                      backgroundColor: colors.surface,
+                      borderColor: colors.border,
+                      borderRadius: 24,
+                      borderWidth: 1.5,
+                      padding: 40,
+                    },
+                  ]}
+                >
+                  <View
+                    style={{
+                      width: 80,
+                      height: 80,
+                      borderRadius: 999,
+                      backgroundColor: `${colors.primary}08`,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: 20,
+                    }}
+                  >
+                    <Feather name="message-square" size={40} color={colors.primary} style={{ opacity: 0.6 }} />
+                  </View>
+                  <Text style={[styles.emptyStateText, { color: colors.text, fontSize: 16, marginBottom: 8 }]}>
+                    Belum ada diskusi
+                  </Text>
+                  <Text style={{ color: colors.subtle, fontSize: 14, textAlign: 'center' }}>
+                    Mulailah percakapan dan bagikan pengalaman Anda!
                   </Text>
                 </View>
               ) : (
                 <View style={{ gap: 16 }}>
-                  {posts.map((post) => (
-                    <View
-                      key={post.id}
-                      style={[styles.postCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
-                    >
-                      <View style={styles.postCardHeader}>
-                        <View style={styles.postAuthorGroup}>
-                          <View style={[styles.postAvatar, { backgroundColor: `${colors.primary}12` }]}>
-                            <Feather name="user" size={18} color={colors.primary} />
-                          </View>
-                          <View>
-                            <View style={styles.postAuthorNameRow}>
-                              <Text style={[styles.postAuthorName, { color: colors.text }]}>{post.author_name}</Text>
-                              {post.is_verified && <Feather name="check-circle" size={13} color={colors.primary} />}
-                              <View style={[styles.postCategoryBadge, { backgroundColor: `${colors.primary}08` }]}>
-                                <Text style={[styles.postCategoryText, { color: colors.primary }]}>{post.category || 'Umum'}</Text>
-                              </View>
-                            </View>
-                            <Text style={[styles.postTime, { color: colors.subtle }]}>
-                              {new Date(post.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                            </Text>
-                          </View>
-                        </View>
-                      </View>
-
-                      <View style={styles.postContentArea}>
-                        {post.title && <Text style={[styles.postDisplayTitle, { color: colors.text }]}>{post.title}</Text>}
-                        <Text style={[styles.postBodyText, { color: colors.text }]}>
-                          {post.content}
-                        </Text>
-                      </View>
-
-                      <View style={styles.postInteractionBar}>
-                        <TouchableOpacity style={styles.interactionButton}>
-                          <Feather name="heart" size={18} color={colors.subtle} />
-                          <Text style={[styles.interactionText, { color: colors.subtle }]}>{post.likes || 0}</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.interactionButton}>
-                          <Feather name="message-circle" size={18} color={colors.subtle} />
-                          <Text style={[styles.interactionText, { color: colors.subtle }]}>{post.comments_count || 0}</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.interactionButton}>
-                          <Feather name="share-2" size={18} color={colors.subtle} />
-                        </TouchableOpacity>
-                      </View>
-                    </View>
+                  {posts.map((post, index) => (
+                    <AnimatedPostCard key={post.id} post={post} index={index} colors={colors} styles={styles} />
                   ))}
                 </View>
               )}
@@ -846,181 +1621,299 @@ export default function UserDashboardScreen() {
                   behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                   style={styles.modalKeyboardAvoid}
                 >
-                  <View style={[styles.createPostContainer, { backgroundColor: colors.surface }]}>
-                    {/* Premium Mesh Gradient Background Decoration */}
-                    <View style={styles.composerMeshDecor}>
-                      <Animated.View style={[
-                        styles.meshBlobOne,
-                        {
-                          opacity: meshMotionAnim.interpolate({ inputRange: [0, 1], outputRange: [0.3, 0.6] }),
-                          transform: [
-                            { translateY: meshMotionAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 15] }) },
-                            { scale: meshMotionAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.1] }) }
-                          ]
-                        }
-                      ]}>
-                        <LinearGradient
-                          colors={[scheme === 'dark' ? '#1E3A8A' : '#EFF6FF', 'transparent']}
-                          style={StyleSheet.absoluteFill}
-                        />
-                      </Animated.View>
-                      <Animated.View style={[
-                        styles.meshBlobTwo,
-                        {
-                          opacity: meshMotionAnim.interpolate({ inputRange: [0, 1], outputRange: [0.2, 0.4] }),
-                          transform: [
-                            { translateY: meshMotionAnim.interpolate({ inputRange: [0, 1], outputRange: [0, -20] }) },
-                            { scale: meshMotionAnim.interpolate({ inputRange: [0, 1], outputRange: [1.2, 1.1] }) }
-                          ]
-                        }
-                      ]}>
-                        <LinearGradient
-                          colors={[scheme === 'dark' ? '#4F46E5' : '#FDF4FF', 'transparent']}
-                          style={StyleSheet.absoluteFill}
-                        />
-                      </Animated.View>
-                    </View>
-
-                    {/* Image-Matched Header with Glassmorphism */}
-                    <View style={[styles.modalHeaderPremium, { borderBottomColor: `${colors.primary}10` }]}>
-                      <TouchableOpacity onPress={() => setCreatePostModalVisible(false)} style={styles.headerActionBtn}>
-                        <Text style={[styles.modalCancelText, { color: colors.subtle }]}>Batal</Text>
+                  <View style={[styles.createPostContainer, { backgroundColor: colors.background }]}>
+                    {/* Ultra-Premium Header */}
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        paddingHorizontal: 20,
+                        paddingVertical: 16,
+                        backgroundColor: colors.surface,
+                        borderBottomWidth: 1,
+                        borderBottomColor: colors.border,
+                      }}
+                    >
+                      <TouchableOpacity
+                        onPress={() => setCreatePostModalVisible(false)}
+                        style={{
+                          paddingVertical: 8,
+                          paddingHorizontal: 4,
+                        }}
+                      >
+                        <Text style={{ fontSize: 15, color: colors.subtle }}>Batal</Text>
                       </TouchableOpacity>
-                      <Text style={[styles.modalTitleSimple, { color: colors.text }]}>Buat Postingan</Text>
-                      <Animated.View style={{ transform: [{ scale: buttonScaleAnim }] }}>
-                        <TouchableOpacity
-                          onPress={handleCreatePost}
-                          disabled={posting || !isPostValid}
-                          activeOpacity={0.7}
-                          style={[
-                            styles.modalPostButtonPremium,
-                            {
-                              backgroundColor: !isPostValid
-                                ? `${colors.primary}15`
-                                : `${colors.primary}`
-                            }
-                          ]}
-                        >
-                          {posting ? (
-                            <Animated.View style={{
-                              transform: [{
-                                rotate: loaderRotateAnim.interpolate({
-                                  inputRange: [0, 1],
-                                  outputRange: ['0deg', '360deg']
-                                })
-                              }]
-                            }}>
-                              <Feather name="loader" size={16} color={colors.surface} />
-                            </Animated.View>
-                          ) : (
-                            <Text style={[
-                              styles.modalPostButtonTextPremium,
-                              { color: !isPostValid ? `${colors.primary}40` : '#FFFFFF' }
-                            ]}>Unggah</Text>
-                          )}
-                        </TouchableOpacity>
-                      </Animated.View>
+
+                      <Text
+                        style={{
+                          fontSize: 16,
+                          color: colors.text,
+                          letterSpacing: -0.2,
+                        }}
+                      >
+                        Buat Postingan
+                      </Text>
+
+                      <TouchableOpacity
+                        onPress={handleCreatePost}
+                        disabled={posting || !isPostValid}
+                        activeOpacity={0.7}
+                        style={{
+                          paddingVertical: 8,
+                          paddingHorizontal: 12,
+                          borderRadius: 10,
+                          backgroundColor: !isPostValid ? `${colors.primary}10` : colors.primary,
+                        }}
+                      >
+                        {posting ? (
+                          <Animated.View
+                            style={{
+                              transform: [
+                                {
+                                  rotate: loaderRotateAnim.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: ['0deg', '360deg'],
+                                  }),
+                                },
+                              ],
+                            }}
+                          >
+                            <Feather name="loader" size={14} color={colors.surface} />
+                          </Animated.View>
+                        ) : (
+                          <Text
+                            style={{
+                              fontSize: 14,
+                              color: !isPostValid ? `${colors.primary}50` : '#FFFFFF',
+                              letterSpacing: -0.1,
+                            }}
+                          >
+                            Unggah
+                          </Text>
+                        )}
+                      </TouchableOpacity>
                     </View>
 
                     <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
-                      <View style={styles.modalComposeArea}>
-                        {/* User Identity Row - Rounded Square Avatar */}
-                        <View style={styles.composerUserInfo}>
-                          <View style={[styles.postAvatarSquare, { backgroundColor: `${colors.primary}12` }]}>
-                            <LinearGradient
-                              colors={[`${colors.primary}20`, `${colors.primary}05`]}
-                              style={StyleSheet.absoluteFill}
-                            />
-                            <Feather name="user" size={24} color={colors.primary} />
+                      <View style={{ padding: 20, gap: 16 }}>
+                        {/* User Info Card */}
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 12,
+                            padding: 16,
+                            backgroundColor: colors.surface,
+                            borderRadius: 16,
+                            borderWidth: 1,
+                            borderColor: colors.border,
+                          }}
+                        >
+                          <View
+                            style={{
+                              width: 48,
+                              height: 48,
+                              borderRadius: 14,
+                              backgroundColor: `${colors.primary}10`,
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              borderWidth: 1,
+                              borderColor: `${colors.primary}20`,
+                            }}
+                          >
+                            <Feather name="user" size={22} color={colors.primary} />
                           </View>
-                          <View>
-                            <Text style={[styles.composerUserNameBold, { color: colors.text }]}>
+                          <View style={{ flex: 1 }}>
+                            <Text
+                              style={{
+                                fontSize: 15,
+                                color: colors.text,
+                                marginBottom: 4,
+                                letterSpacing: -0.2,
+                              }}
+                            >
                               {user?.displayName || 'Budi Santoso'}
                             </Text>
-                            <TouchableOpacity style={styles.composerCategoryRow}>
-                              <Text style={[styles.composerCategoryTextBlue, { color: colors.primary }]}>{selectedCategory}</Text>
+                            <TouchableOpacity
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                gap: 4,
+                                alignSelf: 'flex-start',
+                                paddingVertical: 2,
+                              }}
+                            >
+                              <Text style={{ fontSize: 13, color: colors.primary }}>{selectedCategory}</Text>
                               <Feather name="chevron-down" size={14} color={colors.primary} />
                             </TouchableOpacity>
                           </View>
                         </View>
 
-                        {/* Large Premium Title Input with Focus Animation */}
-                        <Animated.View style={{
-                          transform: [{
-                            translateY: titleFocusAnim.interpolate({
-                              inputRange: [0, 1],
-                              outputRange: [0, -4]
-                            })
-                          }]
-                        }}>
+                        {/* Title Input Card */}
+                        <View
+                          style={{
+                            backgroundColor: colors.surface,
+                            borderRadius: 0,
+                            borderBottomWidth: 1,
+                            borderBottomColor: `${colors.border}40`,
+                            paddingVertical: 16,
+                            paddingHorizontal: 4,
+                          }}
+                        >
                           <TextInput
                             placeholder="Judul Diskusi"
-                            placeholderTextColor={`${colors.subtle}35`}
+                            placeholderTextColor={`${colors.subtle}50`}
                             maxLength={100}
-                            style={[styles.composerTitleInputLarge, { color: colors.text }]}
+                            style={{
+                              fontSize: 18,
+                              color: colors.text,
+                              letterSpacing: -0.3,
+                              padding: 0,
+                            }}
                             value={newPostTitle}
-                            onFocus={handleTitleFocus}
-                            onBlur={handleTitleBlur}
                             onChangeText={setNewPostTitle}
                           />
-                        </Animated.View>
+                        </View>
 
-                        {/* Fluid Content Input */}
-                        <Animated.View style={[
-                          styles.composerBodyWrapper,
-                          {
-                            backgroundColor: contentFocusAnim.interpolate({
-                              inputRange: [0, 1],
-                              outputRange: ['rgba(0,0,0,0)', `${colors.primary}05`]
-                            }),
+                        {/* Content Input Card */}
+                        <View
+                          style={{
+                            backgroundColor: colors.surface,
                             borderRadius: 16,
-                            padding: 4
-                          }
-                        ]}>
+                            borderWidth: 1,
+                            borderColor: colors.border,
+                            padding: 16,
+                            minHeight: 200,
+                          }}
+                        >
                           <TextInput
                             multiline
                             placeholder="Apa yang ingin Anda bagikan atau tanyakan hari ini?"
-                            placeholderTextColor={`${colors.subtle}35`}
+                            placeholderTextColor={`${colors.subtle}50`}
                             maxLength={2000}
-                            style={[styles.composerBodyInputFluid, { color: colors.text }]}
-                            onFocus={handleContentFocus}
-                            onBlur={handleContentBlur}
+                            style={{
+                              fontSize: 15,
+                              color: colors.text,
+                              lineHeight: 24,
+                              letterSpacing: -0.1,
+                              padding: 0,
+                              textAlignVertical: 'top',
+                            }}
                             value={newPostContent}
                             onChangeText={setNewPostContent}
                           />
-                        </Animated.View>
+                        </View>
 
-                        <View style={styles.characterCountRow}>
-                          <Text style={[styles.characterCountText, { color: newPostContent.length >= 1900 ? '#EF4444' : colors.subtle }]}>
+                        {/* Character Count */}
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <Text
+                            style={{
+                              fontSize: 13,
+                              color: newPostContent.length >= 1900 ? '#EF4444' : colors.subtle,
+                            }}
+                          >
                             {newPostContent.length}/2000 karakter
                           </Text>
                           {newPostContent.length > 0 && (
                             <TouchableOpacity onPress={() => setNewPostContent('')}>
-                              <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '700' }}>Hapus Semua</Text>
+                              <Text style={{ fontSize: 13, color: colors.primary }}>Hapus Semua</Text>
                             </TouchableOpacity>
                           )}
                         </View>
 
-                        {/* Premium Media Tool Bar */}
-                        <View style={styles.mediaToolBar}>
-                          <TouchableOpacity style={[styles.mediaToolBtn, { backgroundColor: `${colors.primary}08` }]}>
-                            <Feather name="image" size={18} color={colors.primary} />
+                        {/* Premium Media Toolbar */}
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            gap: 10,
+                            paddingVertical: 8,
+                          }}
+                        >
+                          <TouchableOpacity
+                            style={{
+                              width: 44,
+                              height: 44,
+                              borderRadius: 12,
+                              backgroundColor: `${colors.primary}08`,
+                              borderWidth: 1,
+                              borderColor: `${colors.primary}15`,
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <Feather name="image" size={20} color={colors.primary} />
                           </TouchableOpacity>
-                          <TouchableOpacity style={[styles.mediaToolBtn, { backgroundColor: '#F0FDF4' }]}>
-                            <Feather name="bar-chart-2" size={18} color="#16A34A" />
+                          <TouchableOpacity
+                            style={{
+                              width: 44,
+                              height: 44,
+                              borderRadius: 12,
+                              backgroundColor: '#F0FDF408',
+                              borderWidth: 1,
+                              borderColor: '#16A34A15',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <Feather name="bar-chart-2" size={20} color="#16A34A" />
                           </TouchableOpacity>
-                          <TouchableOpacity style={[styles.mediaToolBtn, { backgroundColor: '#FEF2F2' }]}>
-                            <Feather name="link" size={18} color="#DC2626" />
+                          <TouchableOpacity
+                            style={{
+                              width: 44,
+                              height: 44,
+                              borderRadius: 12,
+                              backgroundColor: '#FEF2F208',
+                              borderWidth: 1,
+                              borderColor: '#DC262615',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <Feather name="link" size={20} color="#DC2626" />
                           </TouchableOpacity>
-                          <TouchableOpacity style={[styles.mediaToolBtn, { backgroundColor: '#F5F3FF' }]}>
-                            <Feather name="map-pin" size={18} color="#7C3AED" />
+                          <TouchableOpacity
+                            style={{
+                              width: 44,
+                              height: 44,
+                              borderRadius: 12,
+                              backgroundColor: '#F5F3FF08',
+                              borderWidth: 1,
+                              borderColor: '#7C3AED15',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <Feather name="map-pin" size={20} color="#7C3AED" />
                           </TouchableOpacity>
                         </View>
 
-                        {/* PILH KATEGORI Section */}
-                        <View style={{ marginTop: 24, paddingBottom: 60 }}>
-                          <Text style={[styles.composerCategoryLabel, { color: colors.subtle }]}>PILIH KATEGORI</Text>
-                          <View style={styles.composerCategoryChipsGrid}>
+                        {/* Category Selector */}
+                        <View style={{ marginTop: 8, paddingBottom: 40 }}>
+                          <Text
+                            style={{
+                              fontSize: 12,
+                              color: colors.subtle,
+                              letterSpacing: 1,
+                              textTransform: 'uppercase',
+                              marginBottom: 12,
+                            }}
+                          >
+                            Pilih Kategori
+                          </Text>
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              flexWrap: 'wrap',
+                              gap: 10,
+                            }}
+                          >
                             {['Umum', ...availableTags].map((cat) => {
                               const isSelected = selectedCategory === cat;
                               return (
@@ -1030,24 +1923,28 @@ export default function UserDashboardScreen() {
                                     setSelectedCategory(cat);
                                     triggerChipPop();
                                   }}
-                                  activeOpacity={0.6}
+                                  activeOpacity={0.7}
                                 >
-                                  <Animated.View
-                                    style={[
-                                      styles.composerPillChip,
-                                      {
-                                        backgroundColor: isSelected ? `${colors.primary}12` : 'rgba(0,0,0,0.02)',
-                                        transform: isSelected ? [{ scale: chipPopAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.05] }) }] : [{ scale: 1 }]
-                                      }
-                                    ]}
+                                  <View
+                                    style={{
+                                      paddingHorizontal: 16,
+                                      paddingVertical: 10,
+                                      borderRadius: 12,
+                                      backgroundColor: isSelected ? `${colors.primary}12` : colors.surface,
+                                      borderWidth: 1.5,
+                                      borderColor: isSelected ? `${colors.primary}30` : colors.border,
+                                    }}
                                   >
-                                    <Text style={[
-                                      styles.composerPillChipText,
-                                      { color: isSelected ? colors.primary : colors.subtle }
-                                    ]}>
+                                    <Text
+                                      style={{
+                                        fontSize: 14,
+                                        color: isSelected ? colors.primary : colors.subtle,
+                                        letterSpacing: -0.1,
+                                      }}
+                                    >
                                       {cat}
                                     </Text>
-                                  </Animated.View>
+                                  </View>
                                 </TouchableOpacity>
                               );
                             })}

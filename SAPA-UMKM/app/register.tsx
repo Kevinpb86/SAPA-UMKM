@@ -2,9 +2,10 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Alert,
+  Animated,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -15,7 +16,7 @@ import {
   TextInput,
   TouchableOpacity,
   useColorScheme,
-  View,
+  View
 } from 'react-native';
 
 import { useAuth } from '@/hooks/use-auth';
@@ -99,6 +100,7 @@ type FormInputProps = {
   onIconPress?: () => void;
   rightIcon?: keyof typeof Feather.glyphMap;
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  accentColor?: string; // NEW: Color for icon and background tint
 };
 
 function FormInput({
@@ -114,10 +116,63 @@ function FormInput({
   onIconPress,
   rightIcon,
   autoCapitalize,
+  accentColor, // NEW
 }: FormInputProps) {
   const scheme = useColorScheme();
   const colors = scheme === 'dark' ? palette.dark : palette.light;
   const [isFocused, setIsFocused] = useState(false);
+
+  // Premium animations
+  const focusAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  // Use accent color or fallback to default
+  const effectiveAccentColor = accentColor || colors.primary;
+
+  const handleFocus = () => {
+    setIsFocused(true);
+    Animated.parallel([
+      Animated.spring(focusAnim, {
+        toValue: 1,
+        useNativeDriver: false,
+        tension: 50,
+        friction: 7,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1.02,
+        useNativeDriver: true,
+        tension: 50,
+        friction: 7,
+      }),
+    ]).start();
+  };
+
+  const handleBlur = () => {
+    setIsFocused(false);
+    Animated.parallel([
+      Animated.timing(focusAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: false,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 50,
+        friction: 7,
+      }),
+    ]).start();
+  };
+
+  const animatedBorderColor = focusAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [`${effectiveAccentColor}30`, effectiveAccentColor],
+  });
+
+  const animatedShadowOpacity = focusAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.02, 0.12],
+  });
 
   return (
     <View style={styles.formField}>
@@ -125,21 +180,28 @@ function FormInput({
         {label}
         {required && <Text style={styles.required}> *</Text>}
       </Text>
-      <View
+      <Animated.View
         style={[
           styles.inputWrapper,
           {
-            borderColor: isFocused ? colors.focus : colors.border,
-            backgroundColor: colors.input,
+            backgroundColor: isFocused ? `${effectiveAccentColor}12` : `${effectiveAccentColor}08`,
             minHeight: multiline ? 100 : 54,
             alignItems: multiline ? 'flex-start' : 'center',
             paddingTop: multiline ? 12 : 0,
+            transform: [{ scale: scaleAnim }],
+            shadowColor: effectiveAccentColor,
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: animatedShadowOpacity,
+            shadowRadius: 20,
+            elevation: isFocused ? 8 : 3,
+            borderWidth: 2.5,
+            borderColor: isFocused ? effectiveAccentColor : '#FFFFFF',
           },
         ]}>
         <Feather
           name={icon}
           size={18}
-          color={isFocused ? colors.focus : colors.subtle}
+          color={isFocused ? effectiveAccentColor : `${effectiveAccentColor}90`}
           style={[styles.inputIcon, multiline && { marginTop: 4 }]}
         />
         <TextInput
@@ -151,8 +213,8 @@ function FormInput({
           secureTextEntry={secureTextEntry}
           multiline={multiline}
           autoCapitalize={autoCapitalize}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
           style={[
             styles.input,
             { color: colors.text },
@@ -165,7 +227,7 @@ function FormInput({
             <Feather name={rightIcon} size={18} color={colors.subtle} />
           </TouchableOpacity>
         )}
-      </View>
+      </Animated.View>
     </View>
   );
 }
@@ -253,8 +315,81 @@ export default function RegisterScreen() {
     sector: '',
     scale: '',
     capital: '',
-  });
+  })
   const [passwordVisible, setPasswordVisible] = useState(false);
+
+  // Premium entrance animations
+  const heroFadeAnim = useRef(new Animated.Value(0)).current;
+  const heroSlideAnim = useRef(new Animated.Value(30)).current;
+  const section1FadeAnim = useRef(new Animated.Value(0)).current;
+  const section1SlideAnim = useRef(new Animated.Value(30)).current;
+  const section2FadeAnim = useRef(new Animated.Value(0)).current;
+  const section2SlideAnim = useRef(new Animated.Value(30)).current;
+  const submitButtonScaleAnim = useRef(new Animated.Value(0.95)).current;
+
+  useEffect(() => {
+    // Staggered entrance animation
+    Animated.stagger(120, [
+      // Hero animation
+      Animated.parallel([
+        Animated.timing(heroFadeAnim, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.spring(heroSlideAnim, {
+          toValue: 0,
+          tension: 40,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+      ]),
+      // Section 1 animation
+      Animated.parallel([
+        Animated.timing(section1FadeAnim, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.spring(section1SlideAnim, {
+          toValue: 0,
+          tension: 40,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+      ]),
+      // Section 2 animation
+      Animated.parallel([
+        Animated.timing(section2FadeAnim, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.spring(section2SlideAnim, {
+          toValue: 0,
+          tension: 40,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start();
+
+    // Submit button pulse
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(submitButtonScaleAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(submitButtonScaleAnim, {
+          toValue: 0.95,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, []);
 
   const handleChange = (key: keyof RegisterForm, value: string) => {
     setForm(prev => ({ ...prev, [key]: value }));
@@ -316,208 +451,461 @@ export default function RegisterScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.flexOne}>
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          <LinearGradient
-            colors={['#1E3A8A', '#2563EB', '#3B82F6']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.hero}
+          {/* Ultra-Premium Animated Hero Section */}
+          <Animated.View
+            style={{
+              opacity: heroFadeAnim,
+              transform: [{ translateY: heroSlideAnim }],
+            }}
           >
-            <View style={styles.heroOverlayOne} />
-            <View style={styles.heroOverlayTwo} />
+            <LinearGradient
+              colors={['#1E40AF', '#2563EB', '#3B82F6', '#60A5FA', '#93C5FD']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.hero}
+            >
+              {/* Multiple Decorative Blobs with Different Sizes */}
+              <View style={{
+                position: 'absolute',
+                top: -80,
+                right: -60,
+                width: 280,
+                height: 280,
+                borderRadius: 140,
+                backgroundColor: 'rgba(255, 255, 255, 0.08)',
+              }} />
+              <View style={{
+                position: 'absolute',
+                top: 40,
+                right: 20,
+                width: 160,
+                height: 160,
+                borderRadius: 80,
+                backgroundColor: 'rgba(255, 255, 255, 0.06)',
+              }} />
+              <View style={{
+                position: 'absolute',
+                bottom: -40,
+                left: -30,
+                width: 200,
+                height: 200,
+                borderRadius: 100,
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              }} />
+              <View style={{
+                position: 'absolute',
+                bottom: 60,
+                right: 40,
+                width: 100,
+                height: 100,
+                borderRadius: 50,
+                backgroundColor: 'rgba(255, 255, 255, 0.04)',
+              }} />
 
+              {/* Glassmorphic Back Button */}
+              <TouchableOpacity
+                accessibilityRole="button"
+                onPress={() => router.back()}
+                style={{
+                  alignSelf: 'flex-start',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 8,
+                  borderRadius: 16,
+                  borderWidth: 1.5,
+                  borderColor: 'rgba(255,255,255,0.4)',
+                  paddingHorizontal: 18,
+                  paddingVertical: 10,
+                  backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.15,
+                  shadowRadius: 12,
+                  elevation: 4,
+                }}
+              >
+                <Feather name="arrow-left" size={18} color="#FFFFFF" />
+                <Text style={{ color: '#FFFFFF', fontSize: 15, letterSpacing: -0.2 }}>Kembali</Text>
+              </TouchableOpacity>
+
+              {/* Premium Header Content */}
+              <View style={{ gap: 16, marginTop: 8 }}>
+                {/* Glassmorphic Badge */}
+                <View style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 10,
+                  backgroundColor: 'rgba(255,255,255,0.20)',
+                  alignSelf: 'flex-start',
+                  paddingHorizontal: 16,
+                  paddingVertical: 8,
+                  borderRadius: 16,
+                  borderWidth: 1.5,
+                  borderColor: 'rgba(255,255,255,0.3)',
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 8,
+                }}>
+                  <View style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: 10,
+                    backgroundColor: 'rgba(255,255,255,0.25)',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    <Feather name="shield" size={16} color="#FFFFFF" />
+                  </View>
+                  <Text style={{
+                    color: '#FFFFFF',
+                    fontSize: 13,
+                    letterSpacing: 0.8,
+                    textTransform: 'uppercase',
+                  }}>Portal Registrasi UMKM</Text>
+                </View>
+
+                {/* Title with Text Shadow */}
+                <Text style={{
+                  color: '#FFFFFF',
+                  fontSize: 32,
+                  letterSpacing: -0.8,
+                  lineHeight: 38,
+                  textShadowColor: 'rgba(0, 0, 0, 0.3)',
+                  textShadowOffset: { width: 0, height: 2 },
+                  textShadowRadius: 8,
+                }}>Registrasi Pelaku UMKM</Text>
+
+                {/* Subtitle */}
+                <Text style={{
+                  color: 'rgba(255, 255, 255, 0.95)',
+                  fontSize: 15,
+                  lineHeight: 23,
+                  letterSpacing: -0.1,
+                }}>
+                  Lengkapi data pemilik, identitas usaha, dan dokumen pendukung untuk mengakses layanan SAPA UMKM secara terpadu.
+                </Text>
+              </View>
+
+              {/* Ultra-Premium Glassmorphic Chips */}
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 8 }}>
+                {/* Chip 1 */}
+                <View style={{
+                  flexDirection: 'row',
+                  gap: 10,
+                  alignItems: 'center',
+                  backgroundColor: 'rgba(255,255,255,0.18)',
+                  borderRadius: 18,
+                  paddingHorizontal: 14,
+                  paddingVertical: 12,
+                  borderWidth: 1.5,
+                  borderColor: 'rgba(255,255,255,0.35)',
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 6 },
+                  shadowOpacity: 0.12,
+                  shadowRadius: 12,
+                  elevation: 5,
+                }}>
+                  <View style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 10,
+                    backgroundColor: 'rgba(255,255,255,0.25)',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    <Feather name="user-check" size={16} color="#FFFFFF" />
+                  </View>
+                  <Text style={{
+                    color: '#FFFFFF',
+                    fontSize: 13,
+                    letterSpacing: -0.2,
+                  }}>NIK & NPWP pemilik</Text>
+                </View>
+
+                {/* Chip 2 */}
+                <View style={{
+                  flexDirection: 'row',
+                  gap: 10,
+                  alignItems: 'center',
+                  backgroundColor: 'rgba(255,255,255,0.18)',
+                  borderRadius: 18,
+                  paddingHorizontal: 14,
+                  paddingVertical: 12,
+                  borderWidth: 1.5,
+                  borderColor: 'rgba(255,255,255,0.35)',
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 6 },
+                  shadowOpacity: 0.12,
+                  shadowRadius: 12,
+                  elevation: 5,
+                }}>
+                  <View style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 10,
+                    backgroundColor: 'rgba(255,255,255,0.25)',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    <Feather name="briefcase" size={16} color="#FFFFFF" />
+                  </View>
+                  <Text style={{
+                    color: '#FFFFFF',
+                    fontSize: 13,
+                    letterSpacing: -0.2,
+                  }}>Detail usaha & KBLI</Text>
+                </View>
+
+                {/* Chip 3 */}
+                <View style={{
+                  flexDirection: 'row',
+                  gap: 10,
+                  alignItems: 'center',
+                  backgroundColor: 'rgba(255,255,255,0.18)',
+                  borderRadius: 18,
+                  paddingHorizontal: 14,
+                  paddingVertical: 12,
+                  borderWidth: 1.5,
+                  borderColor: 'rgba(255,255,255,0.35)',
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 6 },
+                  shadowOpacity: 0.12,
+                  shadowRadius: 12,
+                  elevation: 5,
+                }}>
+                  <View style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 10,
+                    backgroundColor: 'rgba(255,255,255,0.25)',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    <Feather name="file-text" size={16} color="#FFFFFF" />
+                  </View>
+                  <Text style={{
+                    color: '#FFFFFF',
+                    fontSize: 13,
+                    letterSpacing: -0.2,
+                  }}>E-KTP & Dokumen</Text>
+                </View>
+
+                {/* Chip 4 */}
+                <View style={{
+                  flexDirection: 'row',
+                  gap: 10,
+                  alignItems: 'center',
+                  backgroundColor: 'rgba(255,255,255,0.18)',
+                  borderRadius: 18,
+                  paddingHorizontal: 14,
+                  paddingVertical: 12,
+                  borderWidth: 1.5,
+                  borderColor: 'rgba(255,255,255,0.35)',
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 6 },
+                  shadowOpacity: 0.12,
+                  shadowRadius: 12,
+                  elevation: 5,
+                }}>
+                  <View style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 10,
+                    backgroundColor: 'rgba(255,255,255,0.25)',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    <Feather name="check-circle" size={16} color="#FFFFFF" />
+                  </View>
+                  <Text style={{
+                    color: '#FFFFFF',
+                    fontSize: 13,
+                    letterSpacing: -0.2,
+                  }}>Verifikasi & Submit</Text>
+                </View>
+              </View>
+            </LinearGradient>
+          </Animated.View>
+
+          {/* Animated Section 1: Data Pemilik */}
+          <Animated.View
+            style={{
+              opacity: section1FadeAnim,
+              transform: [{ translateY: section1SlideAnim }],
+            }}
+          >
+            <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={styles.sectionHeaderRow}>
+                <View style={[styles.sectionIcon, { backgroundColor: `${colors.primary}15` }]}
+                >
+                  <Feather name="user" size={20} color={colors.primary} />
+                </View>
+                <View style={styles.sectionHeaderCopy}>
+                  <Text style={[styles.sectionTitle, { color: colors.text }]}>Data Pemilik</Text>
+                  <Text style={[styles.sectionSubtitle, { color: colors.subtle }]}>
+                    Informasi identitas pribadi sesuai dokumen resmi.
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.formGroup}>
+                <FormInput
+                  label="NIK (Nomor Induk Kependudukan)"
+                  icon="credit-card"
+                  placeholder="Masukkan 16 digit NIK"
+                  value={form.nik}
+                  onChangeText={value => handleChange('nik', value)}
+                  keyboardType="number-pad"
+                  accentColor="#3B82F6"
+                  required
+                />
+                <FormInput
+                  label="Nama Lengkap Pemilik"
+                  icon="user"
+                  placeholder="Sesuai e-KTP"
+                  value={form.ownerName}
+                  onChangeText={value => handleChange('ownerName', value)}
+                  accentColor="#6366F1"
+                  required
+                />
+                <FormInput
+                  label="Email Aktif"
+                  icon="mail"
+                  placeholder="contoh: pelaku@umkm.id"
+                  value={form.email}
+                  onChangeText={value => handleChange('email', value.trim())}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  accentColor="#8B5CF6"
+                  required
+                />
+                <FormInput
+                  label="Kata Sandi"
+                  icon="lock"
+                  placeholder="Minimal 6 karakter"
+                  value={form.password}
+                  onChangeText={value => handleChange('password', value)}
+                  secureTextEntry={!passwordVisible}
+                  rightIcon={passwordVisible ? 'eye-off' : 'eye'}
+                  onIconPress={() => setPasswordVisible(!passwordVisible)}
+                  accentColor="#A855F7"
+                  required
+                />
+                <FormInput
+                  label="NPWP Pribadi"
+                  icon="file-text"
+                  placeholder="Nomor Pokok Wajib Pajak"
+                  value={form.npwp}
+                  onChangeText={value => handleChange('npwp', value)}
+                  keyboardType="number-pad"
+                  accentColor="#14B8A6"
+                  required
+                />
+                <FormInput
+                  label="Alamat Pemilik"
+                  icon="map-pin"
+                  placeholder="Sesuai domisili pribadi"
+                  value={form.ownerAddress}
+                  onChangeText={value => handleChange('ownerAddress', value)}
+                  multiline
+                  accentColor="#06B6D4"
+                  required
+                />
+              </View>
+            </View>
+          </Animated.View>
+
+          {/* Animated Section 2: Data Usaha */}
+          <Animated.View
+            style={{
+              opacity: section2FadeAnim,
+              transform: [{ translateY: section2SlideAnim }],
+            }}
+          >
+            <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={styles.sectionHeaderRow}>
+                <View style={[styles.sectionIcon, { backgroundColor: `${colors.success}15` }]}
+                >
+                  <Feather name="briefcase" size={20} color={colors.success} />
+                </View>
+                <View style={styles.sectionHeaderCopy}>
+                  <Text style={[styles.sectionTitle, { color: colors.text }]}>Data Usaha</Text>
+                  <Text style={[styles.sectionSubtitle, { color: colors.subtle }]}>
+                    Detail usaha yang akan didaftarkan dalam SAPA UMKM.
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.formGroup}>
+                <FormInput
+                  label="Nama Usaha"
+                  icon="shopping-bag"
+                  placeholder="Nama brand atau toko"
+                  value={form.businessName}
+                  onChangeText={value => handleChange('businessName', value)}
+                  accentColor="#10B981"
+                  required
+                />
+                <FormInput
+                  label="Alamat Lokasi Usaha"
+                  icon="map"
+                  placeholder="Alamat tempat usaha beroperasi"
+                  value={form.businessAddress}
+                  onChangeText={value => handleChange('businessAddress', value)}
+                  multiline
+                  accentColor="#F59E0B"
+                  required
+                />
+                <SelectField
+                  label="Kode KBLI"
+                  icon="hash"
+                  placeholder="Pilih kode KBLI"
+                  options={kbliOptions}
+                  value={form.kbli}
+                  onChange={value => handleChange('kbli', value)}
+                  required
+                />
+                <SelectField
+                  label="Sektor Usaha"
+                  icon="grid"
+                  placeholder="Pilih sektor usaha"
+                  options={sectorOptions}
+                  value={form.sector}
+                  onChange={value => handleChange('sector', value)}
+                  required
+                />
+                <SelectField
+                  label="Skala Usaha"
+                  icon="trending-up"
+                  placeholder="Pilih skala usaha"
+                  options={scaleOptions}
+                  value={form.scale}
+                  onChange={value => handleChange('scale', value)}
+                  required
+                />
+                <FormInput
+                  label="Estimasi Modal Usaha"
+                  icon="dollar-sign"
+                  placeholder="Nominal investasi"
+                  value={form.capital}
+                  onChangeText={value => handleChange('capital', value)}
+                  keyboardType="number-pad"
+                  accentColor="#EF4444"
+                  required
+                />
+              </View>
+            </View>
+          </Animated.View>
+
+          {/* Animated Submit Button */}
+          <Animated.View style={{ transform: [{ scale: submitButtonScaleAnim }] }}>
             <TouchableOpacity
               accessibilityRole="button"
-              onPress={() => router.back()}
-              style={styles.heroBackButton}
-            >
-              <Feather name="arrow-left" size={18} color="#FFFFFF" />
-              <Text style={styles.heroBackText}>Kembali</Text>
+              onPress={handleSubmit}
+              style={[styles.submitButton, { backgroundColor: colors.focus, shadowColor: colors.focus }]}>
+              <Text style={styles.submitButtonText}>Daftar Sekarang</Text>
+              <Feather name="arrow-right" size={18} color="#FFFFFF" />
             </TouchableOpacity>
-
-            <View style={styles.heroHeader}>
-              <View style={styles.heroTag}>
-                <Feather name="shield" size={16} color="#FFFFFF" />
-                <Text style={styles.heroTagText}>Portal Registrasi UMKM</Text>
-              </View>
-              <Text style={styles.heroTitle}>Registrasi Pelaku UMKM</Text>
-              <Text style={styles.heroSubtitle}>
-                Lengkapi data pemilik, identitas usaha, dan dokumen pendukung untuk mengakses layanan SAPA UMKM secara terpadu.
-              </Text>
-            </View>
-
-            <View style={styles.heroChecklist}>
-              <View style={styles.heroChecklistItem}>
-                <View style={styles.checkInnerIcon}>
-                  <Feather name="user-check" size={14} color="#FFFFFF" />
-                </View>
-                <Text style={styles.heroChecklistText}>NIK & NPWP pemilik</Text>
-              </View>
-              <View style={styles.heroChecklistItem}>
-                <View style={styles.checkInnerIcon}>
-                  <Feather name="briefcase" size={14} color="#FFFFFF" />
-                </View>
-                <Text style={styles.heroChecklistText}>Detail usaha & KBLI</Text>
-              </View>
-              <View style={styles.heroChecklistItem}>
-                <View style={styles.checkInnerIcon}>
-                  <Feather name="file-text" size={14} color="#FFFFFF" />
-                </View>
-                <Text style={styles.heroChecklistText}>E-KTP & Dokumen</Text>
-              </View>
-            </View>
-          </LinearGradient>
-
-          <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={styles.sectionHeaderRow}>
-              <View style={[styles.sectionIcon, { backgroundColor: `${colors.primary}15` }]}
-              >
-                <Feather name="user" size={20} color={colors.primary} />
-              </View>
-              <View style={styles.sectionHeaderCopy}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>Data Pemilik</Text>
-                <Text style={[styles.sectionSubtitle, { color: colors.subtle }]}>
-                  Informasi identitas pribadi sesuai dokumen resmi.
-                </Text>
-              </View>
-            </View>
-            <View style={styles.formGroup}>
-              <FormInput
-                label="NIK (Nomor Induk Kependudukan)"
-                icon="credit-card"
-                placeholder="Masukkan 16 digit NIK"
-                value={form.nik}
-                onChangeText={value => handleChange('nik', value)}
-                keyboardType="number-pad"
-                required
-              />
-              <FormInput
-                label="Nama Lengkap Pemilik"
-                icon="user"
-                placeholder="Sesuai e-KTP"
-                value={form.ownerName}
-                onChangeText={value => handleChange('ownerName', value)}
-                required
-              />
-              <FormInput
-                label="Email Aktif"
-                icon="mail"
-                placeholder="contoh: pelaku@umkm.id"
-                value={form.email}
-                onChangeText={value => handleChange('email', value.trim())}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                required
-              />
-              <FormInput
-                label="Kata Sandi"
-                icon="lock"
-                placeholder="Minimal 6 karakter"
-                value={form.password}
-                onChangeText={value => handleChange('password', value)}
-                secureTextEntry={!passwordVisible}
-                rightIcon={passwordVisible ? 'eye-off' : 'eye'}
-                onIconPress={() => setPasswordVisible(!passwordVisible)}
-                required
-              />
-              <FormInput
-                label="NPWP Pribadi"
-                icon="file-text"
-                placeholder="Nomor Pokok Wajib Pajak"
-                value={form.npwp}
-                onChangeText={value => handleChange('npwp', value)}
-                keyboardType="number-pad"
-                required
-              />
-              <FormInput
-                label="Alamat Pemilik"
-                icon="map-pin"
-                placeholder="Sesuai domisili pribadi"
-                value={form.ownerAddress}
-                onChangeText={value => handleChange('ownerAddress', value)}
-                multiline
-                required
-              />
-            </View>
-          </View>
-
-          <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={styles.sectionHeaderRow}>
-              <View style={[styles.sectionIcon, { backgroundColor: `${colors.success}15` }]}
-              >
-                <Feather name="briefcase" size={20} color={colors.success} />
-              </View>
-              <View style={styles.sectionHeaderCopy}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>Data Usaha</Text>
-                <Text style={[styles.sectionSubtitle, { color: colors.subtle }]}>
-                  Detail usaha yang akan didaftarkan dalam SAPA UMKM.
-                </Text>
-              </View>
-            </View>
-            <View style={styles.formGroup}>
-              <FormInput
-                label="Nama Usaha"
-                icon="shopping-bag"
-                placeholder="Nama brand atau toko"
-                value={form.businessName}
-                onChangeText={value => handleChange('businessName', value)}
-                required
-              />
-              <FormInput
-                label="Alamat Lokasi Usaha"
-                icon="map"
-                placeholder="Alamat tempat usaha beroperasi"
-                value={form.businessAddress}
-                onChangeText={value => handleChange('businessAddress', value)}
-                multiline
-                required
-              />
-              <SelectField
-                label="Kode KBLI"
-                icon="hash"
-                placeholder="Pilih kode KBLI"
-                options={kbliOptions}
-                value={form.kbli}
-                onChange={value => handleChange('kbli', value)}
-                required
-              />
-              <SelectField
-                label="Sektor Usaha"
-                icon="grid"
-                placeholder="Pilih sektor usaha"
-                options={sectorOptions}
-                value={form.sector}
-                onChange={value => handleChange('sector', value)}
-                required
-              />
-              <SelectField
-                label="Skala Usaha"
-                icon="trending-up"
-                placeholder="Pilih skala usaha"
-                options={scaleOptions}
-                value={form.scale}
-                onChange={value => handleChange('scale', value)}
-                required
-              />
-              <FormInput
-                label="Estimasi Modal Usaha"
-                icon="dollar-sign"
-                placeholder="Nominal investasi"
-                value={form.capital}
-                onChangeText={value => handleChange('capital', value)}
-                keyboardType="number-pad"
-                required
-              />
-            </View>
-          </View>
-
-
-          <TouchableOpacity
-            accessibilityRole="button"
-            onPress={handleSubmit}
-            style={[styles.submitButton, { backgroundColor: colors.focus, shadowColor: colors.focus }]}>
-            <Text style={styles.submitButtonText}>Daftar Sekarang</Text>
-            <Feather name="arrow-right" size={18} color="#FFFFFF" />
-          </TouchableOpacity>
+          </Animated.View>
 
           <TouchableOpacity
             onPress={() => router.replace('/login')}
@@ -653,15 +1041,16 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   sectionCard: {
-    borderRadius: 28,
-    borderWidth: 0,
-    padding: 24,
-    gap: 24,
-    elevation: 4,
+    borderRadius: 32,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.8)',
+    padding: 28,
+    gap: 28,
+    elevation: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.1,
+    shadowRadius: 24,
   },
   sectionHeaderRow: {
     flexDirection: 'row',
@@ -705,10 +1094,10 @@ const styles = StyleSheet.create({
   },
   inputWrapper: {
     borderRadius: 16,
-    borderWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 18,
+    paddingVertical: 2,
   },
   inputIcon: {
     marginRight: 12,

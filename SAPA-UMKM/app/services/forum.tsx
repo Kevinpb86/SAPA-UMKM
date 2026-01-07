@@ -2,8 +2,10 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Animated,
+  Easing,
   FlatList,
   Platform,
   SafeAreaView,
@@ -57,6 +59,59 @@ export default function CommunityForumScreen() {
   const [sortBy, setSortBy] = useState<SortOption>('recent');
   const [expandedTopicId, setExpandedTopicId] = useState<string | null>(null);
 
+  // Animations
+  const meshAnim = useRef(new Animated.Value(0)).current;
+  const floatAnim = useRef(new Animated.Value(0)).current;
+  const entryAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Mesh rotation
+    Animated.loop(
+      Animated.timing(meshAnim, {
+        toValue: 1,
+        duration: 20000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    ).start();
+
+    // Floating loop
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatAnim, {
+          toValue: 1,
+          duration: 4000,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(floatAnim, {
+          toValue: 0,
+          duration: 4000,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    // Fade-in entry
+    Animated.spring(entryAnim, {
+      toValue: 1,
+      tension: 20,
+      friction: 8,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  const meshRotate = meshAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  const floatY = floatAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -15],
+  });
+
   const filteredTopics = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
 
@@ -101,116 +156,93 @@ export default function CommunityForumScreen() {
       <TouchableOpacity
         accessibilityRole="button"
         onPress={() => handleSelectTopic(item.id)}
+        activeOpacity={0.9}
         style={[
           styles.topicCard,
           {
-            borderColor:
-              item.status === 'pinned' ? colors.accent : colors.border,
-            backgroundColor: isExpanded ? colors.highlight : colors.card,
+            backgroundColor: isExpanded ? `${colors.accent}05` : colors.card,
+            borderColor: item.status === 'pinned' ? colors.accent : colors.border,
+            borderWidth: item.status === 'pinned' ? 2 : 1,
           },
         ]}
       >
         <View style={styles.topicHeader}>
-          <View style={styles.topicAuthor}>
-            <View style={[styles.avatar, { backgroundColor: `${colors.accent}1F` }]}>
-              <Text style={[styles.avatarText, { color: colors.accent }]}>
-                {item.author.avatarInitials}
-              </Text>
-            </View>
-            <View style={styles.topicInfo}>
-              <Text style={[styles.topicTitle, { color: colors.text }]}>{item.title}</Text>
-              <Text style={[styles.topicMeta, { color: colors.subtle }]}>
-                {item.author.name} • {item.author.role} • {new Date(item.createdAt).toLocaleString('id-ID', {
-                  day: 'numeric',
-                  month: 'long',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              </Text>
-            </View>
+          <View style={[styles.authorAvatar, { backgroundColor: `${colors.accent}15` }]}>
+            <Feather name="user" size={20} color={colors.accent} />
           </View>
+          <View style={styles.authorInfo}>
+            <Text style={[styles.authorName, { color: colors.text }]}>{item.author.name}</Text>
+            <Text style={[styles.topicTime, { color: colors.subtle }]}>
+              {item.author.role} • {new Date(item.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+            </Text>
+          </View>
+          {item.status === 'pinned' && (
+            <View style={styles.pinnedBadge}>
+              <Feather name="bookmark" size={12} color={colors.accent} />
+            </View>
+          )}
           <Feather
             name={isExpanded ? 'chevron-up' : 'chevron-down'}
             size={18}
             color={colors.subtle}
+            style={{ marginLeft: 8 }}
           />
         </View>
 
-        <Text style={[styles.topicSummary, { color: colors.text }]} numberOfLines={isExpanded ? undefined : 3}>
-          {item.summary}
-        </Text>
+        <View style={styles.topicContent}>
+          <Text style={[styles.topicTitle, { color: colors.text }]}>{item.title}</Text>
+          <Text
+            style={[styles.topicSummary, { color: colors.subtle }]}
+            numberOfLines={isExpanded ? undefined : 3}
+          >
+            {item.summary}
+          </Text>
+        </View>
+
+        <View style={styles.tagRow}>
+          {item.tags.map(tag => (
+            <View key={tag} style={[styles.topicTag, { backgroundColor: `${colors.accent}08` }]}>
+              <Text style={[styles.topicTagText, { color: colors.accent }]}>{tag}</Text>
+            </View>
+          ))}
+        </View>
 
         <View style={styles.topicFooter}>
-          <View style={styles.tagGroup}>
-            {item.tags.map(tag => (
-              <View key={tag} style={[styles.tagPill, { borderColor: colors.border }]}>
-                <Text style={[styles.tagText, { color: colors.accent }]}>{tag}</Text>
-              </View>
-            ))}
-          </View>
           <View style={styles.topicStats}>
-            {item.status === 'pinned' && (
-              <View style={[styles.statusPill, { backgroundColor: `${colors.accent}20` }]}>
-                <Feather name="bookmark" size={12} color={colors.accent} />
-                <Text style={[styles.statusText, { color: colors.accent }]}>Pinned</Text>
-              </View>
-            )}
-            {item.status === 'closed' && (
-              <View style={[styles.statusPill, { backgroundColor: 'rgba(209, 213, 219, 0.16)' }]}>
-                <Feather name="lock" size={12} color={colors.subtle} />
-                <Text style={[styles.statusText, { color: colors.subtle }]}>Closed</Text>
-              </View>
-            )}
-            <View style={styles.statItem}>
+            <View style={styles.statLabel}>
               <Feather name="message-circle" size={14} color={colors.subtle} />
-              <Text style={[styles.statText, { color: colors.subtle }]}>{item.replies.length} balasan</Text>
+              <Text style={[styles.statText, { color: colors.subtle }]}>{item.replies.length}</Text>
             </View>
-            <View style={styles.statItem}>
+            <View style={styles.statLabel}>
               <Feather name="thumbs-up" size={14} color={colors.subtle} />
-              <Text style={[styles.statText, { color: colors.subtle }]}>{totalVotes} apresiasi</Text>
+              <Text style={[styles.statText, { color: colors.subtle }]}>{totalVotes}</Text>
             </View>
+          </View>
+
+          <View style={styles.expandBtn}>
+            <Text style={[styles.expandText, { color: colors.accent }]}>
+              {isExpanded ? 'Tutup' : 'Lihat Detail'}
+            </Text>
           </View>
         </View>
 
         {isExpanded && (
-          <View style={styles.replySection}>
-            <Text style={[styles.replyTitle, { color: colors.text }]}>Ringkasan Balasan</Text>
+          <View style={styles.repliesContainer}>
+            <Text style={[styles.replyTitle, { color: colors.text, fontSize: 14, fontWeight: '800', marginBottom: 8 }]}>
+              Balasan Populer
+            </Text>
             {item.replies.map(reply => (
-              <View key={reply.id} style={[styles.replyCard, { borderColor: colors.border }]}>
+              <View key={reply.id} style={[styles.replyCard, { backgroundColor: scheme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }]}>
                 <View style={styles.replyHeader}>
-                  <View style={[styles.avatarSmall, { backgroundColor: `${colors.accent}1A` }]}>
-                    <Text style={[styles.avatarSmallText, { color: colors.accent }]}>
-                      {reply.author.avatarInitials}
-                    </Text>
-                  </View>
-                  <View style={styles.replyAuthorInfo}>
-                    <Text style={[styles.replyAuthorName, { color: colors.text }]}>{reply.author.name}</Text>
-                    <Text style={[styles.replyMeta, { color: colors.subtle }]}>
-                      {reply.author.role} • {new Date(reply.createdAt).toLocaleString('id-ID', {
-                        day: 'numeric',
-                        month: 'long',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </Text>
-                  </View>
+                  <Text style={[styles.replyAuthor, { color: colors.text }]}>{reply.author.name}</Text>
                   <View style={styles.replyVotes}>
-                    <Feather name="thumbs-up" size={14} color={colors.accent} />
-                    <Text style={[styles.replyVotesText, { color: colors.accent }]}>{reply.upvotes}</Text>
+                    <Feather name="thumbs-up" size={12} color={colors.accent} />
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: colors.accent, marginLeft: 4 }}>{reply.upvotes}</Text>
                   </View>
                 </View>
-                <Text style={[styles.replyContent, { color: colors.text }]}>{reply.message}</Text>
+                <Text style={[styles.replyContent, { color: colors.subtle }]}>{reply.message}</Text>
               </View>
             ))}
-
-            <TouchableOpacity
-              accessibilityRole="button"
-              style={[styles.joinDiscussionButton, { borderColor: colors.accent }]}
-              onPress={() => router.push('/services/forum/discussion')}
-            >
-              <Feather name="edit-3" size={14} color={colors.accent} />
-              <Text style={[styles.joinDiscussionText, { color: colors.accent }]}>Ikut berdiskusi</Text>
-            </TouchableOpacity>
           </View>
         )}
       </TouchableOpacity>
@@ -223,49 +255,56 @@ export default function CommunityForumScreen() {
       <FlatList
         ListHeaderComponent={
           <>
-            <View style={styles.heroWrapper}>
+            <Animated.View
+              style={[
+                styles.heroContainer,
+                {
+                  opacity: entryAnim,
+                  transform: [{ translateY: entryAnim.interpolate({ inputRange: [0, 1], outputRange: [-20, 0] }) }]
+                }
+              ]}
+            >
               <LinearGradient
                 colors={colors.hero}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.hero}
               >
-                <TouchableOpacity
-                  accessibilityRole="button"
-                  onPress={() => router.back()}
-                  style={styles.backButton}
-                >
-                  <Feather name="arrow-left" size={18} color="#FFFFFF" />
-                  <Text style={styles.backText}>Kembali</Text>
-                </TouchableOpacity>
-                <Text style={styles.heroKicker}>Forum Komunikasi & Diskusi</Text>
-                <Text style={styles.heroTitle}>Temukan Solusi Bersama Komunitas UMKM</Text>
-                <Text style={styles.heroSubtitle}>
-                  Berdiskusi, berbagi strategi, dan kolaborasi secara langsung antar pelaku UMKM serta mentor.
-                </Text>
+                <Animated.View style={[styles.meshOverlay, { transform: [{ rotate: meshRotate }, { scale: 1.5 }] }]}>
+                  <View style={[styles.meshCircle, { top: -80, right: -40, width: 260, height: 260, backgroundColor: 'rgba(255,255,255,0.12)' }]} />
+                  <View style={[styles.meshCircle, { bottom: -120, left: -60, width: 320, height: 320, backgroundColor: 'rgba(255,255,255,0.08)' }]} />
+                </Animated.View>
 
-                <View style={styles.heroStats}>
-                  <View style={styles.heroStatItem}>
-                    <Text style={styles.heroStatValue}>{forumTopics.length}</Text>
-                    <Text style={styles.heroStatLabel}>Topik aktif</Text>
-                  </View>
-                  <View style={styles.heroStatItem}>
-                    <Text style={styles.heroStatValue}>
-                      {forumTopics.reduce((acc, topic) => acc + topic.replies.length, 0)}
-                    </Text>
-                    <Text style={styles.heroStatLabel}>Balasan</Text>
-                  </View>
-                  <View style={styles.heroStatItem}>
-                    <Text style={styles.heroStatValue}>{availableTags.length}</Text>
-                    <Text style={styles.heroStatLabel}>Kategori diskusi</Text>
+                <Animated.View style={[styles.floatingIcon, { top: '20%', right: '10%', transform: [{ translateY: floatY }] }]}>
+                  <Feather name="message-square" size={90} color="#FFFFFF" style={{ opacity: 0.1 }} />
+                </Animated.View>
+
+                <View style={styles.heroContent}>
+                  <Text style={styles.heroKicker}>KOMUNITAS & DISKUSI</Text>
+                  <Text style={styles.heroTitle}>Forum SAPA UMKM</Text>
+                  <Text style={styles.heroSubtitle}>
+                    Ruang kolaborasi untuk berbagi wawasan, bertanya seputar regulasi, dan terhubung dengan sesama pelaku usaha di seluruh Indonesia.
+                  </Text>
+
+                  <View style={styles.heroStats}>
+                    <View style={styles.heroStatItem}>
+                      <Text style={styles.heroStatValue}>{forumTopics.length}</Text>
+                      <Text style={styles.heroStatLabel}>Topik</Text>
+                    </View>
+                    <View style={styles.heroStatItem}>
+                      <Text style={styles.heroStatValue}>
+                        {forumTopics.reduce((acc, topic) => acc + topic.replies.length, 0)}
+                      </Text>
+                      <Text style={styles.heroStatLabel}>Balasan</Text>
+                    </View>
+                    <View style={styles.heroStatItem}>
+                      <Text style={styles.heroStatValue}>{availableTags.length}</Text>
+                      <Text style={styles.heroStatLabel}>Kategori</Text>
+                    </View>
                   </View>
                 </View>
               </LinearGradient>
-              <LinearGradient
-                colors={scheme === 'dark' ? [`${colors.accent}33`, 'transparent'] : ['#F5F3FF', 'transparent']}
-                style={styles.meshGradient}
-              />
-            </View>
+            </Animated.View>
 
             <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={styles.searchHeader}>
@@ -424,92 +463,91 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   listContent: {
-    padding: 24,
+    padding: 20,
     gap: 20,
     paddingBottom: 48,
   },
-  heroWrapper: {
-    borderRadius: 28,
+  heroContainer: {
+    borderRadius: 32,
     overflow: 'hidden',
-    elevation: 4,
+    elevation: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.15,
-    shadowRadius: 10,
-    marginBottom: 16,
+    shadowRadius: 24,
+    marginBottom: 8,
   },
   hero: {
     padding: 24,
-    gap: 16,
-    zIndex: 1,
+    minHeight: 240,
+    justifyContent: 'flex-end',
+    overflow: 'hidden',
   },
-  meshGradient: {
+  meshOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    opacity: 0.5,
+    zIndex: -1,
   },
-  backButton: {
-    alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  meshCircle: {
+    position: 'absolute',
     borderRadius: 999,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.4)',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    backgroundColor: 'rgba(31, 15, 51, 0.25)',
   },
-  backText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
+  floatingIcon: {
+    position: 'absolute',
+    zIndex: 0,
+  },
+  heroContent: {
+    gap: 8,
+    zIndex: 2,
   },
   heroKicker: {
-    color: 'rgba(237, 233, 254, 0.92)',
-    fontSize: 13,
-    letterSpacing: 1,
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 12,
+    fontWeight: '700',
     textTransform: 'uppercase',
-    fontWeight: '800',
+    letterSpacing: 1.5,
+    marginBottom: 4,
   },
   heroTitle: {
     color: '#FFFFFF',
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: '900',
     letterSpacing: -0.5,
   },
   heroSubtitle: {
-    color: 'rgba(240, 240, 255, 0.9)',
+    color: 'rgba(255, 255, 255, 0.85)',
     fontSize: 14,
     lineHeight: 22,
     fontWeight: '500',
+    marginTop: 4,
   },
   heroStats: {
     flexDirection: 'row',
-    gap: 16,
+    gap: 20,
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.15)',
   },
   heroStatItem: {
-    flex: 1,
-    borderRadius: 18,
-    padding: 16,
-    backgroundColor: 'rgba(255,255,255,0.16)',
-    gap: 4,
+    gap: 2,
   },
   heroStatValue: {
     color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: '800',
   },
   heroStatLabel: {
-    color: 'rgba(240, 240, 255, 0.85)',
-    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 11,
+    fontWeight: '600',
+    textTransform: 'uppercase',
   },
   card: {
     borderRadius: 32,
-    borderWidth: 0,
     padding: 24,
     gap: 24,
     elevation: 4,
@@ -520,210 +558,191 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '800',
     letterSpacing: -0.3,
   },
   sectionSubtitle: {
     fontSize: 13,
-    lineHeight: 20,
+    lineHeight: 18,
     fontWeight: '500',
     opacity: 0.7,
   },
   searchHeader: {
-    gap: 6,
+    gap: 4,
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    borderWidth: 1.5,
-    borderRadius: 18,
+    borderRadius: 20,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    height: 52,
   },
   searchInput: {
     flex: 1,
     fontSize: 14,
-    paddingVertical: 0,
+    fontWeight: '500',
+    paddingHorizontal: 12,
   },
   filterRow: {
     gap: 16,
-    marginTop: 8,
   },
   tagScroll: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
+    gap: 10,
   },
   tagFilter: {
-    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 14,
     borderWidth: 1.5,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
   },
   tagFilterText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   sortMenu: {
     flexDirection: 'row',
-    alignSelf: 'flex-start',
-    borderRadius: 14,
+    borderRadius: 18,
     borderWidth: 1.5,
-    padding: 3,
+    overflow: 'hidden',
+    alignSelf: 'flex-start',
   },
   sortOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    borderRadius: 11,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    gap: 8,
   },
   sortText: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: '700',
   },
   topicCard: {
-    borderRadius: 24,
-    borderWidth: 0,
-    padding: 24,
-    gap: 20,
-    elevation: 4,
+    borderRadius: 32,
+    padding: 20,
+    gap: 16,
+    elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
   },
   topicHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  topicAuthor: {
-    flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    flex: 1,
   },
-  avatar: {
+  authorAvatar: {
     width: 44,
     height: 44,
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: {
-    fontSize: 16,
+  authorInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  authorName: {
+    fontSize: 15,
     fontWeight: '700',
   },
-  topicInfo: {
-    flex: 1,
+  topicTime: {
+    fontSize: 12,
+    opacity: 0.6,
+  },
+  pinnedBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: 'rgba(234, 179, 8, 0.1)',
+  },
+  topicContent: {
+    gap: 8,
   },
   topicTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    flexShrink: 1,
-  },
-  topicMeta: {
-    fontSize: 12,
-    marginTop: 2,
-    opacity: 0.7,
+    fontSize: 17,
+    fontWeight: '800',
+    lineHeight: 22,
+    letterSpacing: -0.3,
   },
   topicSummary: {
     fontSize: 14,
     lineHeight: 20,
+    opacity: 0.8,
+  },
+  tagRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  topicTag: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  topicTagText: {
+    fontSize: 11,
+    fontWeight: '700',
   },
   topicFooter: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  tagGroup: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  tagPill: {
-    borderRadius: 999,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  tagText: {
-    fontSize: 12,
-    fontWeight: '600',
+    justifyContent: 'space-between',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.05)',
   },
   topicStats: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 16,
   },
-  statItem: {
+  statLabel: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
   statText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
+    opacity: 0.7,
   },
-  statusPill: {
+  expandBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
   },
-  statusText: {
-    fontSize: 11,
+  expandText: {
+    fontSize: 13,
     fontWeight: '700',
   },
-  replySection: {
+  repliesContainer: {
+    marginTop: 8,
     gap: 12,
-    paddingTop: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(124, 58, 237, 0.2)',
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.05)',
   },
   replyTitle: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '800',
+    marginBottom: 8,
   },
   replyCard: {
-    borderWidth: 1,
-    borderRadius: 18,
-    padding: 14,
-    gap: 10,
-    backgroundColor: 'rgba(124, 58, 237, 0.04)',
+    padding: 12,
+    borderRadius: 16,
+    gap: 8,
   },
   replyHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    justifyContent: 'space-between',
   },
-  avatarSmall: {
-    width: 34,
-    height: 34,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarSmallText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  replyAuthorInfo: {
-    flex: 1,
-  },
-  replyAuthorName: {
+  replyAuthor: {
     fontSize: 13,
     fontWeight: '700',
-  },
-  replyMeta: {
-    fontSize: 11,
   },
   replyVotes: {
     flexDirection: 'row',

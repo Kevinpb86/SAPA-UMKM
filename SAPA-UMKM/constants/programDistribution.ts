@@ -43,6 +43,7 @@ export type ProgramInfo = {
   requirements: string[];
   timeline: ProgramTimelineItem[];
   resources: ProgramResource[];
+  applyUrl?: string;
   contact: {
     email: string;
     phone: string;

@@ -2,9 +2,11 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
+  Animated,
+  Easing,
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
@@ -76,6 +78,59 @@ export default function ProfileUpdateScreen() {
 
   const [form, setForm] = useState<ProfileForm>(defaultForm);
   const [submitting, setSubmitting] = useState(false);
+
+  // Animations
+  const meshAnim = useRef(new Animated.Value(0)).current;
+  const floatAnim = useRef(new Animated.Value(0)).current;
+  const entryAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Mesh rotation
+    Animated.loop(
+      Animated.timing(meshAnim, {
+        toValue: 1,
+        duration: 25000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    ).start();
+
+    // Floating loop
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatAnim, {
+          toValue: 1,
+          duration: 4000,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(floatAnim, {
+          toValue: 0,
+          duration: 4000,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    // Fade-in entry
+    Animated.spring(entryAnim, {
+      toValue: 1,
+      tension: 20,
+      friction: 8,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  const meshRotate = meshAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  const floatY = floatAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -15],
+  });
 
   const accountEmail = useMemo(() => user?.email ?? '', [user]);
 
@@ -167,180 +222,224 @@ export default function ProfileUpdateScreen() {
         style={styles.flexOne}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.heroWrapper}>
+          <Animated.View
+            style={[
+              styles.heroContainer,
+              {
+                opacity: entryAnim,
+                transform: [{ translateY: entryAnim.interpolate({ inputRange: [0, 1], outputRange: [-20, 0] }) }]
+              }
+            ]}
+          >
             <LinearGradient
               colors={colors.hero}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.hero}
             >
-              <TouchableOpacity
-                accessibilityRole="button"
-                onPress={() => router.back()}
-                style={styles.backButton}
-              >
-                <Feather name="arrow-left" size={18} color="#FFFFFF" />
-                <Text style={styles.backText}>Kembali</Text>
-              </TouchableOpacity>
-              <Text style={styles.heroKicker}>Pembaruan Data Profil UMKM</Text>
-              <Text style={styles.heroTitle}>Pastikan Profil Usaha Selalu Terkini</Text>
-              <Text style={styles.heroSubtitle}>
-                Informasi profil yang akurat memudahkan proses verifikasi dan memprioritaskan dukungan program sesuai
-                kebutuhan UMKM Anda.
-              </Text>
+              <Animated.View style={[styles.meshOverlay, { transform: [{ rotate: meshRotate }, { scale: 1.5 }] }]}>
+                <View style={[styles.meshCircle, { top: -80, right: -40, width: 260, height: 260, backgroundColor: 'rgba(255,255,255,0.12)' }]} />
+                <View style={[styles.meshCircle, { bottom: -120, left: -60, width: 320, height: 320, backgroundColor: 'rgba(255,255,255,0.08)' }]} />
+              </Animated.View>
+
+              <Animated.View style={[styles.floatingIcon, { top: '20%', right: '10%', transform: [{ translateY: floatY }] }]}>
+                <Feather name="user" size={90} color="#FFFFFF" style={{ opacity: 0.1 }} />
+              </Animated.View>
+
+              <View style={styles.heroContent}>
+                <TouchableOpacity
+                  accessibilityRole="button"
+                  onPress={() => router.back()}
+                  style={styles.backButton}
+                >
+                  <Feather name="arrow-left" size={18} color="#FFFFFF" />
+                  <Text style={styles.backText}>Kembali</Text>
+                </TouchableOpacity>
+                <Text style={styles.heroKicker}>PENGATURAN PROFIL</Text>
+                <Text style={styles.heroTitle}>Identitas Usaha</Text>
+                <Text style={styles.heroSubtitle}>
+                  Lengkapi data usaha Anda untuk memudahkan verifikasi program bantuan dan sinkronisasi dengan layanan pemerintah.
+                </Text>
+              </View>
             </LinearGradient>
-            <LinearGradient
-              colors={scheme === 'dark' ? ['#10B98133', 'transparent'] : ['#F6FFF9', 'transparent']}
-              style={styles.meshGradient}
-            />
-          </View>
+          </Animated.View>
 
           <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.sectionHeader}>
-              <View style={[styles.iconWrapper, { backgroundColor: `${colors.accent}15` }]}>
-                <Feather name="info" size={18} color={colors.accent} />
+              <View style={[styles.iconWrapper, { backgroundColor: `${colors.accent}12` }]}>
+                <Feather name="briefcase" size={18} color={colors.accent} />
               </View>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Mengapa Perlu Memperbarui Profil?</Text>
-            </View>
-            <View style={styles.sectionBody}>
-              <InfoRow
-                colors={colors}
-                icon="check-circle"
-                text="Dapatkan rekomendasi program dan pendanaan yang paling relevan."
-              />
-              <InfoRow
-                colors={colors}
-                icon="map-pin"
-                text="Pastikan alamat dan wilayah layanan Anda tercatat untuk pemetaan pasar."
-              />
-              <InfoRow
-                colors={colors}
-                icon="users"
-                text="Laporkan jumlah tenaga kerja terbaru sebagai dasar evaluasi pertumbuhan UMKM."
-              />
-            </View>
-          </View>
-
-          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={styles.sectionHeader}>
-              <View style={[styles.iconWrapper, { backgroundColor: `${colors.accent}15` }]}>
-                <Feather name="edit-3" size={18} color={colors.accent} />
-              </View>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Form Pembaruan Profil</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Informasi Bisnis</Text>
             </View>
 
             <View style={styles.fieldGroup}>
               <LabeledInput
                 label="Nama Usaha"
-                icon="briefcase"
-                placeholder="Nama brand atau badan usaha"
+                icon="home"
+                placeholder="cth: Coffee Baroka"
                 value={form.businessName}
-                onChangeText={value => handleChange('businessName', value)}
+                onChangeText={v => setForm(f => ({ ...f, businessName: v }))}
                 colors={colors}
               />
               <LabeledInput
-                label="Nama Pemilik/Penanggung Jawab"
+                label="Nama Pemilik"
                 icon="user"
-                placeholder="Nama lengkap"
+                placeholder="cth: Ahmad Fauzi"
                 value={form.ownerName}
-                onChangeText={value => handleChange('ownerName', value)}
+                onChangeText={v => setForm(f => ({ ...f, ownerName: v }))}
                 colors={colors}
               />
+              <View style={styles.row}>
+                <View style={styles.flexOne}>
+                  <LabeledInput
+                    label="Sektor Usaha"
+                    icon="grid"
+                    placeholder="cth: Kuliner"
+                    value={form.sector}
+                    onChangeText={v => setForm(f => ({ ...f, sector: v }))}
+                    colors={colors}
+                  />
+                </View>
+                <View style={styles.flexOne}>
+                  <LabeledInput
+                    label="Kode KBLI"
+                    icon="hash"
+                    placeholder="cth: 56101"
+                    keyboardType="number-pad"
+                    value={form.kbli}
+                    onChangeText={v => setForm(f => ({ ...f, kbli: v }))}
+                    colors={colors}
+                  />
+                </View>
+              </View>
               <LabeledInput
-                label="Sektor Usaha"
-                icon="grid"
-                placeholder="Contoh: Kuliner, Perdagangan, Jasa"
-                value={form.sector}
-                onChangeText={value => handleChange('sector', value)}
-                colors={colors}
-              />
-              <LabeledInput
-                label="Kode KBLI (opsional)"
-                icon="hash"
-                placeholder="Contoh: 56101 - Rumah makan/restoran"
-                value={form.kbli}
-                onChangeText={value => handleChange('kbli', value)}
-                colors={colors}
-              />
-              <LabeledInput
-                label="Jumlah Tenaga Kerja"
+                label="Jumlah Karyawan"
                 icon="users"
-                placeholder="Contoh: 12 orang"
+                placeholder="cth: 5"
+                keyboardType="number-pad"
                 value={form.employees}
-                onChangeText={value => handleChange('employees', value)}
+                onChangeText={v => setForm(f => ({ ...f, employees: v }))}
                 colors={colors}
               />
+            </View>
+          </View>
+
+          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.sectionHeader}>
+              <View style={[styles.iconWrapper, { backgroundColor: `${colors.accent}12` }]}>
+                <Feather name="map-pin" size={18} color={colors.accent} />
+              </View>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Kontak & Alamat</Text>
+            </View>
+
+            <View style={styles.fieldGroup}>
               <LabeledInput
-                label="Alamat Usaha"
-                icon="map-pin"
-                placeholder="Jalan, kelurahan, kecamatan"
-                value={form.address}
-                onChangeText={value => handleChange('address', value)}
-                colors={colors}
-                multiline
-              />
-              <LabeledInput
-                label="Kabupaten/Kota"
+                label="Alamat Lengkap"
                 icon="map"
-                placeholder="Contoh: Kota Malang"
+                placeholder="cth: Jl. Merdeka No. 12"
+                multiline
+                value={form.address}
+                onChangeText={v => setForm(f => ({ ...f, address: v }))}
+                colors={colors}
+              />
+              <LabeledInput
+                label="Kota / Kabupaten"
+                icon="navigation"
+                placeholder="cth: Surabaya"
                 value={form.city}
-                onChangeText={value => handleChange('city', value)}
+                onChangeText={v => setForm(f => ({ ...f, city: v }))}
                 colors={colors}
               />
+              <View style={styles.row}>
+                <View style={styles.flexOne}>
+                  <LabeledInput
+                    label="WhatsApp"
+                    icon="phone"
+                    placeholder="0812..."
+                    keyboardType="phone-pad"
+                    value={form.phone}
+                    onChangeText={v => setForm(f => ({ ...f, phone: v }))}
+                    colors={colors}
+                  />
+                </View>
+                <View style={styles.flexOne}>
+                  <LabeledInput
+                    label="Email Kontak"
+                    icon="mail"
+                    placeholder="email@bisnis.com"
+                    keyboardType="email-address"
+                    value={form.email}
+                    onChangeText={v => setForm(f => ({ ...f, email: v }))}
+                    colors={colors}
+                  />
+                </View>
+              </View>
+            </View>
+          </View>
+
+          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.sectionHeader}>
+              <View style={[styles.iconWrapper, { backgroundColor: `${colors.accent}12` }]}>
+                <Feather name="file-text" size={18} color={colors.accent} />
+              </View>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Deskripsi Usaha</Text>
+            </View>
+
+            <View style={styles.fieldGroup}>
               <LabeledInput
-                label="Nomor Telepon / WhatsApp"
-                icon="phone"
-                placeholder="08xxxxxxxxxx"
-                keyboardType="phone-pad"
-                value={form.phone}
-                onChangeText={value => handleChange('phone', value)}
-                colors={colors}
-              />
-              <LabeledInput
-                label="Email (opsional)"
-                icon="mail"
-                placeholder={accountEmail || 'contoh: kontak@umkm.id'}
-                keyboardType="email-address"
-                value={form.email}
-                onChangeText={value => handleChange('email', value)}
-                colors={colors}
-              />
-              <LabeledInput
-                label="Deskripsi Usaha"
-                icon="align-left"
-                placeholder="Ringkasan produk/jasa, segmentasi pelanggan, dll."
+                label="Tentang Bisnis Anda"
+                icon="info"
+                placeholder="Ceritakan sejarah singkat atau spesialisasi usaha Anda"
+                multiline
                 value={form.description}
-                onChangeText={value => handleChange('description', value)}
+                onChangeText={v => setForm(f => ({ ...f, description: v }))}
                 colors={colors}
-                multiline
               />
               <LabeledInput
-                label="Kebutuhan Dukungan (opsional)"
-                icon="help-circle"
-                placeholder="Pelatihan digital marketing, akses bahan baku, kemitraan, dsb."
-                value={form.supportNeeds}
-                onChangeText={value => handleChange('supportNeeds', value)}
-                colors={colors}
+                label="Harapan & Kebutuhan"
+                icon="target"
+                placeholder="Apa target Anda 1 tahun kedepan?"
                 multiline
+                value={form.supportNeeds}
+                onChangeText={v => setForm(f => ({ ...f, supportNeeds: v }))}
+                colors={colors}
               />
             </View>
 
-            <TouchableOpacity
-              accessibilityRole="button"
-              onPress={handleSubmit}
-              disabled={submitting}
-              style={styles.submitWrapper}
-            >
-              <LinearGradient
-                colors={submitting ? [`${colors.accent}80`, `${colors.accent}60`] : [`${colors.accent}`, '#059669']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.submitButton}
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                accessibilityRole="button"
+                onPress={() => router.back()}
+                style={[
+                  styles.secondaryButton,
+                  {
+                    backgroundColor: scheme === 'dark' ? 'rgba(255,255,255,0.08)' : '#FFFFFF',
+                    borderColor: colors.border,
+                    borderWidth: 1,
+                  }
+                ]}
               >
-                <Text style={styles.submitText}>{submitting ? 'Menyimpan...' : 'Perbarui Profil UMKM'}</Text>
-                <Feather name={submitting ? 'loader' : 'save'} size={18} color="#FFFFFF" />
-              </LinearGradient>
-            </TouchableOpacity>
+                <Text style={[styles.secondaryButtonText, { color: colors.text }]}>Batal</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                accessibilityRole="button"
+                onPress={handleSubmit}
+                disabled={submitting}
+                activeOpacity={0.8}
+                style={styles.modalSubmitWrapper}
+              >
+                <LinearGradient
+                  colors={submitting ? [`${colors.accent}CC`, `${colors.accent}CC`] : [`${colors.accent}`, `${colors.accent}EE`]}
+                  style={styles.modalSubmitBtn}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                >
+                  <Text style={styles.submitText}>{submitting ? 'Memproses...' : 'Simpan Perubahan'}</Text>
+                  <Feather name={submitting ? 'loader' : 'check'} size={18} color="#FFFFFF" />
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -369,27 +468,52 @@ function LabeledInput({
   multiline,
   keyboardType = 'default',
 }: LabeledInputProps) {
+  const scheme = useColorScheme();
   const [isFocused, setIsFocused] = useState(false);
+  const focusAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(focusAnim, {
+      toValue: isFocused ? 1 : 0,
+      duration: 250,
+      useNativeDriver: false,
+    }).start();
+  }, [isFocused]);
+
+  const borderColor = focusAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [scheme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', colors.accent],
+  });
+
+  const backgroundColor = focusAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [scheme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', `${colors.accent}04`],
+  });
+
   return (
     <View style={styles.inputWrapper}>
-      <Text style={[styles.inputLabel, { color: colors.text }]}>{label}</Text>
-      <View style={[
+      <Text style={[styles.inputLabel, { color: colors.subtle, opacity: isFocused ? 1 : 0.8 }]}>{label}</Text>
+      <Animated.View style={[
         styles.inputInner,
         {
-          backgroundColor: isFocused ? colors.card : `${colors.subtle}08`,
-          borderColor: isFocused ? colors.accent : 'transparent',
-          alignItems: multiline ? 'flex-start' : 'center',
-          paddingTop: multiline ? 12 : 0,
+          backgroundColor,
+          borderColor,
+          transform: [{ scale: focusAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.015] }) }],
+          shadowColor: colors.accent,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: focusAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 0.2] }),
+          shadowRadius: focusAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 8] }),
+          elevation: focusAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 4] }),
         }
       ]}>
-        <View style={multiline ? { marginTop: 4 } : null}>
+        <View style={[styles.inputIcon, { top: multiline ? 16 : 14 }]}>
           <Feather name={icon} size={18} color={isFocused ? colors.accent : colors.subtle} />
         </View>
         <TextInput
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor={`${colors.subtle}50`}
+          placeholderTextColor={`${colors.subtle}80`}
           multiline={multiline}
           keyboardType={keyboardType}
           onFocus={() => setIsFocused(true)}
@@ -398,13 +522,14 @@ function LabeledInput({
             styles.input,
             {
               color: colors.text,
-              minHeight: multiline ? 120 : 50,
+              minHeight: multiline ? 96 : 48,
+              paddingLeft: 48,
+              textAlignVertical: multiline ? 'top' : 'center',
             },
-            multiline && { paddingTop: 0, paddingBottom: 12 },
             Platform.OS === 'web' && ({ outlineStyle: 'none' } as any)
           ]}
         />
-      </View>
+      </Animated.View>
     </View>
   );
 }
@@ -428,34 +553,44 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  flexOne: {
-    flex: 1,
-  },
   scrollContent: {
-    padding: 24,
+    padding: 20,
     gap: 20,
   },
-  heroWrapper: {
-    borderRadius: 28,
+  heroContainer: {
+    borderRadius: 32,
     overflow: 'hidden',
-    elevation: 4,
+    elevation: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.15,
-    shadowRadius: 10,
+    shadowRadius: 24,
   },
   hero: {
     padding: 24,
-    gap: 16,
-    zIndex: 1,
+    minHeight: 240,
+    justifyContent: 'flex-end',
+    overflow: 'hidden',
   },
-  meshGradient: {
+  meshOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    opacity: 0.5,
+    zIndex: -1,
+  },
+  meshCircle: {
+    position: 'absolute',
+    borderRadius: 999,
+  },
+  floatingIcon: {
+    position: 'absolute',
+    zIndex: 0,
+  },
+  heroContent: {
+    gap: 8,
+    zIndex: 2,
   },
   backButton: {
     alignSelf: 'flex-start',
@@ -467,7 +602,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.4)',
     paddingHorizontal: 14,
     paddingVertical: 8,
-    backgroundColor: 'rgba(6, 78, 59, 0.25)',
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    marginBottom: 8,
   },
   backText: {
     color: '#FFFFFF',
@@ -475,32 +611,33 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   heroKicker: {
-    color: 'rgba(204, 251, 241, 0.9)',
-    fontSize: 13,
-    letterSpacing: 1,
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 12,
+    fontWeight: '700',
     textTransform: 'uppercase',
-    fontWeight: '800',
+    letterSpacing: 1.5,
+    marginBottom: 4,
   },
   heroTitle: {
     color: '#FFFFFF',
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: '900',
     letterSpacing: -0.5,
   },
   heroSubtitle: {
-    color: 'rgba(209, 250, 229, 0.88)',
+    color: 'rgba(255, 255, 255, 0.85)',
     fontSize: 14,
     lineHeight: 22,
     fontWeight: '500',
+    marginTop: 4,
   },
   card: {
     borderRadius: 32,
-    borderWidth: 0,
     padding: 24,
     gap: 24,
     elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.08,
     shadowRadius: 15,
   },
@@ -521,69 +658,92 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: -0.3,
   },
-  sectionBody: {
-    gap: 12,
+  fieldGroup: {
+    gap: 20,
   },
   infoRow: {
     flexDirection: 'row',
     gap: 10,
-    alignItems: 'flex-start',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   infoText: {
-    flex: 1,
-    fontSize: 13,
-    lineHeight: 20,
+    fontSize: 14,
     fontWeight: '500',
-    opacity: 0.7,
+    flex: 1,
   },
-  fieldGroup: {
-    gap: 20,
+  row: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  flexOne: {
+    flex: 1,
   },
   inputWrapper: {
     gap: 10,
   },
   inputLabel: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
     marginLeft: 4,
   },
   inputInner: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 16,
+    borderRadius: 20,
     borderWidth: 1.5,
-    borderColor: 'transparent',
     paddingHorizontal: 16,
+    overflow: 'hidden',
+  },
+  inputIcon: {
+    position: 'absolute',
+    left: 16,
+    zIndex: 1,
   },
   input: {
     flex: 1,
     fontSize: 15,
-    fontWeight: '400',
+    fontWeight: '500',
     paddingHorizontal: 12,
     paddingVertical: 14,
   },
-  submitWrapper: {
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
     marginTop: 8,
+    alignItems: 'center',
   },
-  submitButton: {
+  secondaryButton: {
+    flex: 1,
+    height: 56,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  secondaryButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  modalSubmitWrapper: {
+    flex: 2,
+  },
+  modalSubmitBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    paddingVertical: 18,
+    height: 56,
     borderRadius: 20,
-    elevation: 8,
+    elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
-    shadowRadius: 12,
+    shadowRadius: 8,
   },
   submitText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
 });
-
-

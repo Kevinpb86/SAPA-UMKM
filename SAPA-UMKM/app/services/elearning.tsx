@@ -2,9 +2,11 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Alert,
+  Animated,
+  Easing,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -35,6 +37,59 @@ export default function ElearningScreen() {
   const colors = scheme === 'dark' ? palette.dark : palette.light;
   const router = useRouter();
 
+  // Animations
+  const meshAnim = useRef(new Animated.Value(0)).current;
+  const floatAnim = useRef(new Animated.Value(0)).current;
+  const entryAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Mesh rotation
+    Animated.loop(
+      Animated.timing(meshAnim, {
+        toValue: 1,
+        duration: 25000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    ).start();
+
+    // Floating loop
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatAnim, {
+          toValue: 1,
+          duration: 4000,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(floatAnim, {
+          toValue: 0,
+          duration: 4000,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    // Fade-in entry
+    Animated.spring(entryAnim, {
+      toValue: 1,
+      tension: 20,
+      friction: 8,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  const meshRotate = meshAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  const floatY = floatAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -15],
+  });
+
   const [activeModuleId, setActiveModuleId] = useState(moduleCatalog[0].id);
   const activeModule = moduleCatalog.find(module => module.id === activeModuleId) ?? moduleCatalog[0];
 
@@ -53,33 +108,47 @@ export default function ElearningScreen() {
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.heroWrapper}>
+        <Animated.View
+          style={[
+            styles.heroContainer,
+            {
+              opacity: entryAnim,
+              transform: [{ translateY: entryAnim.interpolate({ inputRange: [0, 1], outputRange: [-20, 0] }) }]
+            }
+          ]}
+        >
           <LinearGradient
             colors={colors.hero}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.hero}
           >
-            <TouchableOpacity
-              accessibilityRole="button"
-              onPress={() => router.back()}
-              style={styles.backButton}
-            >
-              <Feather name="arrow-left" size={18} color="#FFFFFF" />
-              <Text style={styles.backText}>Kembali</Text>
-            </TouchableOpacity>
-            <Text style={styles.heroKicker}>Modul Pembelajaran E-Learning</Text>
-            <Text style={styles.heroTitle}>Belajar Mandiri Kapan Saja dan Di Mana Saja</Text>
-            <Text style={styles.heroSubtitle}>
-              Akses modul interaktif yang disusun oleh KemenKopUKM. Tingkatkan kompetensi usaha Anda melalui video,
-              studi kasus, dan kuis evaluasi.
-            </Text>
+            <Animated.View style={[styles.meshOverlay, { transform: [{ rotate: meshRotate }, { scale: 1.5 }] }]}>
+              <View style={[styles.meshCircle, { top: -80, right: -40, width: 260, height: 260, backgroundColor: 'rgba(255,255,255,0.12)' }]} />
+              <View style={[styles.meshCircle, { bottom: -120, left: -60, width: 320, height: 320, backgroundColor: 'rgba(255,255,255,0.08)' }]} />
+            </Animated.View>
+
+            <Animated.View style={[styles.floatingIcon, { top: '20%', right: '10%', transform: [{ translateY: floatY }] }]}>
+              <Feather name="layers" size={90} color="#FFFFFF" style={{ opacity: 0.1 }} />
+            </Animated.View>
+
+            <View style={styles.heroContent}>
+              <TouchableOpacity
+                accessibilityRole="button"
+                onPress={() => router.back()}
+                style={styles.backButton}
+              >
+                <Feather name="arrow-left" size={18} color="#FFFFFF" />
+                <Text style={styles.backText}>Kembali</Text>
+              </TouchableOpacity>
+              <Text style={styles.heroKicker}>PELATIHAN MANDIRI</Text>
+              <Text style={styles.heroTitle}>E-Learning</Text>
+              <Text style={styles.heroSubtitle}>
+                Akses modul interaktif yang disusun oleh KemenKopUKM. Tingkatkan kompetensi usaha Anda melalui video, studi kasus, dan kuis evaluasi secara mandiri.
+              </Text>
+            </View>
           </LinearGradient>
-          <LinearGradient
-            colors={scheme === 'dark' ? [`${colors.accent}33`, 'transparent'] : ['#E0F2FE', 'transparent']}
-            style={styles.meshGradient}
-          />
-        </View>
+        </Animated.View>
 
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.sectionHeader}>
@@ -273,31 +342,45 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 24,
-    gap: 20,
-    paddingBottom: 48,
+    padding: 20,
+    gap: 16,
+    paddingBottom: 40,
   },
-  heroWrapper: {
-    borderRadius: 28,
+  heroContainer: {
+    borderRadius: 32,
     overflow: 'hidden',
-    elevation: 4,
+    elevation: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.15,
-    shadowRadius: 10,
+    shadowRadius: 24,
+    marginBottom: 8,
   },
   hero: {
     padding: 24,
-    gap: 16,
-    zIndex: 1,
+    minHeight: 240,
+    justifyContent: 'flex-end',
+    overflow: 'hidden',
   },
-  meshGradient: {
+  meshOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    opacity: 0.5,
+    zIndex: -1,
+  },
+  meshCircle: {
+    position: 'absolute',
+    borderRadius: 999,
+  },
+  floatingIcon: {
+    position: 'absolute',
+    zIndex: 0,
+  },
+  heroContent: {
+    gap: 8,
+    zIndex: 2,
   },
   backButton: {
     alignSelf: 'flex-start',
@@ -309,7 +392,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.4)',
     paddingHorizontal: 14,
     paddingVertical: 8,
-    backgroundColor: 'rgba(15, 23, 42, 0.25)',
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    marginBottom: 8,
   },
   backText: {
     color: '#FFFFFF',
@@ -317,32 +401,33 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   heroKicker: {
-    color: 'rgba(219, 239, 255, 0.92)',
-    fontSize: 13,
-    letterSpacing: 1,
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 12,
+    fontWeight: '700',
     textTransform: 'uppercase',
-    fontWeight: '800',
+    letterSpacing: 1.5,
+    marginBottom: 4,
   },
   heroTitle: {
     color: '#FFFFFF',
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: '900',
     letterSpacing: -0.5,
   },
   heroSubtitle: {
-    color: 'rgba(225, 245, 255, 0.92)',
+    color: 'rgba(255, 255, 255, 0.85)',
     fontSize: 14,
     lineHeight: 22,
     fontWeight: '500',
+    marginTop: 4,
   },
   card: {
     borderRadius: 32,
-    borderWidth: 0,
     padding: 24,
     gap: 24,
     elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.08,
     shadowRadius: 15,
   },
@@ -352,9 +437,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconWrapper: {
-    width: 44,
-    height: 44,
-    borderRadius: 16,
+    width: 48,
+    height: 48,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -367,10 +452,10 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   moduleCard: {
-    borderWidth: 1,
-    borderRadius: 18,
+    borderWidth: 1.5,
+    borderRadius: 32,
     padding: 16,
-    gap: 10,
+    gap: 12,
   },
   moduleHeader: {
     flexDirection: 'row',
@@ -378,13 +463,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   moduleTitle: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '700',
     flexShrink: 1,
   },
   moduleSummary: {
     fontSize: 13,
     lineHeight: 18,
+    fontWeight: '500',
   },
   moduleMeta: {
     flexDirection: 'row',
@@ -396,36 +482,38 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     borderRadius: 999,
-    borderWidth: 1,
+    borderWidth: 1.5,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
   metaText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 11,
+    fontWeight: '800',
   },
   activePill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     borderRadius: 999,
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     paddingVertical: 6,
   },
   activePillText: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   detailHeader: {
-    gap: 12,
+    gap: 16,
   },
   detailTitle: {
-    fontSize: 20,
-    fontWeight: '800',
+    fontSize: 22,
+    fontWeight: '900',
+    letterSpacing: -0.5,
   },
   detailSummary: {
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 22,
+    fontWeight: '500',
   },
   detailMeta: {
     flexDirection: 'row',
@@ -455,20 +543,22 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   sectionDivider: {
-    height: 1,
+    height: 1.5,
     width: '100%',
+    opacity: 0.1,
   },
   sectionSubtitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    marginBottom: 8,
+    fontSize: 16,
+    fontWeight: '800',
+    marginBottom: 16,
+    letterSpacing: -0.2,
   },
   lessonList: {
     gap: 12,
   },
   lessonItem: {
-    borderWidth: 1,
-    borderRadius: 16,
+    borderWidth: 1.5,
+    borderRadius: 20,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -476,27 +566,30 @@ const styles = StyleSheet.create({
   },
   lessonBadge: {
     borderRadius: 12,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 6,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
   lessonBadgeText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
   },
   lessonInfo: {
     flex: 1,
-    gap: 8,
+    gap: 4,
   },
   lessonTitle: {
     fontSize: 15,
     fontWeight: '700',
   },
   lessonSubtitle: {
-    fontSize: 13,
+    fontSize: 12,
     lineHeight: 18,
+    fontWeight: '500',
+    opacity: 0.8,
   },
   durationWrapper: {
     flexDirection: 'row',
@@ -504,37 +597,38 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   durationText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 11,
+    fontWeight: '700',
   },
   outcomeList: {
-    gap: 10,
+    gap: 12,
   },
   outcomeItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 10,
+    gap: 12,
   },
   outcomeText: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 20,
     flex: 1,
+    fontWeight: '500',
   },
   resourceList: {
     gap: 12,
   },
   resourceCard: {
-    borderWidth: 1,
-    borderRadius: 16,
+    borderWidth: 1.5,
+    borderRadius: 20,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
   },
   resourceIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 14,
+    width: 44,
+    height: 44,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -549,5 +643,7 @@ const styles = StyleSheet.create({
   resourceSubtitle: {
     fontSize: 12,
     lineHeight: 18,
+    fontWeight: '500',
+    opacity: 0.7,
   },
 });

@@ -2,8 +2,10 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Animated,
+  Easing,
   FlatList,
   Platform,
   SafeAreaView,
@@ -80,6 +82,59 @@ export default function TechnicalTrainingScreen() {
   const scheme = useColorScheme();
   const colors = scheme === 'dark' ? palette.dark : palette.light;
   const router = useRouter();
+
+  // Animations
+  const meshAnim = useRef(new Animated.Value(0)).current;
+  const floatAnim = useRef(new Animated.Value(0)).current;
+  const entryAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Mesh rotation
+    Animated.loop(
+      Animated.timing(meshAnim, {
+        toValue: 1,
+        duration: 25000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    ).start();
+
+    // Floating loop
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatAnim, {
+          toValue: 1,
+          duration: 4000,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(floatAnim, {
+          toValue: 0,
+          duration: 4000,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    // Fade-in entry
+    Animated.spring(entryAnim, {
+      toValue: 1,
+      tension: 20,
+      friction: 8,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  const meshRotate = meshAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
+  const floatY = floatAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -15],
+  });
 
   const [searchQuery, setSearchQuery] = useState('');
   const [modeFilter, setModeFilter] = useState<TrainingMode | 'Semua'>('Semua');
@@ -231,39 +286,59 @@ export default function TechnicalTrainingScreen() {
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={
           <>
-            <View style={styles.heroWrapper}>
+            <Animated.View
+              style={[
+                styles.heroContainer,
+                {
+                  opacity: entryAnim,
+                  transform: [{ translateY: entryAnim.interpolate({ inputRange: [0, 1], outputRange: [-20, 0] }) }]
+                }
+              ]}
+            >
               <LinearGradient
                 colors={colors.hero}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.hero}
               >
-                <TouchableOpacity
-                  accessibilityRole="button"
-                  onPress={() => router.back()}
-                  style={styles.backButton}
-                >
-                  <Feather name="arrow-left" size={18} color="#FFFFFF" />
-                  <Text style={styles.backText}>Kembali</Text>
-                </TouchableOpacity>
-                <Text style={styles.heroKicker}>Pelatihan Teknis & Manajemen KemenKopUKM</Text>
-                <Text style={styles.heroTitle}>Sesuaikan Jadwal Pelatihan untuk Tim UMKM Anda</Text>
-                <Text style={styles.heroSubtitle}>
-                  Telusuri katalog modul pelatihan resmi beserta silabus, fasilitator, dan layanan pendampingan lanjutan.
-                </Text>
+                <Animated.View style={[styles.meshOverlay, { transform: [{ rotate: meshRotate }, { scale: 1.5 }] }]}>
+                  <View style={[styles.meshCircle, { top: -80, right: -40, width: 260, height: 260, backgroundColor: 'rgba(255,255,255,0.12)' }]} />
+                  <View style={[styles.meshCircle, { bottom: -120, left: -60, width: 320, height: 320, backgroundColor: 'rgba(255,255,255,0.08)' }]} />
+                </Animated.View>
+
+                <Animated.View style={[styles.floatingIcon, { top: '20%', right: '10%', transform: [{ translateY: floatY }] }]}>
+                  <Feather name="award" size={90} color="#FFFFFF" style={{ opacity: 0.1 }} />
+                </Animated.View>
+
+                <View style={styles.heroContent}>
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    onPress={() => router.back()}
+                    style={styles.backButton}
+                  >
+                    <Feather name="arrow-left" size={18} color="#FFFFFF" />
+                    <Text style={styles.backText}>Kembali</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.heroKicker}>PELATIHAN TEKNIS</Text>
+                  <Text style={styles.heroTitle}>Katalog Modul</Text>
+                  <Text style={styles.heroSubtitle}>
+                    Telusuri katalog modul pelatihan resmi beserta silabus, fasilitator, dan layanan pendampingan lanjutan dari KemenKopUKM.
+                  </Text>
+                </View>
               </LinearGradient>
-              <LinearGradient
-                colors={scheme === 'dark' ? ['#0EA5E933', 'transparent'] : ['#F1F7FF', 'transparent']}
-                style={styles.meshGradient}
-              />
-            </View>
+            </Animated.View>
 
             <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Mengapa Memilih Pelatihan Resmi?</Text>
-              <Text style={[styles.sectionSubtitle, { color: colors.subtle }]}>Pelatihan dirancang untuk membawa perubahan nyata di usaha Anda.</Text>
+              <View style={styles.sectionHeader}>
+                <View style={[styles.iconWrapper, { backgroundColor: `${colors.accent}12` }]}>
+                  <Feather name="zap" size={18} color={colors.accent} />
+                </View>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>Keunggulan Pelatihan</Text>
+              </View>
+              <Text style={[styles.sectionSubtitleText, { color: colors.subtle }]}>Dirancang khusus untuk membawa perubahan nyata di usaha Anda.</Text>
               <View style={styles.highlightGrid}>
                 {highlightCards.map(card => (
-                  <View key={card.id} style={[styles.highlightCard, { borderColor: colors.border }]}>
+                  <View key={card.id} style={[styles.highlightCard, { backgroundColor: scheme === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)' }]}>
                     <View style={[styles.highlightIcon, { backgroundColor: `${colors.accent}18` }]}>
                       <Feather name={card.icon} size={16} color={colors.accent} />
                     </View>
@@ -275,8 +350,13 @@ export default function TechnicalTrainingScreen() {
             </View>
 
             <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Temukan Modul yang Tepat</Text>
-              <Text style={[styles.sectionSubtitle, { color: colors.subtle }]}>Gunakan pencarian dan filter untuk menampilkan rekomendasi pelatihan yang relevan.</Text>
+              <View style={styles.sectionHeader}>
+                <View style={[styles.iconWrapper, { backgroundColor: `${colors.accent}12` }]}>
+                  <Feather name="search" size={18} color={colors.accent} />
+                </View>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>Eksplorasi Modul</Text>
+              </View>
+              <Text style={[styles.sectionSubtitleText, { color: colors.subtle }]}>Gunakan pencarian dan filter untuk menampilkan rekomendasi pelatihan yang relevan.</Text>
               <View style={[styles.searchBar, { backgroundColor: `${colors.subtle}08`, borderColor: 'transparent' }]}>
                 <Feather name="search" size={16} color={colors.accent} />
                 <TextInput
@@ -403,32 +483,45 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   listContent: {
-    padding: 24,
-    gap: 20,
-    paddingBottom: 48,
+    padding: 20,
+    gap: 16,
+    paddingBottom: 40,
   },
-  heroWrapper: {
-    borderRadius: 28,
+  heroContainer: {
+    borderRadius: 32,
     overflow: 'hidden',
-    elevation: 4,
+    elevation: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.15,
-    shadowRadius: 10,
-    marginBottom: 16,
+    shadowRadius: 24,
+    marginBottom: 8,
   },
   hero: {
     padding: 24,
-    gap: 16,
-    zIndex: 1,
+    minHeight: 240,
+    justifyContent: 'flex-end',
+    overflow: 'hidden',
   },
-  meshGradient: {
+  meshOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    opacity: 0.5,
+    zIndex: -1,
+  },
+  meshCircle: {
+    position: 'absolute',
+    borderRadius: 999,
+  },
+  floatingIcon: {
+    position: 'absolute',
+    zIndex: 0,
+  },
+  heroContent: {
+    gap: 8,
+    zIndex: 2,
   },
   backButton: {
     alignSelf: 'flex-start',
@@ -440,35 +533,37 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.4)',
     paddingHorizontal: 14,
     paddingVertical: 8,
-    backgroundColor: 'rgba(8, 33, 72, 0.25)',
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    marginBottom: 8,
   },
   backText: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   heroKicker: {
-    color: 'rgba(213, 233, 255, 0.92)',
-    fontSize: 13,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 12,
     fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+    marginBottom: 4,
   },
   heroTitle: {
     color: '#FFFFFF',
-    fontSize: 26,
-    fontWeight: '700',
+    fontSize: 28,
+    fontWeight: '900',
     letterSpacing: -0.5,
   },
   heroSubtitle: {
-    color: 'rgba(226, 241, 255, 0.9)',
+    color: 'rgba(255, 255, 255, 0.85)',
     fontSize: 14,
     lineHeight: 22,
     fontWeight: '500',
+    marginTop: 4,
   },
   card: {
     borderRadius: 32,
-    borderWidth: 0,
     padding: 24,
     gap: 24,
     elevation: 4,
@@ -477,16 +572,28 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 15,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    gap: 12,
+    alignItems: 'center',
+  },
+  iconWrapper: {
+    width: 48,
+    height: 48,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '800',
     letterSpacing: -0.3,
   },
-  sectionSubtitle: {
-    fontSize: 13,
+  sectionSubtitleText: {
+    fontSize: 14,
     lineHeight: 20,
     fontWeight: '500',
-    opacity: 0.7,
+    marginTop: -12,
   },
   highlightGrid: {
     flexDirection: 'row',
@@ -495,22 +602,21 @@ const styles = StyleSheet.create({
   },
   highlightCard: {
     flex: 1,
-    minWidth: 200,
-    borderRadius: 18,
-    borderWidth: 1.5,
-    padding: 16,
-    gap: 10,
+    minWidth: '100%',
+    borderRadius: 24,
+    padding: 20,
+    gap: 12,
   },
   highlightIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
+    width: 40,
+    height: 40,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
   highlightTitle: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
   },
   highlightDescription: {
     fontSize: 13,
@@ -520,7 +626,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    borderRadius: 18,
+    borderRadius: 20,
     borderWidth: 1.5,
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -528,16 +634,17 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 14,
-    paddingVertical: 0,
+    fontWeight: '500',
   },
   filterGroup: {
-    gap: 10,
+    gap: 12,
   },
   filterLabel: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '800',
     textTransform: 'uppercase',
-    letterSpacing: 0.6,
+    letterSpacing: 1,
+    marginLeft: 4,
   },
   filterList: {
     flexDirection: 'row',
@@ -546,19 +653,20 @@ const styles = StyleSheet.create({
   },
   filterChip: {
     borderRadius: 999,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    borderWidth: 1.5,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
   },
   filterChipText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   moduleCard: {
-    borderRadius: 22,
-    borderWidth: 1,
+    borderRadius: 32,
+    borderWidth: 1.5,
     padding: 20,
     gap: 16,
+    overflow: 'hidden',
   },
   moduleHeader: {
     flexDirection: 'row',
@@ -569,52 +677,58 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    flex: 1,
   },
   modeBadge: {
-    borderRadius: 14,
-    paddingHorizontal: 12,
+    borderRadius: 12,
+    paddingHorizontal: 10,
     paddingVertical: 6,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
   modeBadgeText: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
   },
   moduleHeading: {
     flex: 1,
-    gap: 4,
+    gap: 2,
   },
   moduleTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   moduleSubtitle: {
     fontSize: 12,
+    fontWeight: '500',
+    opacity: 0.8,
   },
   moduleDescription: {
     fontSize: 14,
     lineHeight: 20,
+    fontWeight: '500',
   },
   metaRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: 8,
   },
   metaTag: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     borderRadius: 12,
-    backgroundColor: 'rgba(14, 165, 233, 0.12)',
+    backgroundColor: 'rgba(0, 0, 0, 0.04)',
   },
   metaTagText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 11,
+    fontWeight: '700',
   },
   moduleExpanded: {
-    gap: 18,
+    gap: 20,
+    marginTop: 8,
   },
   outcomeList: {
     gap: 10,
@@ -628,91 +742,101 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     lineHeight: 18,
+    fontWeight: '500',
   },
   agendaList: {
     gap: 12,
   },
   agendaCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 14,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    padding: 16,
     gap: 8,
   },
   agendaHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 10,
   },
   agendaTitle: {
     fontSize: 14,
     fontWeight: '700',
+    flex: 1,
   },
   agendaDescription: {
-    fontSize: 12,
+    fontSize: 13,
     lineHeight: 18,
+    fontWeight: '500',
   },
   facilitatorCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 14,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    padding: 16,
     flexDirection: 'row',
-    gap: 12,
+    gap: 16,
     alignItems: 'center',
   },
   facilitatorAvatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 18,
+    width: 60,
+    height: 60,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
   },
   facilitatorInitial: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 22,
+    fontWeight: '800',
   },
   facilitatorInfo: {
     flex: 1,
-    gap: 4,
+    gap: 2,
   },
   facilitatorName: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 15,
+    fontWeight: '800',
   },
   facilitatorRole: {
     fontSize: 12,
+    fontWeight: '700',
+    opacity: 0.8,
   },
   facilitatorBio: {
     fontSize: 12,
     lineHeight: 18,
+    fontWeight: '500',
+    marginTop: 4,
   },
   materialList: {
     gap: 12,
   },
   materialCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 14,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 14,
   },
   materialIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 14,
+    width: 44,
+    height: 44,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
   materialInfo: {
     flex: 1,
-    gap: 4,
+    gap: 2,
   },
   materialLabel: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '700',
   },
   materialType: {
     fontSize: 12,
+    fontWeight: '600',
+    opacity: 0.7,
   },
   followUpList: {
     gap: 10,
@@ -726,47 +850,53 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     lineHeight: 18,
+    fontWeight: '500',
   },
   ctaButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: 8,
-    borderRadius: 999,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
+    justifyContent: 'center',
+    gap: 10,
+    borderRadius: 20,
+    paddingVertical: 18,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
   },
   ctaButtonText: {
     color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: 15,
+    fontWeight: '800',
   },
   emptyState: {
-    borderRadius: 20,
-    borderWidth: 1,
-    padding: 24,
+    borderRadius: 32,
+    borderWidth: 1.5,
+    padding: 32,
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
   },
   emptyTitle: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '800',
   },
   emptySubtitle: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 20,
     textAlign: 'center',
+    fontWeight: '500',
+    opacity: 0.8,
   },
   sectionTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginTop: 8,
+    gap: 12,
   },
   sectionTitleIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
+    width: 36,
+    height: 36,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },

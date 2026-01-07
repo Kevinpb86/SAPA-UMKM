@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
-    gap: 24,
+    gap: 20,
     paddingBottom: 40,
   },
   heroContainer: {
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
     fontWeight: '400',
   },
   card: {
-    borderRadius: 36,
+    borderRadius: 32,
     borderWidth: 1,
     padding: 24,
     gap: 24,
@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 18,
     padding: 20,
-    borderRadius: 24,
+    borderRadius: 32,
     borderWidth: 1.5,
     elevation: 2,
     shadowColor: '#000',
