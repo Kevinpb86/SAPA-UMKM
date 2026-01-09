@@ -250,3 +250,17 @@ export const updateUserProfile = async (token: string, payload: any) => {
     throw error;
   }
 };
+
+export const fetchMyHistory = async (token: string) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/submissions/my-history`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Failed to fetch history');
+    return data;
+  } catch (error) {
+    console.error('Fetch history error:', error);
+    return { success: false, data: [] };
+  }
+};

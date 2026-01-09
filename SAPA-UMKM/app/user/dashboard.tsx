@@ -1765,12 +1765,15 @@ export default function UserDashboardScreen() {
                             placeholder="Judul Diskusi"
                             placeholderTextColor={`${colors.subtle}50`}
                             maxLength={100}
-                            style={{
-                              fontSize: 18,
-                              color: colors.text,
-                              letterSpacing: -0.3,
-                              padding: 0,
-                            }}
+                            style={[
+                              {
+                                fontSize: 18,
+                                color: colors.text,
+                                letterSpacing: -0.3,
+                                padding: 0,
+                              },
+                              Platform.OS === 'web' && ({ outlineStyle: 'none' } as any)
+                            ]}
                             value={newPostTitle}
                             onChangeText={setNewPostTitle}
                           />
@@ -1792,14 +1795,17 @@ export default function UserDashboardScreen() {
                             placeholder="Apa yang ingin Anda bagikan atau tanyakan hari ini?"
                             placeholderTextColor={`${colors.subtle}50`}
                             maxLength={2000}
-                            style={{
-                              fontSize: 15,
-                              color: colors.text,
-                              lineHeight: 24,
-                              letterSpacing: -0.1,
-                              padding: 0,
-                              textAlignVertical: 'top',
-                            }}
+                            style={[
+                              {
+                                fontSize: 15,
+                                color: colors.text,
+                                lineHeight: 24,
+                                letterSpacing: -0.1,
+                                padding: 0,
+                                textAlignVertical: 'top',
+                              },
+                              Platform.OS === 'web' && ({ outlineStyle: 'none' } as any)
+                            ]}
                             value={newPostContent}
                             onChangeText={setNewPostContent}
                           />
@@ -1972,6 +1978,7 @@ export default function UserDashboardScreen() {
               <View style={{ gap: 8 }}>
                 {[
                   { label: 'Edit Profil', icon: 'edit-3', action: openEditModal, color: colors.primary },
+                  { label: 'Riwayat Pengajuan', icon: 'clock', action: () => router.push('/user/history'), color: '#F59E0B' },
                   { label: 'Sertifikat Pelatihan', icon: 'book', action: () => { }, color: '#8B5CF6' },
                   { label: 'Pengaturan', icon: 'sliders', action: () => router.push('/user/settings'), color: '#64748B' },
                 ].map((item, index) => (

@@ -604,6 +604,20 @@ export default function AdminDashboardScreen() {
             ))}
           </View>
         </View>
+
+        <TouchableOpacity
+          onPress={handleLogout}
+          style={[
+            styles.logoutSectionButton,
+            {
+              backgroundColor: scheme === 'dark' ? 'rgba(239, 68, 68, 0.15)' : '#FEF2F2',
+              borderColor: '#EF4444',
+            }
+          ]}
+        >
+          <Feather name="log-out" size={20} color="#EF4444" />
+          <Text style={styles.logoutSectionButtonText}>Keluar dari Sistem</Text>
+        </TouchableOpacity>
       </ScrollView>
 
       <Modal
@@ -1078,6 +1092,23 @@ const styles = StyleSheet.create({
   modalPrimaryButtonText: {
     color: '#FFFFFF',
     fontSize: 14,
+    fontWeight: '700',
+  },
+  logoutSectionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    marginTop: 8,
+    marginBottom: 40,
+    paddingVertical: 18,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+  },
+  logoutSectionButtonText: {
+    color: '#EF4444',
+    fontSize: 16,
     fontWeight: '700',
   },
 });
