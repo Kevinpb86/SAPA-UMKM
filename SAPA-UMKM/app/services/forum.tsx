@@ -17,11 +17,12 @@ import {
   View,
 } from 'react-native';
 
+import { useAuth } from '@/hooks/use-auth';
+import { getCommunityPosts } from '@/lib/api';
 import {
   availableTags,
   ForumTag,
   ForumTopic,
-  forumTopics,
 } from '../../constants/forumData';
 
 const palette = {
@@ -58,6 +59,9 @@ export default function CommunityForumScreen() {
   const [activeTag, setActiveTag] = useState<ForumTag | 'Semua'>('Semua');
   const [sortBy, setSortBy] = useState<SortOption>('recent');
   const [expandedTopicId, setExpandedTopicId] = useState<string | null>(null);
+  const [topics, setTopics] = useState<ForumTopic[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   // Animations
   const meshAnim = useRef(new Animated.Value(0)).current;
@@ -65,6 +69,8 @@ export default function CommunityForumScreen() {
   const entryAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    fetchTopics();
+
     // Mesh rotation
     Animated.loop(
       Animated.timing(meshAnim, {
@@ -102,6 +108,64 @@ export default function CommunityForumScreen() {
     }).start();
   }, []);
 
+  const fetchTopics = async () => {
+    try {
+      setLoading(true);
+      const data = await getCommunityPosts(user?.token, user?.id?.toString());
+
+      const mappedTopics: ForumTopic[] = data.map((post: any) => ({
+        id: post.id.toString(),
+        title: post.title,
+        author: {
+          id: post.user_id.toString(),
+          name: post.author_name,
+          role: post.author_role || 'Pelaku UMKM',
+          avatarInitials: post.author_name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()
+        },
+        createdAt: post.created_at,
+        tags: typeof post.tags === 'string' ? JSON.parse(post.tags) : (post.tags || []),
+        summary: post.content,
+        replies: [], // Will be fetched when expanded if needed, or we can update this
+        likes: post.likes || 0,
+        isLiked: !!post.is_liked,
+        status: post.status
+      }));
+
+      setTopics(mappedTopics);
+    } catch (error) {
+      console.error('Error fetching topics:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCommentsForTopic = async (topicId: string) => {
+    try {
+      const { fetchComments } = require('@/lib/api');
+      const data = await fetchComments(topicId, user?.id?.toString());
+
+      const mappedReplies = (data || []).map((comment: any) => ({
+        id: comment.id.toString(),
+        author: {
+          id: comment.user_id.toString(),
+          name: comment.author_name,
+          role: 'Pelaku UMKM',
+          avatarInitials: comment.author_name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()
+        },
+        message: comment.content,
+        createdAt: comment.created_at,
+        upvotes: comment.likes || 0,
+        isLiked: !!comment.is_liked
+      }));
+
+      setTopics(prev => prev.map(t =>
+        t.id === topicId ? { ...t, replies: mappedReplies } : t
+      ));
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+    }
+  };
+
   const meshRotate = meshAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
@@ -115,7 +179,7 @@ export default function CommunityForumScreen() {
   const filteredTopics = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
 
-    const topicFilter = forumTopics.filter(topic => {
+    const topicFilter = topics.filter(topic => {
       const matchTag = activeTag === 'Semua' || topic.tags.includes(activeTag);
       const matchQuery =
         normalizedQuery.length === 0 ||
@@ -133,8 +197,8 @@ export default function CommunityForumScreen() {
       }
 
       if (sortBy === 'popular') {
-        const aVotes = a.replies.reduce((acc, reply) => acc + reply.upvotes, 0);
-        const bVotes = b.replies.reduce((acc, reply) => acc + reply.upvotes, 0);
+        const aVotes = (a.replies?.reduce((acc, reply) => acc + reply.upvotes, 0) || 0) + (a.likes || 0);
+        const bVotes = (b.replies?.reduce((acc, reply) => acc + reply.upvotes, 0) || 0) + (b.likes || 0);
         return bVotes - aVotes;
       }
 
@@ -142,15 +206,21 @@ export default function CommunityForumScreen() {
     });
 
     return sorted;
-  }, [activeTag, searchQuery, sortBy]);
+  }, [topics, activeTag, searchQuery, sortBy]);
 
   const handleSelectTopic = (topicId: string) => {
+    const isExpanding = expandedTopicId !== topicId;
     setExpandedTopicId(prev => (prev === topicId ? null : topicId));
+
+    if (isExpanding) {
+      fetchCommentsForTopic(topicId);
+    }
   };
 
   const renderTopicCard = ({ item }: { item: ForumTopic }) => {
     const isExpanded = expandedTopicId === item.id;
-    const totalVotes = item.replies.reduce((acc, reply) => acc + reply.upvotes, 0);
+    const totalLikes = item.likes || 0;
+    const commentsCount = item.replies?.length || (item as any).comments_count || 0;
 
     return (
       <TouchableOpacity
@@ -211,11 +281,11 @@ export default function CommunityForumScreen() {
           <View style={styles.topicStats}>
             <View style={styles.statLabel}>
               <Feather name="message-circle" size={14} color={colors.subtle} />
-              <Text style={[styles.statText, { color: colors.subtle }]}>{item.replies.length}</Text>
+              <Text style={[styles.statText, { color: colors.subtle }]}>{commentsCount}</Text>
             </View>
             <View style={styles.statLabel}>
-              <Feather name="thumbs-up" size={14} color={colors.subtle} />
-              <Text style={[styles.statText, { color: colors.subtle }]}>{totalVotes}</Text>
+              <Feather name="thumbs-up" size={14} color={item.isLiked ? colors.accent : colors.subtle} />
+              <Text style={[styles.statText, { color: item.isLiked ? colors.accent : colors.subtle }]}>{totalLikes}</Text>
             </View>
           </View>
 
@@ -288,12 +358,12 @@ export default function CommunityForumScreen() {
 
                   <View style={styles.heroStats}>
                     <View style={styles.heroStatItem}>
-                      <Text style={styles.heroStatValue}>{forumTopics.length}</Text>
+                      <Text style={styles.heroStatValue}>{topics.length}</Text>
                       <Text style={styles.heroStatLabel}>Topik</Text>
                     </View>
                     <View style={styles.heroStatItem}>
                       <Text style={styles.heroStatValue}>
-                        {forumTopics.reduce((acc, topic) => acc + topic.replies.length, 0)}
+                        {topics.reduce((acc, topic) => acc + (topic.replies?.length || 0), 0)}
                       </Text>
                       <Text style={styles.heroStatLabel}>Balasan</Text>
                     </View>

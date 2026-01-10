@@ -23,19 +23,19 @@ import {
 
 const palette = {
   light: {
-    background: '#F5F8FF',
+    background: '#EFF6FF',
     card: '#FFFFFF',
-    border: '#D8E3FF',
-    text: '#0B1740',
-    subtle: '#5A6A99',
-    accent: '#1D4ED8',
+    border: '#DBEAFE',
+    text: '#1E3A8A',
+    subtle: '#3B82F6',
+    accent: '#2563EB',
   },
   dark: {
-    background: '#0B1224',
-    card: '#111C32',
-    border: '#1E2A4A',
-    text: '#F8FAFC',
-    subtle: '#B4C5FF',
+    background: '#0C1633',
+    card: '#1E293B',
+    border: '#1E3A8A',
+    text: '#EFF6FF',
+    subtle: '#93C5FD',
     accent: '#60A5FA',
   },
 };
@@ -178,7 +178,7 @@ export default function SniCertificateFormScreen() {
             ]}
           >
             <LinearGradient
-              colors={['#0F766E', '#10B981']}
+              colors={['#2563EB', '#3B82F6']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.hero}

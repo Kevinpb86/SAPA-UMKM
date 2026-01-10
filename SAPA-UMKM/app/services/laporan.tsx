@@ -23,22 +23,22 @@ import {
 
 const palette = {
   light: {
-    background: '#F4F9FF',
-    hero: ['#0EA5E9', '#2563EB'],
+    background: '#FFF7ED',
+    hero: ['#F97316', '#EA580C'],
     card: '#FFFFFF',
-    border: '#CFE4FF',
+    border: '#FDEAD7',
     text: '#0F172A',
     subtle: '#4B5563',
-    accent: '#0EA5E9',
+    accent: '#F97316',
   },
   dark: {
-    background: '#06111F',
-    hero: ['#1D4ED8', '#0EA5E9'],
-    card: '#0F1C2E',
-    border: '#1F2F44',
+    background: '#1C0A05',
+    hero: ['#EA580C', '#F97316'],
+    card: '#2C1508',
+    border: '#3F1F0D',
     text: '#F8FAFC',
-    subtle: '#A5C8F5',
-    accent: '#38BDF8',
+    subtle: '#FED7AA',
+    accent: '#FB923C',
   },
 };
 

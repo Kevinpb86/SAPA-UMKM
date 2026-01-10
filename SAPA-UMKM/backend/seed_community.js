@@ -13,13 +13,33 @@ async function seedCommunity() {
         );
 
         // Seed Forum Post
-        await pool.execute(
-            `INSERT INTO forum_posts (user_id, title, content, tags) 
-             VALUES (?, 'Cara Daftar NIB untuk Usaha Rumahan', 'Halo rekan-rekan, ada yang punya pengalaman daftar NIB lewat OSS RBA untuk kuliner rumahan?', ?)`,
+        const [result] = await pool.execute(
+            `INSERT INTO forum_posts (user_id, title, content, tags, status) 
+             VALUES (?, 'Cara Daftar NIB untuk Usaha Rumahan', 'Halo rekan-rekan, ada yang punya pengalaman daftar NIB lewat OSS RBA untuk kuliner rumahan?', ?, 'pinned')`,
             [userId, JSON.stringify(['Legalitas', 'Operasional'])]
         );
+        const postId = result.insertId;
 
-        console.log('✅ Community data seeded successfully!');
+        // Seed Likes for Post
+        await pool.execute(
+            'INSERT IGNORE INTO forum_likes (post_id, user_id) VALUES (?, ?)',
+            [postId, userId]
+        );
+
+        // Seed Comments
+        const [commentResult] = await pool.execute(
+            'INSERT INTO forum_comments (post_id, user_id, content) VALUES (?, ?, ?)',
+            [postId, 1, 'Pastikan KBLI yang dipilih sudah sesuai dengan jenis produknya ya.']
+        );
+        const commentId = commentResult.insertId;
+
+        // Seed Comment Likes
+        await pool.execute(
+            'INSERT IGNORE INTO forum_comment_likes (comment_id, user_id) VALUES (?, ?)',
+            [commentId, userId]
+        );
+
+        console.log('✅ Community data (Posts, Likes, Comments) seeded successfully!');
     } catch (error) {
         console.error('❌ Seeding error:', error);
     } finally {

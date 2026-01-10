@@ -24,18 +24,18 @@ import {
 
 const palette = {
   light: {
-    background: '#F3F6FE',
+    background: '#FAFBFC',
     surface: '#FFFFFF',
-    text: '#0C1A3A',
-    subtle: '#5F6C8F',
-    border: '#D9E3F6',
+    text: '#1A202C',
+    subtle: '#64748B',
+    border: '#E2E8F0',
   },
   dark: {
-    background: '#0B1224',
-    surface: '#131D34',
-    text: '#F8FAFC',
+    background: '#0F172A',
+    surface: '#1E293B',
+    text: '#F1F5F9',
     subtle: '#94A3B8',
-    border: '#1F2A40',
+    border: '#334155',
   },
 };
 
@@ -44,24 +44,53 @@ const findCategory = (categoryId?: string): ServiceCategoryDetail | undefined =>
   return serviceCatalog.find(category => category.id === categoryId);
 };
 
-const actionVisuals: Record<string, { colors: string[]; iconBG: string; accent: string; bullet: string }> = {
+const actionVisuals: Record<string, {
+  colors: string[];
+  iconBG: string;
+  accent: string;
+  bullet: string;
+}> = {
   nib: {
-    colors: ['#F4F8FF', '#E0ECFF'],
-    iconBG: '#1D4ED8',
-    accent: '#1D4ED8',
+    colors: ['#EFF6FF', '#DBEAFE'],
+    iconBG: '#3B82F6',
+    accent: '#2563EB',
     bullet: 'Pastikan data perusahaan dan KTP siap sebelum memulai.',
   },
   merek: {
-    colors: ['#F5F3FF', '#ECE7FF'],
-    iconBG: '#7C3AED',
-    accent: '#7C3AED',
+    colors: ['#EFF6FF', '#DBEAFE'],
+    iconBG: '#3B82F6',
+    accent: '#2563EB',
     bullet: 'Siapkan logo/identitas visual untuk didaftarkan.',
   },
   sertifikasi: {
-    colors: ['#F0FBF7', '#DEF7EC'],
-    iconBG: '#047857',
-    accent: '#047857',
+    colors: ['#EFF6FF', '#DBEAFE'],
+    iconBG: '#3B82F6',
+    accent: '#2563EB',
     bullet: 'Pilih jenis sertifikasi (Halal, SNI, dsb) sesuai kebutuhan.',
+  },
+  kur: {
+    colors: ['#F0FDF4', '#DCFCE7'],
+    iconBG: '#22C55E',
+    accent: '#16A34A',
+    bullet: 'Siapkan dokumen usaha dan rencana penggunaan dana.',
+  },
+  umi: {
+    colors: ['#F0FDF4', '#DCFCE7'],
+    iconBG: '#22C55E',
+    accent: '#16A34A',
+    bullet: 'Program khusus untuk usaha mikro dengan proses cepat.',
+  },
+  lpdb: {
+    colors: ['#F0FDF4', '#DCFCE7'],
+    iconBG: '#22C55E',
+    accent: '#16A34A',
+    bullet: 'Dana bergulir untuk ekspansi usaha yang sudah berjalan.',
+  },
+  inkubasi: {
+    colors: ['#F0FDF4', '#DCFCE7'],
+    iconBG: '#22C55E',
+    accent: '#16A34A',
+    bullet: 'Pendampingan intensif untuk pengembangan bisnis berkelanjutan.',
   },
 };
 
@@ -133,43 +162,70 @@ export default function ServiceDetailScreen() {
   };
 
   const renderActions = () => {
-    if (categoryDetail.id === 'layanan') {
+    if (categoryDetail.id === 'layanan' || categoryDetail.id === 'pemberdayaan') {
       return (
         <View style={styles.featuredList}>
-          {categoryDetail.actions.map(action => {
+          {categoryDetail.actions.map((action) => {
             const visuals = actionVisuals[action.id] ?? actionVisuals.nib;
             return (
-              <LinearGradient
+              <View
                 key={action.id}
-                colors={visuals.colors}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.featuredCard}
+                style={[
+                  styles.featuredCard,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.06,
+                    shadowRadius: 12,
+                    elevation: 3,
+                  }
+                ]}
               >
-                <View style={styles.featuredHeader}>
-                  <View style={[styles.featuredIconWrapper, { backgroundColor: visuals.iconBG }]}
-                  >
-                    <Feather name={action.icon} size={20} color="#FFFFFF" />
+                <LinearGradient
+                  colors={visuals.colors}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.featuredGradientBar}
+                />
+
+                <View style={styles.featuredContent}>
+                  <View style={styles.featuredHeader}>
+                    <View style={[styles.featuredIconWrapper, { backgroundColor: visuals.iconBG }]}>
+                      <Feather name={action.icon} size={20} color="#FFFFFF" />
+                    </View>
+                    <View style={styles.featuredTitleBlock}>
+                      <Text style={[styles.featuredTitle, { color: colors.text }]}>
+                        {action.title}
+                      </Text>
+                      <Text style={[styles.featuredSubtitle, { color: colors.subtle }]}>
+                        {action.description}
+                      </Text>
+                    </View>
                   </View>
-                  <View style={styles.featuredTitleBlock}>
-                    <Text style={[styles.featuredTitle, { color: visuals.iconBG }]}>{action.title}</Text>
-                    <Text style={[styles.featuredSubtitle, { color: '#4A5878' }]}>
-                      {action.description}
+
+                  <View style={[styles.featuredBulletRow, {
+                    backgroundColor: `${visuals.accent}08`,
+                    borderColor: `${visuals.accent}15`,
+                  }]}>
+                    <Feather name="check-circle" size={14} color={visuals.accent} />
+                    <Text style={[styles.featuredBulletText, { color: colors.subtle }]}>
+                      {visuals.bullet}
                     </Text>
                   </View>
+
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    onPress={() => handleAction(action)}
+                    activeOpacity={0.7}
+                    style={[styles.featuredButton, { backgroundColor: visuals.iconBG }]}
+                  >
+                    <Text style={styles.featuredButtonText}>{action.ctaLabel}</Text>
+                    <Feather name="arrow-right" size={16} color="#FFFFFF" />
+                  </TouchableOpacity>
                 </View>
-                <View style={styles.featuredBulletRow}>
-                  <Feather name="check-circle" size={16} color={visuals.accent} />
-                  <Text style={[styles.featuredBulletText, { color: '#4A5878' }]}>{visuals.bullet}</Text>
-                </View>
-                <TouchableOpacity
-                  accessibilityRole="button"
-                  onPress={() => handleAction(action)}
-                  style={[styles.featuredButton, { backgroundColor: visuals.iconBG }]}>
-                  <Text style={styles.featuredButtonText}>{action.ctaLabel}</Text>
-                  <Feather name="arrow-up-right" size={16} color="#FFFFFF" />
-                </TouchableOpacity>
-              </LinearGradient>
+              </View>
             );
           })}
         </View>
@@ -177,9 +233,11 @@ export default function ServiceDetailScreen() {
     }
 
     return categoryDetail.actions.map(action => (
-      <View key={action.id} style={[styles.actionRow, { borderColor: colors.border }]}>
-        <View style={[styles.actionIcon, { backgroundColor: `${categoryDetail.accent}1A` }]}
-        >
+      <View key={action.id} style={[styles.actionRow, {
+        borderColor: colors.border,
+        backgroundColor: colors.surface,
+      }]}>
+        <View style={[styles.actionIcon, { backgroundColor: `${categoryDetail.accent}12` }]}>
           <Feather name={action.icon} size={18} color={categoryDetail.accent} />
         </View>
         <View style={styles.actionCopy}>
@@ -188,10 +246,11 @@ export default function ServiceDetailScreen() {
           <TouchableOpacity
             accessibilityRole="button"
             onPress={() => handleAction(action)}
+            activeOpacity={0.7}
             style={[styles.ctaButton, { backgroundColor: categoryDetail.accent }]}
           >
             <Text style={styles.ctaButtonText}>{action.ctaLabel}</Text>
-            <Feather name="arrow-up-right" size={14} color="#FFFFFF" />
+            <Feather name="arrow-right" size={14} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
       </View>
@@ -201,47 +260,66 @@ export default function ServiceDetailScreen() {
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Enhanced Hero Section */}
         <LinearGradient
-          colors={[`${categoryDetail.accent}FF`, `${categoryDetail.accent}CC`]}
+          colors={[`${categoryDetail.accent}`, `${categoryDetail.accent}E6`]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.hero}
         >
+          {/* Decorative Background Elements */}
+          <View style={styles.decorativeCircle1} />
+          <View style={styles.decorativeCircle2} />
+
           <TouchableOpacity
             accessibilityRole="button"
             onPress={() => router.back()}
-            style={[styles.backButton, { borderColor: 'rgba(255,255,255,0.35)' }]}
+            activeOpacity={0.7}
+            style={styles.backButton}
           >
-            <Feather name="arrow-left" size={18} color="#FFFFFF" />
+            <Feather name="arrow-left" size={16} color="#FFFFFF" />
             <Text style={styles.backButtonText}>Kembali</Text>
           </TouchableOpacity>
 
-          <View style={styles.heroHeader}>
-            <View style={styles.heroIconWrapper}>
-              <Feather name={categoryDetail.icon} size={24} color={categoryDetail.accent} />
+          <View style={styles.heroContent}>
+            <View style={styles.heroIconContainer}>
+              <Feather name={categoryDetail.icon} size={32} color="#FFFFFF" />
             </View>
-            <View style={styles.heroCopy}>
-              <Text style={styles.heroTitle}>{categoryDetail.title}</Text>
-              <Text style={styles.heroSubtitle}>{categoryDetail.summary}</Text>
-            </View>
+            <Text style={styles.heroTitle}>{categoryDetail.title}</Text>
+            <Text style={styles.heroSubtitle}>{categoryDetail.summary}</Text>
+            <Text style={styles.heroDescription}>{categoryDetail.description}</Text>
           </View>
-
-          <Text style={styles.heroDescription}>{categoryDetail.description}</Text>
         </LinearGradient>
 
-        <View style={[styles.card, { borderColor: colors.border, backgroundColor: colors.surface }]}>
-          <Text style={[styles.cardTitle, { color: colors.text }]}>Layanan yang tersedia</Text>
-          <View style={styles.divider} />
+        {/* Services Card */}
+        <View style={[styles.card, {
+          borderColor: colors.border,
+          backgroundColor: colors.surface,
+        }]}>
+          <View style={styles.cardHeader}>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>Layanan yang tersedia</Text>
+            <View style={[styles.badge, { backgroundColor: `${categoryDetail.accent}15` }]}>
+              <Text style={[styles.badgeText, { color: categoryDetail.accent }]}>
+                {categoryDetail.actions.length}
+              </Text>
+            </View>
+          </View>
           {renderActions()}
         </View>
 
-        <View style={[styles.card, { borderColor: colors.border, backgroundColor: colors.surface }]}>
-          <Text style={[styles.cardTitle, { color: colors.text }]}>Tips pengajuan</Text>
-          <View style={styles.divider} />
-          {categoryDetail.tips.map(tip => (
+        {/* Tips Card */}
+        <View style={[styles.card, {
+          borderColor: colors.border,
+          backgroundColor: colors.surface,
+        }]}>
+          <View style={styles.cardHeader}>
+            <Feather name="info" size={18} color={categoryDetail.accent} />
+            <Text style={[styles.cardTitle, { color: colors.text }]}>Tips pengajuan</Text>
+          </View>
+          {categoryDetail.tips.map((tip, index) => (
             <View key={tip} style={styles.tipRow}>
-              <Feather name="check-circle" size={16} color={categoryDetail.accent} />
+              <View style={[styles.tipDot, { backgroundColor: categoryDetail.accent }]} />
               <Text style={[styles.tipText, { color: colors.subtle }]}>{tip}</Text>
             </View>
           ))}
@@ -258,84 +336,134 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 20,
     gap: 20,
+    paddingBottom: 32,
   },
   hero: {
-    borderRadius: 28,
-    padding: 24,
-    gap: 20,
+    borderRadius: 24,
+    padding: 28,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 8,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  decorativeCircle1: {
+    position: 'absolute',
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    top: -80,
+    right: -60,
+  },
+  decorativeCircle2: {
+    position: 'absolute',
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    bottom: -40,
+    left: -40,
   },
   backButton: {
     alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    borderRadius: 999,
-    borderWidth: 1,
+    gap: 6,
     paddingHorizontal: 14,
-    paddingVertical: 6,
-    backgroundColor: 'rgba(15, 23, 42, 0.22)',
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    marginBottom: 28,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   backButtonText: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
   },
-  heroHeader: {
-    flexDirection: 'row',
-    gap: 16,
-    alignItems: 'center',
+  heroContent: {
+    gap: 14,
+    zIndex: 1,
   },
-  heroIconWrapper: {
-    width: 56,
-    height: 56,
-    borderRadius: 20,
+  heroIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.92)',
-  },
-  heroCopy: {
-    flex: 1,
-    gap: 4,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
   },
   heroTitle: {
     color: '#FFFFFF',
-    fontSize: 20,
+    fontSize: 26,
     fontWeight: '600',
+    lineHeight: 34,
+    letterSpacing: -0.5,
   },
   heroSubtitle: {
-    color: 'rgba(255,255,255,0.86)',
-    fontSize: 14,
+    color: 'rgba(255,255,255,0.95)',
+    fontSize: 16,
+    fontWeight: '500',
+    lineHeight: 24,
   },
   heroDescription: {
     color: 'rgba(255,255,255,0.9)',
     fontSize: 14,
-    lineHeight: 20,
+    fontWeight: '400',
+    lineHeight: 22,
+    marginTop: 2,
   },
   card: {
-    borderRadius: 22,
+    marginHorizontal: 20,
+    marginTop: 20,
+    borderRadius: 16,
     borderWidth: 1,
     padding: 20,
     gap: 16,
   },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 4,
   },
-  divider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(15, 23, 42, 0.1)',
+  cardTitle: {
+    fontSize: 17,
+    fontWeight: '500',
+    flex: 1,
+  },
+  badge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  badgeText: {
+    fontSize: 13,
+    fontWeight: '500',
   },
   actionRow: {
     flexDirection: 'row',
-    gap: 16,
-    borderRadius: 18,
+    gap: 14,
+    borderRadius: 12,
     borderWidth: 1,
     padding: 16,
+    marginTop: 12,
   },
   actionIcon: {
     width: 44,
     height: 44,
-    borderRadius: 16,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -345,123 +473,146 @@ const styles = StyleSheet.create({
   },
   actionTitle: {
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   actionDescription: {
     fontSize: 13,
-    lineHeight: 18,
+    lineHeight: 19,
+    fontWeight: '400',
   },
   ctaButton: {
     alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    borderRadius: 999,
+    borderRadius: 8,
     paddingHorizontal: 14,
     paddingVertical: 8,
+    marginTop: 4,
   },
   ctaButtonText: {
     color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '500',
   },
   tipRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 12,
     alignItems: 'flex-start',
+    marginTop: 12,
+  },
+  tipDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginTop: 7,
   },
   tipText: {
     flex: 1,
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 21,
+    fontWeight: '400',
   },
   emptyState: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 14,
+    gap: 12,
     paddingHorizontal: 24,
   },
   emptyTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '500',
     textAlign: 'center',
   },
   emptySubtitle: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 20,
     textAlign: 'center',
+    fontWeight: '400',
   },
   emptyButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#2563EB',
-    borderRadius: 999,
-    paddingHorizontal: 18,
+    backgroundColor: '#3B82F6',
+    borderRadius: 8,
+    paddingHorizontal: 16,
     paddingVertical: 10,
+    marginTop: 8,
   },
   emptyButtonText: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   featuredList: {
     gap: 16,
+    marginTop: 12,
   },
   featuredCard: {
-    borderRadius: 22,
+    borderRadius: 16,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  featuredGradientBar: {
+    height: 4,
+  },
+  featuredContent: {
     padding: 20,
     gap: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(29, 78, 216, 0.08)',
   },
   featuredHeader: {
     flexDirection: 'row',
     gap: 14,
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   featuredIconWrapper: {
-    width: 46,
-    height: 46,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   featuredTitleBlock: {
     flex: 1,
-    gap: 6,
+    gap: 4,
   },
   featuredTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '500',
+    lineHeight: 22,
   },
   featuredSubtitle: {
     fontSize: 13,
-    lineHeight: 18,
+    lineHeight: 19,
+    fontWeight: '400',
   },
   featuredBulletRow: {
     flexDirection: 'row',
     gap: 10,
     alignItems: 'center',
+    borderRadius: 10,
+    borderWidth: 1,
+    padding: 12,
   },
   featuredBulletText: {
     flex: 1,
     fontSize: 13,
     lineHeight: 18,
+    fontWeight: '400',
   },
   featuredButton: {
-    alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 8,
-    borderRadius: 999,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    borderRadius: 10,
+    paddingVertical: 12,
   },
   featuredButtonText: {
     color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });

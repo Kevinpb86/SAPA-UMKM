@@ -220,7 +220,7 @@ export default function HomeScreen() {
             <View style={styles.heroVisualWrapper}>
               <View style={[styles.heroVisualGlow, { backgroundColor: colors.heroGlow }]} />
               <Image
-                source={require('@/assets/images/icon.png')}
+                source={require('@/assets/images/logo.png')}
                 style={styles.heroImage}
                 contentFit="contain"
               />
@@ -276,42 +276,40 @@ export default function HomeScreen() {
           </ScrollView>
         </View>
 
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              {user ? 'Program & Layanan' : 'Contoh Layanan & Program'}
-            </Text>
-            <Text style={[styles.sectionSubtitle, { color: colors.subtle }]}>
-              {user
-                ? 'Jelajahi layanan resmi dan komunitas untuk mendukung perjalanan usaha Anda.'
-                : 'Berikut adalah contoh layanan yang dapat Anda akses setelah masuk.'}
-            </Text>
-          </View>
-          {serviceCategories.map(category => (
-            <TouchableOpacity
-              key={category.id}
-              activeOpacity={0.85}
-              onPress={() => navigateToService(router, category.id)}
-              style={[
-                styles.categoryCard,
-                {
-                  backgroundColor: colors.card,
-                  borderColor: colors.border,
-                },
-              ]}>
-              <View style={styles.categoryHeader}>
-                <View style={[styles.categoryIconWrapper, { backgroundColor: category.accent }]}>
-                  <Feather name={category.icon} size={20} color={colors.primary} />
+        {user && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                Program & Layanan
+              </Text>
+              <Text style={[styles.sectionSubtitle, { color: colors.subtle }]}>
+                Jelajahi layanan resmi dan komunitas untuk mendukung perjalanan usaha Anda.
+              </Text>
+            </View>
+            {serviceCategories.map(category => (
+              <TouchableOpacity
+                key={category.id}
+                activeOpacity={0.85}
+                onPress={() => navigateToService(router, category.id)}
+                style={[
+                  styles.categoryCard,
+                  {
+                    backgroundColor: colors.card,
+                    borderColor: colors.border,
+                  },
+                ]}>
+                <View style={styles.categoryHeader}>
+                  <View style={[styles.categoryIconWrapper, { backgroundColor: category.accent }]}>
+                    <Feather name={category.icon} size={20} color={colors.primary} />
+                  </View>
+                  <View style={styles.categoryText}>
+                    <Text style={[styles.categoryTitle, { color: colors.text }]}>{category.title}</Text>
+                    <Text style={[styles.categoryDescription, { color: colors.subtle }]}>
+                      {category.description}
+                    </Text>
+                  </View>
                 </View>
-                <View style={styles.categoryText}>
-                  <Text style={[styles.categoryTitle, { color: colors.text }]}>{category.title}</Text>
-                  <Text style={[styles.categoryDescription, { color: colors.subtle }]}>
-                    {category.description}
-                  </Text>
-                </View>
-              </View>
 
-              {user ? (
                 <View style={styles.featureList}>
                   {category.items.map(item => (
                     <View key={item} style={styles.featureItem}>
@@ -320,30 +318,10 @@ export default function HomeScreen() {
                     </View>
                   ))}
                 </View>
-              ) : (
-                <View style={[styles.previewContainer, { backgroundColor: scheme === 'dark' ? '#1E293B' : '#F8FAFC', borderColor: colors.border }]}>
-                  <View style={styles.previewHeader}>
-                    <Text style={[styles.previewLabel, { color: colors.subtle }]}>CONTOH STATUS PENGGUNA</Text>
-                  </View>
-                  <View style={styles.featureItem}>
-                    <Feather name="check-circle" size={18} color="#16A34A" />
-                    <Text style={[styles.featureText, { color: colors.text, fontWeight: '600' }]}>
-                      {category.id === 'layanan'
-                        ? 'Izin Usaha (NIB) Telah Terbit'
-                        : category.id === 'pemberdayaan'
-                          ? 'Pengajuan KUR Disetujui'
-                          : category.id === 'pelaporan'
-                            ? 'Laporan Keuangan Terverifikasi'
-                            : category.id === 'komunitas'
-                              ? 'Anggota Aktif Komunitas'
-                              : 'Sertifikat Kompetensi Lulus'}
-                    </Text>
-                  </View>
-                </View>
-              )}
-            </TouchableOpacity>
-          ))}
-        </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );

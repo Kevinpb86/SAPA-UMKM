@@ -23,20 +23,20 @@ import {
 
 const palette = {
   light: {
-    background: '#F9F5FF',
+    background: '#EFF6FF',
     card: '#FFFFFF',
-    border: '#E7DAFF',
-    text: '#2D0F54',
-    subtle: '#6F4C9A',
-    accent: '#7C3AED',
+    border: '#DBEAFE',
+    text: '#1E3A8A',
+    subtle: '#3B82F6',
+    accent: '#2563EB',
   },
   dark: {
-    background: '#1A0D33',
-    card: '#221144',
-    border: '#382066',
-    text: '#F8F5FF',
-    subtle: '#D7B9FF',
-    accent: '#A855F7',
+    background: '#0C1633',
+    card: '#1E293B',
+    border: '#1E3A8A',
+    text: '#EFF6FF',
+    subtle: '#93C5FD',
+    accent: '#60A5FA',
   },
 };
 
@@ -180,7 +180,7 @@ export default function OtherCertificateFormScreen() {
             ]}
           >
             <LinearGradient
-              colors={['#0F766E', '#10B981']}
+              colors={['#2563EB', '#3B82F6']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.hero}

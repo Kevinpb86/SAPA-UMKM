@@ -157,6 +157,16 @@ router.post('/', verifyToken, async (req, res) => {
                     userId, data.title, data.content, JSON.stringify(data.tags || [])
                 ];
                 break;
+            case 'consultation':
+                targetTable = 'consultation_submissions';
+                query = `INSERT INTO consultation_submissions 
+                        (user_id, full_name, email, phone, business_name, business_field, employee_count, interested_modules, preferred_mode, special_notes) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+                params = [
+                    userId, data.fullName, data.email, data.phone, data.businessName, data.businessField,
+                    data.employeeCount, JSON.stringify(data.interestedModules || []), data.preferredMode, data.specialNotes
+                ];
+                break;
             default:
                 // Fallback to generic submissions table
                 targetTable = 'submissions';
@@ -195,6 +205,7 @@ router.get('/', verifyToken, async (req, res) => {
             { name: 'laporan_submissions', label: 'Laporan', titleField: 'period' },
             { name: 'pelatihan_submissions', label: 'Pelatihan', titleField: 'training_interest' },
             { name: 'forum_posts', label: 'Forum', titleField: 'title' },
+            { name: 'consultation_submissions', label: 'Konsultasi', titleField: 'business_name' },
             { name: 'submissions', label: 'Layanan', titleField: 'type' }
         ];
 
@@ -314,19 +325,78 @@ router.get('/my-history', verifyToken, async (req, res) => {
             FROM forum_posts 
             WHERE user_id = ?
             UNION ALL
+            SELECT id, 'Konsultasi' as type, status, created_at, CONCAT('Konsultasi Pelatihan - ', business_name) as title
+            FROM consultation_submissions 
+            WHERE user_id = ?
+            UNION ALL
             SELECT id, type, status, created_at, CONCAT('Layanan - ', type) as title
             FROM submissions 
             WHERE user_id = ?
             ORDER BY created_at DESC
         `;
 
-        const params = [userId, userId, userId, userId, userId, userId, userId, userId, userId, userId, userId, userId, userId, userId];
+        const params = [userId, userId, userId, userId, userId, userId, userId, userId, userId, userId, userId, userId, userId, userId, userId];
         const [rows] = await pool.execute(query, params);
 
         res.json({ success: true, data: rows });
     } catch (error) {
         console.error('Get history error:', error);
         res.status(500).json({ success: false, message: 'Gagal mengambil riwayat pengajuan' });
+    }
+});
+
+// GET Specific Submission Detail
+router.get('/:id/detail', verifyToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { type } = req.query;
+
+        if (!type) {
+            return res.status(400).json({ success: false, message: 'Type is required' });
+        }
+
+        const tableMap = {
+            'KUR': 'kur_submissions',
+            'UMi': 'umi_submissions',
+            'LPDB': 'lpdb_submissions',
+            'Inkubasi': 'inkubasi_submissions',
+            'NIB': 'nib_submissions',
+            'Merek': 'merek_submissions',
+            'Halal': 'halal_submissions',
+            'BPOM': 'bpom_submissions',
+            'SNI': 'sni_submissions',
+            'Lainnya': 'lainnya_submissions',
+            'Laporan': 'laporan_submissions',
+            'Pelatihan': 'pelatihan_submissions',
+            'Forum': 'forum_posts'
+        };
+
+        const targetTable = tableMap[type] || 'submissions';
+
+        const query = `
+            SELECT s.*, u.display_name, u.email
+            FROM ${targetTable} s
+            JOIN users u ON s.user_id = u.id
+            WHERE s.id = ?
+        `;
+
+        const [rows] = await pool.execute(query, [id]);
+
+        if (rows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Detail pengajuan tidak ditemukan' });
+        }
+
+        const detail = rows[0];
+
+        // Security check
+        if (req.user.role !== 'admin' && detail.user_id !== req.user.id) {
+            return res.status(403).json({ success: false, message: 'Akses ditolak' });
+        }
+
+        res.json({ success: true, data: detail });
+    } catch (error) {
+        console.error('Get submission detail error:', error);
+        res.status(500).json({ success: false, message: 'Gagal mengambil detail pengajuan' });
     }
 });
 

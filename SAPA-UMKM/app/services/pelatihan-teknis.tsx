@@ -539,12 +539,12 @@ const styles = StyleSheet.create({
   backText: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   heroKicker: {
     color: 'rgba(255, 255, 255, 0.7)',
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 1.5,
     marginBottom: 4,
@@ -552,7 +552,7 @@ const styles = StyleSheet.create({
   heroTitle: {
     color: '#FFFFFF',
     fontSize: 28,
-    fontWeight: '900',
+    fontWeight: '600',
     letterSpacing: -0.5,
   },
   heroSubtitle: {
@@ -586,7 +586,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: -0.3,
   },
   sectionSubtitleText: {
@@ -616,7 +616,7 @@ const styles = StyleSheet.create({
   },
   highlightTitle: {
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   highlightDescription: {
     fontSize: 13,
@@ -641,7 +641,7 @@ const styles = StyleSheet.create({
   },
   filterLabel: {
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginLeft: 4,
@@ -659,7 +659,7 @@ const styles = StyleSheet.create({
   },
   filterChipText: {
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   moduleCard: {
     borderRadius: 32,
@@ -689,7 +689,7 @@ const styles = StyleSheet.create({
   },
   modeBadgeText: {
     fontSize: 11,
-    fontWeight: '800',
+    fontWeight: '600',
     textTransform: 'uppercase',
   },
   moduleHeading: {
@@ -698,7 +698,7 @@ const styles = StyleSheet.create({
   },
   moduleTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   moduleSubtitle: {
     fontSize: 12,
@@ -724,7 +724,7 @@ const styles = StyleSheet.create({
   },
   metaTagText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   moduleExpanded: {
     gap: 20,
@@ -761,7 +761,7 @@ const styles = StyleSheet.create({
   },
   agendaTitle: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '600',
     flex: 1,
   },
   agendaDescription: {
@@ -786,7 +786,7 @@ const styles = StyleSheet.create({
   },
   facilitatorInitial: {
     fontSize: 22,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   facilitatorInfo: {
     flex: 1,
@@ -794,11 +794,11 @@ const styles = StyleSheet.create({
   },
   facilitatorName: {
     fontSize: 15,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   facilitatorRole: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '600',
     opacity: 0.8,
   },
   facilitatorBio: {
@@ -831,7 +831,7 @@ const styles = StyleSheet.create({
   },
   materialLabel: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   materialType: {
     fontSize: 12,
@@ -868,7 +868,7 @@ const styles = StyleSheet.create({
   ctaButtonText: {
     color: '#FFFFFF',
     fontSize: 15,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   emptyState: {
     borderRadius: 32,
@@ -879,7 +879,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 16,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   emptySubtitle: {
     fontSize: 14,
@@ -902,7 +902,7 @@ const styles = StyleSheet.create({
   },
   sectionTitleText: {
     fontSize: 15,
-    fontWeight: '800',
+    fontWeight: '600',
     letterSpacing: -0.2,
   },
 });

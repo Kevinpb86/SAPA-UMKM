@@ -30,6 +30,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/submissions', submissionRoutes);
 app.use('/api/upload', require('./routes/upload'));
 app.use('/api/community', require('./routes/community'));
+app.use('/api/training', require('./routes/training'));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Error handling middleware

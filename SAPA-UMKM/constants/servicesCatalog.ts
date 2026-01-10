@@ -1,5 +1,5 @@
-import type { ComponentProps } from 'react';
 import { Feather } from '@expo/vector-icons';
+import type { ComponentProps } from 'react';
 
 type FeatherIconName = ComponentProps<typeof Feather>['name'];
 
@@ -66,7 +66,7 @@ export const serviceCatalog: ServiceCategoryDetail[] = [
     description:
       'Temukan program pembiayaan dan pendampingan yang sesuai kebutuhan modal dan pengembangan usaha Anda.',
     icon: 'layers',
-    accent: '#F97316',
+    accent: '#22C55E',
     actions: [
       {
         id: 'kur',
@@ -109,7 +109,7 @@ export const serviceCatalog: ServiceCategoryDetail[] = [
     description:
       'Laporkan perkembangan usaha dan perbarui profil UMKM agar pemerintah dapat memberikan dukungan yang tepat.',
     icon: 'bar-chart-2',
-    accent: '#22C55E',
+    accent: '#F97316',
     actions: [
       {
         id: 'laporan',
@@ -174,7 +174,7 @@ export const serviceCatalog: ServiceCategoryDetail[] = [
     description:
       'Ikuti pelatihan teknis dan manajemen untuk meningkatkan kemampuan bisnis, serta akses modul e-learning mandiri.',
     icon: 'book-open',
-    accent: '#0EA5E9',
+    accent: '#4C7DFF',
     actions: [
       {
         id: 'pelatihan-teknis',
@@ -223,3 +223,4 @@ export const heroHighlights = [
 ];
 
 export type { FeatherIconName };
+

@@ -7,11 +7,13 @@ import { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Animated,
+  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
   SafeAreaView,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   TextInput,
@@ -19,6 +21,7 @@ import {
   useColorScheme,
   View
 } from 'react-native';
+const LOGO_IMG = require('../../assets/images/logo.png');
 
 import { useAuth } from '@/hooks/use-auth';
 import { availableTags, forumTopics } from '../../constants/forumData';
@@ -64,6 +67,7 @@ type ServiceCategory = {
   description: string;
   icon: FeatherIconName;
   items: string[];
+  color: string;
 };
 
 type TimelineItem = {
@@ -124,6 +128,7 @@ const serviceCategories: ServiceCategory[] = [
     title: 'A. Layanan Publik & Perizinan',
     description: 'Permohonan legalitas usaha Anda.',
     icon: 'shield',
+    color: '#3B82F6',
     items: [
       'Pengajuan & pembaruan NIB.',
       'Registrasi dan manajemen merek produk.',
@@ -135,6 +140,7 @@ const serviceCategories: ServiceCategory[] = [
     title: 'B. Program Pemberdayaan Pemerintah',
     description: 'Akses bantuan pembiayaan dan pendampingan.',
     icon: 'layers',
+    color: '#10B981',
     items: [
       'Pendaftaran Program KUR, UMi, dan LPDB.',
       'Informasi program inkubasi & bimbingan.',
@@ -146,6 +152,7 @@ const serviceCategories: ServiceCategory[] = [
     title: 'C. Pelaporan & Data Usaha',
     description: 'Kelola kewajiban pelaporan usaha.',
     icon: 'bar-chart-2',
+    color: '#F59E0B',
     items: [
       'Pelaporan kegiatan dan perkembangan ke pemerintah.',
       'Pembaruan data profil UMKM (skala usaha, alamat, dsb).',
@@ -156,6 +163,7 @@ const serviceCategories: ServiceCategory[] = [
     title: 'D. Komunitas & Jaringan',
     description: 'Bangun relasi dan kolaborasi.',
     icon: 'message-circle',
+    color: '#8B5CF6',
     items: [
       'Forum komunikasi dan diskusi antar pelaku UMKM.',
       'Pendaftaran pelatihan anggota komunitas non-pemerintah.',
@@ -167,6 +175,7 @@ const serviceCategories: ServiceCategory[] = [
     title: 'E. Peningkatan Kompetensi',
     description: 'Perluas pengetahuan dengan materi pelatihan.',
     icon: 'book-open',
+    color: '#EC4899',
     items: [
       'Pendaftaran pelatihan teknis & manajemen dari KemenKopUKM.',
       'Modul pembelajaran mandiri E-Learning.',
@@ -195,7 +204,13 @@ const timeline: TimelineItem[] = [
   },
 ];
 
-import { fetchSubmissions, updateUserProfile } from '@/lib/api';
+import {
+  fetchMyCertificates,
+  fetchSubmissions,
+  getCommunityPosts,
+  likePost,
+  updateUserProfile
+} from '@/lib/api';
 
 type PremiumInteractionButtonProps = {
   icon: FeatherIconName;
@@ -268,9 +283,11 @@ type AnimatedPostCardProps = {
   index: number;
   colors: typeof palette.light;
   styles: any;
+  onLike?: () => void;
+  onComment?: () => void;
 };
 
-function AnimatedPostCard({ post, index, colors, styles }: AnimatedPostCardProps) {
+function AnimatedPostCard({ post, index, colors, styles, onLike, onComment }: AnimatedPostCardProps) {
   const cardAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const shadowAnim = useRef(new Animated.Value(0)).current;
@@ -490,10 +507,25 @@ function AnimatedPostCard({ post, index, colors, styles }: AnimatedPostCardProps
                 gap: 4,
               }}
             >
-              <PremiumInteractionButton icon="heart" count={post.likes || 0} colors={colors} />
-              <PremiumInteractionButton icon="message-circle" count={post.comments_count || 0} colors={colors} />
+              <PremiumInteractionButton
+                icon="heart"
+                count={post.likes || 0}
+                colors={colors}
+                onPress={onLike}
+              />
+              <PremiumInteractionButton
+                icon="message-circle"
+                count={post.comments_count || 0}
+                colors={colors}
+                onPress={onComment}
+              />
               <View style={{ flex: 1 }} />
               <TouchableOpacity
+                onPress={() => {
+                  Share.share({
+                    message: `[SAPA UMKM Komunitas]\n\n${post.author_name} berbagi: "${post.title || post.content.substring(0, 50)}..."\n\nBaca selengkapnya di aplikasi SAPA UMKM!`,
+                  });
+                }}
                 style={{
                   paddingHorizontal: 14,
                   paddingVertical: 8,
@@ -565,6 +597,7 @@ export default function UserDashboardScreen() {
   const router = useRouter();
   const { user, loading, logout } = useAuth();
   const [submissions, setSubmissions] = useState<any[]>([]);
+  const [certsCount, setCertsCount] = useState(0);
 
   // Community State
   const [createPostModalVisible, setCreatePostModalVisible] = useState(false);
@@ -697,6 +730,18 @@ export default function UserDashboardScreen() {
     }
   };
 
+  const loadCertificatesCount = async () => {
+    if (!user?.token) return;
+    try {
+      const response = await fetchMyCertificates(user.token);
+      if (response.success) {
+        setCertsCount(response.data.length);
+      }
+    } catch (error) {
+      console.error('Error loading certs count:', error);
+    }
+  };
+
   const fetchPosts = async () => {
     try {
       // Start with static forum topics mapped to the dashboard's post structure
@@ -712,18 +757,16 @@ export default function UserDashboardScreen() {
         is_verified: topic.author.role !== 'Pelaku UMKM',
       }));
 
-      const response = await fetch('http://localhost:3000/api/community');
-      if (response.ok) {
-        const data = await response.json();
+      const data = await getCommunityPosts(user?.token, user?.id?.toString());
+      if (data && Array.isArray(data)) {
         // Merge static posts with remote posts, avoid duplicates if any
-        setPosts([...staticPosts, ...data.filter((p: any) => !staticPosts.some(sp => sp.id === p.id))]);
+        setPosts([...data, ...staticPosts.filter((sp: any) => !data.some((p: any) => p.id === sp.id))]);
       } else {
         setPosts(staticPosts);
       }
     } catch (error) {
       console.error('Failed to fetch posts:', error);
-      // Fallback to static topics if fetch fails
-      const staticPosts = forumTopics.map(topic => ({
+      setPosts(forumTopics.map(topic => ({
         id: topic.id,
         author_name: topic.author.name,
         category: topic.tags[0],
@@ -733,8 +776,20 @@ export default function UserDashboardScreen() {
         likes: topic.replies.reduce((acc, r) => acc + r.upvotes, 0),
         comments_count: topic.replies.length,
         is_verified: topic.author.role !== 'Pelaku UMKM',
-      }));
-      setPosts(staticPosts);
+      })));
+    }
+  };
+
+  const handleLikePost = async (postId: string | number) => {
+    if (!user?.token) return;
+    try {
+      const response = await likePost(user.token, postId);
+      if (response.success) {
+        // Optimistic update or just refetch
+        fetchPosts();
+      }
+    } catch (error) {
+      console.error('Error liking post:', error);
     }
   };
 
@@ -773,6 +828,7 @@ export default function UserDashboardScreen() {
     } else if (user?.token) {
       loadSubmissions();
       fetchPosts();
+      loadCertificatesCount();
     }
     const timer = setTimeout(() => {
       setInitialLoading(false);
@@ -871,336 +927,251 @@ export default function UserDashboardScreen() {
             }}
           />
 
-          {/* Top Bar with Glassmorphic User Card */}
-          <View style={{ marginBottom: 24 }}>
+          {/* Premium Top Bar (Redesigned) */}
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 32,
+            }}
+          >
+            {/* Ultra-Premium Glass Account Card */}
             <View
               style={{
                 flexDirection: 'row',
-                justifyContent: 'space-between',
                 alignItems: 'center',
+                padding: 10,
+                paddingRight: 24,
+                borderRadius: 20,
+                backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                borderWidth: 1,
+                borderColor: 'rgba(255, 255, 255, 0.25)',
               }}
             >
-              {/* Premium User Info Card */}
               <View
                 style={{
-                  flexDirection: 'row',
+                  width: 44,
+                  height: 44,
+                  borderRadius: 12,
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
                   alignItems: 'center',
-                  backgroundColor: 'rgba(255, 255, 255, 0.12)',
-                  borderRadius: 20,
-                  padding: 8,
-                  paddingRight: 16,
+                  justifyContent: 'center',
+                  marginRight: 12,
                   borderWidth: 1,
-                  borderColor: 'rgba(255, 255, 255, 0.15)',
+                  borderColor: 'rgba(255, 255, 255, 0.3)',
                 }}
               >
-                <View
-                  style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 14,
-                    backgroundColor: 'rgba(255, 255, 255, 0.18)',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginRight: 12,
-                    borderWidth: 1.5,
-                    borderColor: 'rgba(255, 255, 255, 0.25)',
-                  }}
-                >
-                  <Feather name="user" size={22} color="#FFFFFF" />
-                </View>
-                <View>
-                  <Text
-                    style={{
-                      fontSize: 11,
-                      color: 'rgba(255, 255, 255, 0.75)',
-                      letterSpacing: 0.5,
-                      textTransform: 'uppercase',
-                      marginBottom: 2,
-                    }}
-                  >
-                    Akun
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: 15,
-                      color: '#FFFFFF',
-                      letterSpacing: -0.2,
-                    }}
-                  >
-                    {accountLabel}
-                  </Text>
-                </View>
+                <Feather name="user" size={20} color="#FFFFFF" />
               </View>
-
-              {/* Premium Logout Button */}
-              <TouchableOpacity
-                accessibilityRole="button"
-                onPress={handleLogout}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 8,
-                  paddingHorizontal: 16,
-                  paddingVertical: 12,
-                  borderRadius: 14,
-                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                  borderWidth: 1,
-                  borderColor: 'rgba(255, 255, 255, 0.1)',
-                }}
-              >
-                <View
-                  style={{
-                    width: 28,
-                    height: 28,
-                    borderRadius: 8,
-                    backgroundColor: `${colors.primary}12`,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Feather name="log-out" size={14} color={colors.primary} />
-                </View>
+              <View>
                 <Text
                   style={{
-                    fontSize: 14,
-                    color: colors.primary,
-                    letterSpacing: -0.1,
+                    fontSize: 10,
+                    fontWeight: '800',
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    letterSpacing: 1,
+                    textTransform: 'uppercase',
+                    marginBottom: 1,
                   }}
                 >
-                  Logout
+                  Akun
                 </Text>
-              </TouchableOpacity>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: '700',
+                    color: '#FFFFFF',
+                    letterSpacing: -0.2,
+                  }}
+                >
+                  {user?.displayName || 'Budi Santoso'}
+                </Text>
+              </View>
             </View>
+
+            {/* Clean Premium Logout Button */}
+            <TouchableOpacity
+              onPress={handleLogout}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 10,
+                backgroundColor: '#FFFFFF',
+                paddingHorizontal: 18,
+                paddingVertical: 12,
+                borderRadius: 16,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.1,
+                shadowRadius: 10,
+                elevation: 4,
+              }}
+            >
+              <Feather name="log-out" size={18} color="#2563EB" />
+              <Text
+                style={{
+                  fontSize: 15,
+                  fontWeight: '700',
+                  color: '#2563EB',
+                }}
+              >
+                Logout
+              </Text>
+            </TouchableOpacity>
           </View>
 
-          {/* Hero Content with Enhanced Typography */}
-          <View style={{ marginBottom: 28 }}>
+          {/* Hero Content with Premium Typography (Centered) */}
+          <View style={{ marginBottom: 32, alignItems: 'center' }}>
             <Text
               style={{
-                fontSize: 15,
-                color: 'rgba(255, 255, 255, 0.85)',
+                fontSize: 16,
+                fontWeight: '600',
+                color: 'rgba(255, 255, 255, 0.9)',
                 marginBottom: 8,
                 letterSpacing: 0.2,
+                textAlign: 'center',
               }}
             >
               Selamat datang kembali 👋
             </Text>
             <Text
               style={{
-                fontSize: 28,
+                fontSize: 34,
+                fontWeight: '700',
                 color: '#FFFFFF',
-                marginBottom: 12,
-                letterSpacing: -0.8,
-                lineHeight: 34,
+                marginBottom: 16,
+                letterSpacing: -1,
+                lineHeight: 40,
+                textAlign: 'center',
               }}
             >
               Dashboard UMKM Anda
             </Text>
+            <Image
+              source={LOGO_IMG}
+              style={{ width: 120, height: 120, marginBottom: 20, borderRadius: 30 }}
+              resizeMode="contain"
+            />
             <Text
               style={{
-                fontSize: 14,
-                color: 'rgba(255, 255, 255, 0.8)',
-                lineHeight: 22,
-                letterSpacing: 0.1,
+                fontSize: 15,
+                color: 'rgba(255, 255, 255, 0.85)',
+                lineHeight: 24,
+                letterSpacing: 0.2,
+                fontWeight: '500',
+                textAlign: 'center',
               }}
             >
               Kelola dokumen legalitas usaha, akses berbagai program bantuan dan pembiayaan dari pemerintah, ikuti pelatihan dan sertifikasi profesional, serta terhubung dengan komunitas UMKM untuk menumbuhkan dan mengembangkan usaha Anda secara berkelanjutan.
             </Text>
           </View>
 
-          {/* Ultra-Premium Stat Cards */}
-          <View
-            style={{
-              gap: 12,
-            }}
-          >
+          {/* Ultra-Premium Glass Stat Cards (Horizontal Row) */}
+          <View style={{ flexDirection: 'row', gap: 10 }}>
             {statBadges.map((badge, index) => (
-              <View
+              <TouchableOpacity
                 key={badge.label}
+                activeOpacity={0.9}
                 style={{
-                  position: 'relative',
+                  flex: 1,
+                  borderRadius: 20,
+                  overflow: 'hidden',
+                  borderWidth: 1,
+                  borderColor: 'rgba(255, 255, 255, 0.25)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                  elevation: 4,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 8,
                 }}
               >
-                {/* Multi-Layer Shadow for Depth */}
-                <View
-                  style={{
-                    position: 'absolute',
-                    top: 4,
-                    left: 2,
-                    right: -2,
-                    bottom: -4,
-                    borderRadius: 18,
-                    backgroundColor: 'rgba(0, 0, 0, 0.15)',
-                    zIndex: -2,
-                  }}
-                />
-                <View
-                  style={{
-                    position: 'absolute',
-                    top: 2,
-                    left: 1,
-                    right: -1,
-                    bottom: -2,
-                    borderRadius: 18,
-                    backgroundColor: 'rgba(0, 0, 0, 0.1)',
-                    zIndex: -1,
-                  }}
-                />
-
-                {/* Main Card Container */}
-                <View
-                  style={{
-                    borderRadius: 18,
-                    overflow: 'hidden',
-                    borderWidth: 1.5,
-                    borderColor: 'rgba(255, 255, 255, 0.25)',
-                  }}
+                <LinearGradient
+                  colors={['rgba(255, 255, 255, 0.18)', 'rgba(255, 255, 255, 0.08)']}
+                  style={{ padding: 12, alignItems: 'center', gap: 8 }}
                 >
-                  {/* Gradient Background */}
-                  <LinearGradient
-                    colors={[
-                      'rgba(255, 255, 255, 0.18)',
-                      'rgba(255, 255, 255, 0.14)',
-                      'rgba(255, 255, 255, 0.10)',
-                    ]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={{
-                      padding: 18,
-                      paddingRight: 16,
-                      position: 'relative',
-                    }}
-                  >
-                    {/* Shimmer Top Accent */}
+                  {/* Compact Icon with Layered effect */}
+                  <View style={{ position: 'relative' }}>
                     <View
                       style={{
                         position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        height: 2,
-                        backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                        top: -3,
+                        left: -3,
+                        right: -3,
+                        bottom: -3,
+                        borderRadius: 14,
+                        borderWidth: 1,
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
                       }}
                     />
-
-                    {/* Content Row */}
-                    <View
+                    <LinearGradient
+                      colors={['rgba(255, 255, 255, 0.25)', 'rgba(255, 255, 255, 0.15)']}
                       style={{
-                        flexDirection: 'row',
+                        width: 42,
+                        height: 42,
+                        borderRadius: 12,
                         alignItems: 'center',
-                        gap: 16,
+                        justifyContent: 'center',
+                        borderWidth: 1,
+                        borderColor: 'rgba(255, 255, 255, 0.3)',
                       }}
                     >
-                      {/* Glowing Icon Container */}
-                      <View
-                        style={{
-                          position: 'relative',
-                        }}
-                      >
-                        {/* Outer Glow */}
-                        <View
-                          style={{
-                            position: 'absolute',
-                            top: -3,
-                            left: -3,
-                            right: -3,
-                            bottom: -3,
-                            borderRadius: 18,
-                            backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                          }}
-                        />
-                        {/* Icon Background with Gradient */}
-                        <LinearGradient
-                          colors={['rgba(255, 255, 255, 0.25)', 'rgba(255, 255, 255, 0.18)']}
-                          start={{ x: 0, y: 0 }}
-                          end={{ x: 1, y: 1 }}
-                          style={{
-                            width: 56,
-                            height: 56,
-                            borderRadius: 15,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            borderWidth: 2,
-                            borderColor: 'rgba(255, 255, 255, 0.3)',
-                          }}
-                        >
-                          <Feather name={badge.icon} size={26} color="#FFFFFF" />
-                        </LinearGradient>
-                      </View>
+                      <Feather name={badge.icon} size={18} color="#FFFFFF" />
+                    </LinearGradient>
+                  </View>
 
-                      {/* Content Area */}
-                      <View style={{ flex: 1 }}>
-                        {/* Number with Glow */}
-                        <Text
-                          style={{
-                            fontSize: 34,
-                            color: '#FFFFFF',
-                            letterSpacing: -1.2,
-                            marginBottom: 2,
-                            textShadowColor: 'rgba(255, 255, 255, 0.3)',
-                            textShadowOffset: { width: 0, height: 0 },
-                            textShadowRadius: 8,
-                          }}
-                        >
-                          {badge.value}
-                        </Text>
+                  {/* Stats Content Stack */}
+                  <View style={{ alignItems: 'center', gap: 2 }}>
+                    <Text
+                      style={{
+                        fontSize: 26,
+                        fontWeight: '800',
+                        color: '#FFFFFF',
+                        letterSpacing: -0.5,
+                        lineHeight: 30,
+                      }}
+                    >
+                      {badge.value}
+                    </Text>
+                    <Text
+                      numberOfLines={1}
+                      style={{
+                        fontSize: 10,
+                        fontWeight: '700',
+                        color: 'rgba(255, 255, 255, 0.9)',
+                        textAlign: 'center',
+                        textTransform: 'uppercase',
+                        letterSpacing: 0.2,
+                      }}
+                    >
+                      {badge.label.split(' ')[0]}
+                    </Text>
+                  </View>
 
-                        {/* Label */}
-                        <Text
-                          style={{
-                            fontSize: 13,
-                            color: 'rgba(255, 255, 255, 0.88)',
-                            letterSpacing: 0.3,
-                            lineHeight: 17,
-                            marginBottom: 8,
-                          }}
-                        >
-                          {badge.label}
-                        </Text>
-
-                        {/* Progress Bar */}
-                        <View
-                          style={{
-                            height: 4,
-                            backgroundColor: 'rgba(0, 0, 0, 0.15)',
-                            borderRadius: 2,
-                            overflow: 'hidden',
-                          }}
-                        >
-                          <View
-                            style={{
-                              width: `${parseInt(badge.value) * 12}%`,
-                              height: '100%',
-                              backgroundColor: '#FFFFFF',
-                              borderRadius: 2,
-                              shadowColor: '#FFFFFF',
-                              shadowOffset: { width: 0, height: 0 },
-                              shadowOpacity: 0.6,
-                              shadowRadius: 4,
-                            }}
-                          />
-                        </View>
-                      </View>
-
-                      {/* Premium Arrow Button */}
-                      <View
-                        style={{
-                          width: 36,
-                          height: 36,
-                          borderRadius: 11,
-                          backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          borderWidth: 1,
-                          borderColor: 'rgba(255, 255, 255, 0.2)',
-                        }}
-                      >
-                        <Feather name="arrow-right" size={18} color="rgba(255, 255, 255, 0.9)" />
-                      </View>
-                    </View>
-                  </LinearGradient>
-                </View>
-              </View>
+                  {/* Slim Progress Bar */}
+                  <View
+                    style={{
+                      width: '100%',
+                      height: 3,
+                      backgroundColor: 'rgba(0, 0, 0, 0.15)',
+                      borderRadius: 10,
+                      overflow: 'hidden',
+                      marginTop: 2,
+                    }}
+                  >
+                    <Animated.View
+                      style={{
+                        width: `${parseInt(badge.value) * 15}%`,
+                        height: '100%',
+                        backgroundColor: '#FFFFFF',
+                        borderRadius: 10,
+                        opacity: 0.9,
+                      }}
+                    />
+                  </View>
+                </LinearGradient>
+              </TouchableOpacity>
             ))}
           </View>
         </LinearGradient>
@@ -1252,6 +1223,7 @@ export default function UserDashboardScreen() {
                   {submissions.filter(s => s.status === 'approved').map(sub => (
                     <TouchableOpacity
                       key={sub.id}
+                      onPress={() => router.push({ pathname: '/user/submission/[id]', params: { id: sub.id, type: sub.type } })}
                       style={{
                         flexDirection: 'row',
                         alignItems: 'center',
@@ -1360,52 +1332,199 @@ export default function UserDashboardScreen() {
         )}
 
         {activeTab === 'services' && (
-          <View>
-            <View style={{ marginBottom: 20 }}>
-              <Text style={[styles.sectionTitle, { color: colors.text, fontSize: 24 }]}>Layanan & Program</Text>
-              <Text style={[styles.sectionSubtitle, { color: colors.subtle }]}>
-                Jelajahi dukungan komprehensif SAPA UMKM berdasarkan kategori.
+          <View style={{ gap: 28, paddingBottom: 40, position: 'relative' }}>
+            {/* Decorative Background Elements */}
+            <View style={{ position: 'absolute', top: -50, right: -30, width: 200, height: 200, borderRadius: 100, backgroundColor: `${colors.primary}08`, zIndex: 0 }} />
+            <View style={{ position: 'absolute', bottom: 100, left: -40, width: 150, height: 150, borderRadius: 75, backgroundColor: `${colors.accent}08`, zIndex: 0 }} />
+
+            {/* Ultra-Premium Section Header */}
+            <View style={{ alignItems: 'center', marginBottom: 8, zIndex: 1 }}>
+              <LinearGradient
+                colors={[`${colors.primary}15`, `${colors.primary}08`]}
+                style={{
+                  paddingHorizontal: 20,
+                  paddingVertical: 8,
+                  borderRadius: 24,
+                  borderWidth: 1.5,
+                  borderColor: `${colors.primary}25`,
+                  marginBottom: 16,
+                  shadowColor: colors.primary,
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.15,
+                  shadowRadius: 12,
+                  elevation: 5
+                }}
+              >
+                <Text style={{ fontSize: 11, fontWeight: '700', color: colors.primary, letterSpacing: 2, textTransform: 'uppercase' }}>
+                  ✦ Layanan & Program ✦
+                </Text>
+              </LinearGradient>
+              <Text style={[styles.sectionTitle, { color: colors.text, fontSize: 34, fontWeight: '700', letterSpacing: -1.2, textAlign: 'center', marginBottom: 8 }]}>
+                Ekosistem Terpadu
+              </Text>
+              <Text style={[styles.sectionSubtitle, { color: colors.subtle, textAlign: 'center', marginTop: 4, maxWidth: '90%', fontSize: 15, lineHeight: 22 }]}>
+                Akses seluruh layanan publik dan pemberdayaan UMKM dalam satu platform yang elegan dan terintegrasi.
               </Text>
             </View>
 
-            <View style={{ gap: 16 }}>
-              {serviceCategories.map(category => (
+            {/* Enhanced Glassmorphic Category Cards */}
+            <View style={{ gap: 24, zIndex: 1 }}>
+              {serviceCategories.map((category, index) => (
                 <TouchableOpacity
                   key={category.id}
-                  activeOpacity={0.88}
+                  activeOpacity={0.92}
                   onPress={() => handleNavigateToService(category.id)}
-                  style={[
-                    styles.categoryCard,
-                    {
-                      borderColor: colors.border,
-                      backgroundColor: colors.surface,
-                      padding: 24,
-                    }
-                  ]}>
-                  <View style={styles.categoryHeader}>
-                    <View style={[styles.categoryIconWrapper, {
-                      backgroundColor: `${colors.primary}15`,
-                      width: 48,
-                      height: 48,
-                      borderRadius: 16
-                    }]}>
-                      <Feather name={category.icon as FeatherIconName} size={20} color={colors.primary} />
-                    </View>
-                    <View style={styles.categoryTexts}>
-                      <Text style={[styles.categoryTitle, { color: colors.text, fontSize: 17 }]}>{category.title}</Text>
-                      <Text style={[styles.categoryDescription, { color: colors.subtle }]}>
-                        {category.description}
-                      </Text>
-                    </View>
-                  </View>
-                  <View style={[styles.categoryItems, { marginTop: 16, gap: 10 }]}>
-                    {category.items.map(item => (
-                      <View key={item} style={styles.categoryItemRow}>
-                        <Feather name="check-circle" size={16} color={colors.accent} />
-                        <Text style={[styles.categoryItemText, { color: colors.text }]}>{item}</Text>
+                  style={{
+                    borderRadius: 32,
+                    overflow: 'hidden',
+                    backgroundColor: scheme === 'dark' ? 'rgba(255, 255, 255, 0.04)' : '#FFFFFF',
+                    borderWidth: 2,
+                    borderColor: `${category.color}20`,
+                    elevation: 12,
+                    shadowColor: category.color,
+                    shadowOffset: { width: 0, height: 16 },
+                    shadowOpacity: 0.18,
+                    shadowRadius: 28,
+                  }}>
+                  <LinearGradient
+                    colors={scheme === 'dark'
+                      ? [`${category.color}18`, `${category.color}08`, 'rgba(0,0,0,0.1)']
+                      : ['rgba(255, 255, 255, 1)', `${category.color}05`, 'rgba(248, 250, 252, 0.98)']}
+                    style={{ padding: 26, position: 'relative' }}
+                  >
+                    {/* Decorative Corner Blob */}
+                    <View
+                      style={{
+                        position: 'absolute',
+                        top: -30,
+                        right: -30,
+                        width: 140,
+                        height: 140,
+                        borderRadius: 70,
+                        backgroundColor: `${category.color}10`,
+                        zIndex: 0
+                      }}
+                    />
+
+                    {/* Accent Line */}
+                    <View style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: 4,
+                      backgroundColor: category.color,
+                      opacity: 0.6
+                    }} />
+
+                    <View style={[styles.categoryHeader, { zIndex: 1, marginBottom: 20 }]}>
+                      {/* Enhanced Icon Container */}
+                      <View style={{ position: 'relative' }}>
+                        {/* Outer glow ring */}
+                        <View style={{
+                          position: 'absolute',
+                          top: -6, left: -6, right: -6, bottom: -6,
+                          borderRadius: 24,
+                          borderWidth: 2,
+                          borderColor: `${category.color}15`,
+                          backgroundColor: `${category.color}05`
+                        }} />
+                        {/* Middle ring */}
+                        <View style={{
+                          position: 'absolute',
+                          top: -3, left: -3, right: -3, bottom: -3,
+                          borderRadius: 22,
+                          borderWidth: 1.5,
+                          borderColor: `${category.color}25`
+                        }} />
+                        <LinearGradient
+                          colors={[`${category.color}30`, `${category.color}15`]}
+                          style={{
+                            width: 64,
+                            height: 64,
+                            borderRadius: 20,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderWidth: 2,
+                            borderColor: `${category.color}40`,
+                            shadowColor: category.color,
+                            shadowOffset: { width: 0, height: 6 },
+                            shadowOpacity: 0.3,
+                            shadowRadius: 12,
+                            elevation: 8
+                          }}>
+                          <Feather name={category.icon as FeatherIconName} size={28} color={category.color} />
+                        </LinearGradient>
                       </View>
-                    ))}
-                  </View>
+
+                      <View style={[styles.categoryTexts, { flex: 1, marginLeft: 18 }]}>
+                        <Text style={[styles.categoryTitle, { color: colors.text, fontSize: 20, fontWeight: '700', marginBottom: 4 }]}>
+                          {category.title.includes('. ') ? category.title.split('. ')[1] : category.title}
+                        </Text>
+                        <Text style={[styles.categoryDescription, { color: colors.subtle, fontSize: 14, marginTop: 2, lineHeight: 20 }]}>
+                          {category.description}
+                        </Text>
+                      </View>
+
+                      {/* Enhanced Arrow Button */}
+                      <View style={{
+                        width: 42,
+                        height: 42,
+                        borderRadius: 21,
+                        backgroundColor: `${category.color}15`,
+                        borderWidth: 1.5,
+                        borderColor: `${category.color}30`,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        shadowColor: category.color,
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.2,
+                        shadowRadius: 8,
+                        elevation: 4
+                      }}>
+                        <Feather name="arrow-right" size={20} color={category.color} />
+                      </View>
+                    </View>
+
+                    {/* Enhanced Items List */}
+                    <View style={{
+                      padding: 18,
+                      backgroundColor: scheme === 'dark' ? 'rgba(0,0,0,0.25)' : `${category.color}03`,
+                      borderRadius: 24,
+                      borderWidth: 1,
+                      borderColor: `${category.color}15`,
+                      gap: 14,
+                      zIndex: 1
+                    }}>
+                      {category.items.map((item, idx) => (
+                        <View key={item} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 14 }}>
+                          <View style={{
+                            width: 24,
+                            height: 24,
+                            borderRadius: 12,
+                            backgroundColor: `${category.color}20`,
+                            borderWidth: 1.5,
+                            borderColor: `${category.color}40`,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            marginTop: 2
+                          }}>
+                            <Feather name="check" size={14} color={category.color} strokeWidth={3} />
+                          </View>
+                          <Text style={{
+                            flex: 1,
+                            fontSize: 14,
+                            color: colors.text,
+                            opacity: 0.92,
+                            fontWeight: '500',
+                            lineHeight: 21
+                          }}>
+                            {item}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  </LinearGradient>
                 </TouchableOpacity>
               ))}
             </View>
@@ -1604,7 +1723,15 @@ export default function UserDashboardScreen() {
               ) : (
                 <View style={{ gap: 16 }}>
                   {posts.map((post, index) => (
-                    <AnimatedPostCard key={post.id} post={post} index={index} colors={colors} styles={styles} />
+                    <AnimatedPostCard
+                      key={post.id}
+                      post={post}
+                      index={index}
+                      colors={colors}
+                      styles={styles}
+                      onLike={() => handleLikePost(post.id)}
+                      onComment={() => router.push({ pathname: '/user/community/[id]', params: { id: post.id } })}
+                    />
                   ))}
                 </View>
               )}
@@ -1976,10 +2103,34 @@ export default function UserDashboardScreen() {
               </View>
 
               <View style={{ gap: 8 }}>
+                {/* Stats Section */}
+                <View style={{ flexDirection: 'row', gap: 12, marginBottom: 8 }}>
+                  {[
+                    { label: 'Dokumen', value: submissions.filter(s => s.status === 'approved').length, icon: 'shield', color: colors.success },
+                    { label: 'Postingan', value: posts.filter(p => String(p.user_id) === String(user.id)).length, icon: 'edit', color: colors.primary },
+                    { label: 'Sertifikat', value: certsCount, icon: 'award', color: '#8B5CF6' },
+                  ].map((stat, i) => (
+                    <View key={stat.label} style={{
+                      flex: 1,
+                      padding: 16,
+                      borderRadius: 20,
+                      backgroundColor: scheme === 'dark' ? 'rgba(255,255,255,0.03)' : '#F8FAFC',
+                      borderWidth: 1,
+                      borderColor: scheme === 'dark' ? 'rgba(255,255,255,0.05)' : '#F1F5F9',
+                      alignItems: 'center',
+                      gap: 4
+                    }}>
+                      <Feather name={stat.icon as any} size={20} color={stat.color} />
+                      <Text style={{ fontSize: 20, fontWeight: '700', color: colors.text }}>{stat.value}</Text>
+                      <Text style={{ fontSize: 11, fontWeight: '500', color: colors.subtle, textTransform: 'uppercase' }}>{stat.label}</Text>
+                    </View>
+                  ))}
+                </View>
+
                 {[
                   { label: 'Edit Profil', icon: 'edit-3', action: openEditModal, color: colors.primary },
                   { label: 'Riwayat Pengajuan', icon: 'clock', action: () => router.push('/user/history'), color: '#F59E0B' },
-                  { label: 'Sertifikat Pelatihan', icon: 'book', action: () => { }, color: '#8B5CF6' },
+                  { label: 'Sertifikat Pelatihan', icon: 'award', action: () => router.push('/user/certificates'), color: '#8B5CF6' },
                   { label: 'Pengaturan', icon: 'sliders', action: () => router.push('/user/settings'), color: '#64748B' },
                 ].map((item, index) => (
                   <TouchableOpacity
@@ -2009,14 +2160,50 @@ export default function UserDashboardScreen() {
                     <Text style={{
                       flex: 1,
                       fontSize: 16,
-                      fontWeight: '600',
-                      color: item.label === 'Keluar' ? '#EF4444' : colors.text
+                      fontWeight: '500',
+                      color: colors.text
                     }}>
                       {item.label}
                     </Text>
                     <Feather name="chevron-right" size={20} color={colors.subtle} />
                   </TouchableOpacity>
                 ))}
+
+                {/* Prominent Logout Button */}
+                <TouchableOpacity
+                  onPress={handleLogout}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: 18,
+                    borderRadius: 20,
+                    backgroundColor: scheme === 'dark' ? 'rgba(239, 68, 68, 0.1)' : '#FEF2F2',
+                    borderWidth: 1.5,
+                    borderColor: scheme === 'dark' ? 'rgba(239, 68, 68, 0.2)' : '#FEE2E2',
+                    marginTop: 12,
+                    gap: 12
+                  }}
+                >
+                  <View style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 10,
+                    backgroundColor: '#EF4444',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <Feather name="log-out" size={16} color="#FFFFFF" />
+                  </View>
+                  <Text style={{
+                    fontSize: 16,
+                    fontWeight: '600',
+                    color: '#EF4444',
+                    letterSpacing: -0.2
+                  }}>
+                    Keluar dari Sistem
+                  </Text>
+                </TouchableOpacity>
               </View>
             </View>
 
@@ -2261,7 +2448,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   sectionSubtitle: {
     fontSize: 14,

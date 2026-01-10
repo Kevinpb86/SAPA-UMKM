@@ -1,4 +1,5 @@
 import { Feather } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -6,6 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Animated,
+  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -316,6 +318,7 @@ export default function RegisterScreen() {
     scale: '',
     capital: '',
   })
+  const [ktpImage, setKtpImage] = useState<string | null>(null);
   const [passwordVisible, setPasswordVisible] = useState(false);
 
   // Premium entrance animations
@@ -811,6 +814,66 @@ export default function RegisterScreen() {
                   accentColor="#06B6D4"
                   required
                 />
+
+                {/* KTP Photo Upload */}
+                <View style={styles.formField}>
+                  <Text style={[styles.label, { color: colors.text }]}>
+                    Foto e-KTP
+                    <Text style={styles.required}> *</Text>
+                  </Text>
+                  <TouchableOpacity
+                    accessibilityRole="button"
+                    onPress={async () => {
+                      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+                      if (status !== 'granted') {
+                        Alert.alert('Izin ditolak', 'Mohon berikan izin akses galeri untuk mengunggah foto KTP.');
+                        return;
+                      }
+
+                      const result = await ImagePicker.launchImageLibraryAsync({
+                        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                        allowsEditing: true,
+                        aspect: [16, 10],
+                        quality: 0.8,
+                      });
+
+                      if (!result.canceled && result.assets[0]) {
+                        setKtpImage(result.assets[0].uri);
+                      }
+                    }}
+                    style={[
+                      styles.imageUploadButton,
+                      {
+                        backgroundColor: ktpImage ? `${colors.success}12` : `${colors.primary}08`,
+                        borderColor: ktpImage ? colors.success : `${colors.primary}30`,
+                      }
+                    ]}
+                  >
+                    {ktpImage ? (
+                      <View style={styles.imagePreviewContainer}>
+                        <Image source={{ uri: ktpImage }} style={styles.imagePreview} />
+                        <View style={[styles.imageOverlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+                          <Feather name="check-circle" size={32} color="#10B981" />
+                          <Text style={styles.imageOverlayText}>Foto KTP Terunggah</Text>
+                          <Text style={styles.imageOverlaySubtext}>Ketuk untuk mengubah</Text>
+                        </View>
+                      </View>
+                    ) : (
+                      <View style={styles.uploadPlaceholder}>
+                        <View style={[styles.uploadIconContainer, { backgroundColor: `${colors.primary}15` }]}>
+                          <Feather name="camera" size={28} color={colors.primary} />
+                        </View>
+                        <Text style={[styles.uploadText, { color: colors.text }]}>Unggah Foto e-KTP</Text>
+                        <Text style={[styles.uploadSubtext, { color: colors.subtle }]}>
+                          Ketuk untuk memilih dari galeri
+                        </Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                  <Text style={[styles.helperText, { color: colors.subtle }]}>
+                    Pastikan foto KTP jelas dan dapat terbaca
+                  </Text>
+                </View>
               </View>
             </View>
           </Animated.View>
@@ -1235,5 +1298,70 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 14,
     fontWeight: '500',
+  },
+  imageUploadButton: {
+    borderRadius: 20,
+    borderWidth: 2.5,
+    overflow: 'hidden',
+    minHeight: 180,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imagePreviewContainer: {
+    width: '100%',
+    height: 180,
+    position: 'relative',
+  },
+  imagePreview: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  imageOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+  },
+  imageOverlayText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  imageOverlaySubtext: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '400',
+    opacity: 0.9,
+  },
+  uploadPlaceholder: {
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 24,
+  },
+  uploadIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  uploadText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  uploadSubtext: {
+    fontSize: 13,
+    fontWeight: '400',
+  },
+  helperText: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 8,
+    marginLeft: 4,
   },
 });

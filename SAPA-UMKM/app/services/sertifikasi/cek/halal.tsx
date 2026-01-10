@@ -23,20 +23,20 @@ import {
 
 const palette = {
   light: {
-    background: '#F3FBF8',
+    background: '#EFF6FF',
     card: '#FFFFFF',
-    border: '#CFF0E7',
-    text: '#083B36',
-    subtle: '#4A6F6A',
-    accent: '#0F766E',
+    border: '#DBEAFE',
+    text: '#1E3A8A',
+    subtle: '#3B82F6',
+    accent: '#2563EB',
   },
   dark: {
-    background: '#082420',
-    card: '#102D28',
-    border: '#1F433B',
-    text: '#F8FAFC',
-    subtle: '#A7F3D0',
-    accent: '#34D399',
+    background: '#0C1633',
+    card: '#1E293B',
+    border: '#1E3A8A',
+    text: '#EFF6FF',
+    subtle: '#93C5FD',
+    accent: '#60A5FA',
   },
 };
 
@@ -178,7 +178,7 @@ export default function HalalCertificateFormScreen() {
             ]}
           >
             <LinearGradient
-              colors={['#0F766E', '#10B981']}
+              colors={['#2563EB', '#3B82F6']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.hero}

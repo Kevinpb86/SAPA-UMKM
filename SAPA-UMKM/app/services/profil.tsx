@@ -23,22 +23,22 @@ import { useAuth } from '@/hooks/use-auth';
 
 const palette = {
   light: {
-    background: '#F6FFF9',
-    hero: ['#10B981', '#059669'],
+    background: '#FFF7ED',
+    hero: ['#F97316', '#EA580C'],
     card: '#FFFFFF',
-    border: '#C9F2E1',
+    border: '#FDEAD7',
     text: '#064E3B',
     subtle: '#3F7662',
-    accent: '#0EA47A',
+    accent: '#F97316',
   },
   dark: {
-    background: '#05261D',
-    hero: ['#047857', '#10B981'],
-    card: '#0D2F25',
-    border: '#184C3B',
+    background: '#1C0A05',
+    hero: ['#EA580C', '#F97316'],
+    card: '#2C1508',
+    border: '#3F1F0D',
     text: '#ECFDF5',
-    subtle: '#A7F3D0',
-    accent: '#34D399',
+    subtle: '#FED7AA',
+    accent: '#FB923C',
   },
 };
 

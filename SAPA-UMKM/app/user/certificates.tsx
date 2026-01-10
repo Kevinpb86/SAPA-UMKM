@@ -1,11 +1,12 @@
 import { useAuth } from '@/hooks/use-auth';
-import { fetchMyHistory } from '@/lib/api';
+import { fetchMyCertificates } from '@/lib/api';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
+    Alert,
     FlatList,
     RefreshControl,
     SafeAreaView,
@@ -25,8 +26,7 @@ const palette = {
         subtle: '#64748B',
         primary: '#2563EB',
         success: '#10B981',
-        pending: '#F59E0B',
-        rejected: '#EF4444',
+        secondary: '#8B5CF6',
     },
     dark: {
         background: '#0F172A',
@@ -36,38 +36,37 @@ const palette = {
         subtle: '#94A3B8',
         primary: '#3B82F6',
         success: '#34D399',
-        pending: '#FBBF24',
-        rejected: '#F87171',
+        secondary: '#A78BFA',
     },
 };
 
-type Submission = {
+type Certificate = {
     id: number;
-    type: string;
-    status: 'pending' | 'approved' | 'rejected';
+    training_interest: string;
+    full_name: string;
     created_at: string;
-    title: string;
+    status: string;
 };
 
-export default function HistoryScreen() {
+export default function CertificatesScreen() {
     const scheme = useColorScheme();
     const colors = scheme === 'dark' ? palette.dark : palette.light;
     const router = useRouter();
     const { user } = useAuth();
 
-    const [history, setHistory] = useState<Submission[]>([]);
+    const [certificates, setCertificates] = useState<Certificate[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
 
-    const loadHistory = async () => {
+    const loadCertificates = async () => {
         if (!user?.token) return;
         try {
-            const response = await fetchMyHistory(user.token);
+            const response = await fetchMyCertificates(user.token);
             if (response.success) {
-                setHistory(response.data);
+                setCertificates(response.data);
             }
         } catch (error) {
-            console.error('Load history error:', error);
+            console.error('Load certificates error:', error);
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -75,63 +74,52 @@ export default function HistoryScreen() {
     };
 
     useEffect(() => {
-        loadHistory();
+        loadCertificates();
     }, []);
 
     const onRefresh = () => {
         setRefreshing(true);
-        loadHistory();
+        loadCertificates();
     };
 
-    const getStatusColor = (status: string) => {
-        switch (status.toLowerCase()) {
-            case 'approved':
-                return colors.success;
-            case 'pending':
-                return colors.pending;
-            case 'rejected':
-                return colors.rejected;
-            default:
-                return colors.subtle;
-        }
+    const handleDownload = (cert: Certificate) => {
+        Alert.alert(
+            'Unduh Sertifikat',
+            `Sertifikat untuk pelatihan "${cert.training_interest}" sedang diproses untuk diunduh.`,
+            [{ text: 'OK' }]
+        );
     };
 
-    const formatDate = (dateString: string) => {
-        const options: Intl.DateTimeFormatOptions = {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        };
-        return new Date(dateString).toLocaleDateString('id-ID', options);
-    };
-
-    const renderItem = ({ item }: { item: Submission }) => (
-        <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => router.push({ pathname: '/user/submission/[id]', params: { id: item.id, type: item.type } })}
-            style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
-        >
-            <View style={styles.cardHeader}>
-                <View style={[styles.typeBadge, { backgroundColor: `${colors.primary}12` }]}>
-                    <Text style={[styles.typeText, { color: colors.primary }]}>{item.type}</Text>
+    const renderItem = ({ item }: { item: Certificate }) => (
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.cardIconContainer}>
+                <View style={[styles.iconBox, { backgroundColor: `${colors.secondary}15` }]}>
+                    <Feather name="award" size={24} color={colors.secondary} />
                 </View>
-                <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor(item.status)}12` }]}>
-                    <View style={[styles.statusDot, { backgroundColor: getStatusColor(item.status) }]} />
-                    <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
-                        {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
-                    </Text>
+                <View style={styles.cardHeaderInfo}>
+                    <Text style={[styles.certTitle, { color: colors.text }]}>{item.training_interest}</Text>
+                    <Text style={[styles.certSubtitle, { color: colors.subtle }]}>Diterbitkan untuk: {item.full_name}</Text>
                 </View>
             </View>
 
-            <Text style={[styles.title, { color: colors.text }]}>{item.title}</Text>
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
             <View style={styles.cardFooter}>
-                <Feather name="calendar" size={14} color={colors.subtle} />
-                <Text style={[styles.date, { color: colors.subtle }]}>{formatDate(item.created_at)}</Text>
+                <View style={styles.dateInfo}>
+                    <Feather name="calendar" size={14} color={colors.subtle} />
+                    <Text style={[styles.dateText, { color: colors.subtle }]}>
+                        {new Date(item.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    </Text>
+                </View>
+                <TouchableOpacity
+                    onPress={() => handleDownload(item)}
+                    style={[styles.downloadBtn, { backgroundColor: `${colors.primary}10` }]}
+                >
+                    <Feather name="download" size={16} color={colors.primary} />
+                    <Text style={[styles.downloadText, { color: colors.primary }]}>Unduh</Text>
+                </TouchableOpacity>
             </View>
-        </TouchableOpacity>
+        </View>
     );
 
     return (
@@ -142,7 +130,7 @@ export default function HistoryScreen() {
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                     <Feather name="arrow-left" size={24} color={colors.text} />
                 </TouchableOpacity>
-                <Text style={[styles.headerTitle, { color: colors.text }]}>Riwayat Pengajuan</Text>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>Sertifikat Pelatihan</Text>
                 <View style={{ width: 40 }} />
             </View>
 
@@ -152,21 +140,21 @@ export default function HistoryScreen() {
                 </View>
             ) : (
                 <FlatList
-                    data={history}
+                    data={certificates}
                     renderItem={renderItem}
-                    keyExtractor={(item, index) => `${item.type}-${item.id}-${index}`}
+                    keyExtractor={(item) => item.id.toString()}
                     contentContainerStyle={styles.listContent}
                     refreshControl={
                         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
                     }
                     ListEmptyComponent={
                         <View style={styles.emptyContainer}>
-                            <View style={[styles.emptyIconCircle, { backgroundColor: `${colors.subtle}10` }]}>
-                                <Feather name="file-text" size={48} color={colors.subtle} />
+                            <View style={[styles.emptyIconCircle, { backgroundColor: `${colors.secondary}10` }]}>
+                                <Feather name="book-open" size={48} color={colors.secondary} />
                             </View>
-                            <Text style={[styles.emptyTitle, { color: colors.text }]}>Belum ada riwayat</Text>
+                            <Text style={[styles.emptyTitle, { color: colors.text }]}>Belum ada sertifikat</Text>
                             <Text style={[styles.emptySubtitle, { color: colors.subtle }]}>
-                                Semua pengajuan program dan layanan Anda akan muncul di sini.
+                                Selesaikan pelatihan komunitas untuk mendapatkan sertifikat resmi Anda di sini.
                             </Text>
                         </View>
                     }
@@ -206,59 +194,68 @@ const styles = StyleSheet.create({
     },
     card: {
         borderRadius: 20,
-        padding: 18,
+        padding: 20,
         borderWidth: 1,
-        gap: 12,
         elevation: 2,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
         shadowRadius: 8,
     },
-    cardHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    typeBadge: {
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 8,
-    },
-    typeText: {
-        fontSize: 11,
-        fontWeight: '800',
-        textTransform: 'uppercase',
-    },
-    statusBadge: {
+    cardIconContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 8,
-        gap: 6,
+        gap: 16,
     },
-    statusDot: {
-        width: 6,
-        height: 6,
-        borderRadius: 3,
+    iconBox: {
+        width: 56,
+        height: 56,
+        borderRadius: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
-    statusText: {
-        fontSize: 12,
-        fontWeight: '600',
+    cardHeaderInfo: {
+        flex: 1,
+        gap: 4,
     },
-    title: {
+    certTitle: {
         fontSize: 16,
         fontWeight: '700',
         lineHeight: 22,
     },
+    certSubtitle: {
+        fontSize: 13,
+    },
+    divider: {
+        height: 1,
+        marginVertical: 16,
+        opacity: 0.5,
+    },
     cardFooter: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    dateInfo: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
     },
-    date: {
+    dateText: {
+        fontSize: 12,
+        fontWeight: '500',
+    },
+    downloadBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 10,
+    },
+    downloadText: {
         fontSize: 13,
+        fontWeight: '700',
     },
     centered: {
         flex: 1,
@@ -269,7 +266,7 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: 60,
+        paddingVertical: 80,
         gap: 16,
     },
     emptyIconCircle: {

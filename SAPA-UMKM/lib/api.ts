@@ -264,3 +264,101 @@ export const fetchMyHistory = async (token: string) => {
     return { success: false, data: [] };
   }
 };
+
+export const fetchSubmissionDetail = async (token: string, id: string | number, type: string) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/submissions/${id}/detail?type=${type}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Failed to fetch submission detail');
+    return data;
+  } catch (error) {
+    console.error('Fetch submission detail error:', error);
+    return { success: false, message: 'Gagal mengambil detail pengajuan' };
+  }
+};
+
+export const fetchMyCertificates = async (token: string) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/training/certificates`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Failed to fetch certificates');
+    return data;
+  } catch (error) {
+    console.error('Fetch certificates error:', error);
+    return { success: false, data: [] };
+  }
+};
+
+/**
+ * Community API Functions
+ */
+export const getCommunityPosts = async (token?: string, userId?: string) => {
+  try {
+    const url = `${API_BASE_URL}/community${userId ? `?user_id=${userId}` : ''}`;
+    const response = await fetch(url, {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Fetch posts error:', error);
+    return [];
+  }
+};
+
+export const likePost = async (token: string, postId: string | number) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/community/${postId}/like`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Like post error:', error);
+    return { success: false };
+  }
+};
+
+export const fetchComments = async (postId: string | number, userId?: string) => {
+  try {
+    const url = `${API_BASE_URL}/community/${postId}/comments${userId ? `?user_id=${userId}` : ''}`;
+    const response = await fetch(url);
+    return await response.json();
+  } catch (error) {
+    console.error('Fetch comments error:', error);
+    return [];
+  }
+};
+
+export const addComment = async (token: string, postId: string | number, payload: { content: string; parent_comment_id?: number | null }) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/community/${postId}/comments`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Add comment error:', error);
+    return { success: false };
+  }
+};
+
+export const likeComment = async (token: string, commentId: number) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/community/comments/${commentId}/like`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('Like comment error:', error);
+    return { success: false };
+  }
+};

@@ -13,6 +13,7 @@ export type ForumReply = {
   message: string;
   createdAt: string;
   upvotes: number;
+  isLiked?: boolean;
 };
 
 export type ForumTopic = {
@@ -24,6 +25,8 @@ export type ForumTopic = {
   summary: string;
   replies: ForumReply[];
   status: 'open' | 'closed' | 'pinned';
+  likes?: number;
+  isLiked?: boolean;
 };
 
 export const forumParticipants: ForumParticipant[] = [

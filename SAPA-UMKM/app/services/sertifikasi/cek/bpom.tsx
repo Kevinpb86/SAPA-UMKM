@@ -23,20 +23,20 @@ import {
 
 const palette = {
   light: {
-    background: '#FFF7ED',
+    background: '#EFF6FF',
     card: '#FFFFFF',
-    border: '#FDEAD7',
-    text: '#54260F',
-    subtle: '#8A5C3B',
-    accent: '#F97316',
+    border: '#DBEAFE',
+    text: '#1E3A8A',
+    subtle: '#3B82F6',
+    accent: '#2563EB',
   },
   dark: {
-    background: '#2C1608',
-    card: '#3B1E0A',
-    border: '#5C3411',
-    text: '#FCEFE6',
-    subtle: '#F5CBA7',
-    accent: '#FB923C',
+    background: '#0C1633',
+    card: '#1E293B',
+    border: '#1E3A8A',
+    text: '#EFF6FF',
+    subtle: '#93C5FD',
+    accent: '#60A5FA',
   },
 };
 
@@ -178,7 +178,7 @@ export default function BpomCertificateFormScreen() {
             ]}
           >
             <LinearGradient
-              colors={['#0F766E', '#10B981']}
+              colors={['#2563EB', '#3B82F6']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.hero}

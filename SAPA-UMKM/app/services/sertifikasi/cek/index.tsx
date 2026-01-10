@@ -17,22 +17,22 @@ import {
 
 const palette = {
   light: {
-    background: '#F3FBF8',
-    hero: ['#0F766E', '#10B981'],
+    background: '#EFF6FF',
+    hero: ['#2563EB', '#3B82F6'],
     surface: '#FFFFFF',
-    border: '#CFF0E7',
-    text: '#083B36',
-    subtle: '#4A6F6A',
-    accent: '#0F766E',
+    border: '#DBEAFE',
+    text: '#1E3A8A',
+    subtle: '#3B82F6',
+    accent: '#2563EB',
   },
   dark: {
-    background: '#082420',
-    hero: ['#065F46', '#15803D'],
-    surface: '#102D28',
-    border: '#1F433B',
-    text: '#F8FAFC',
-    subtle: '#A7F3D0',
-    accent: '#34D399',
+    background: '#0C1633',
+    hero: ['#1E40AF', '#3B82F6'],
+    surface: '#1E293B',
+    border: '#1E3A8A',
+    text: '#EFF6FF',
+    subtle: '#93C5FD',
+    accent: '#60A5FA',
   },
 };
 
