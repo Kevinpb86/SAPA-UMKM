@@ -1210,12 +1210,58 @@ export default function UserDashboardScreen() {
 
         {activeTab === 'overview' && (
           <View style={{ gap: 24 }}>
-            <View style={[styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <View style={{ marginBottom: 16 }}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>Legalitas & Sertifikasi Anda</Text>
-                <Text style={[styles.sectionSubtitle, { color: colors.subtle }]}>
-                  Dokumen yang telah diterbitkan dan aktif.
-                </Text>
+            {/* Decorative Background Elements */}
+            <View style={{ position: 'absolute', top: -40, right: -50, width: 180, height: 180, borderRadius: 90, backgroundColor: `${colors.primary}06`, zIndex: 0 }} />
+            <View style={{ position: 'absolute', bottom: 100, left: -40, width: 140, height: 140, borderRadius: 70, backgroundColor: `${colors.success}06`, zIndex: 0 }} />
+
+            {/* Enhanced Legalitas & Sertifikasi Card */}
+            <View style={[styles.sectionCard, {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              borderWidth: 1.5,
+              shadowColor: colors.primary,
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 0.08,
+              shadowRadius: 16,
+              elevation: 6,
+              overflow: 'hidden'
+            }]}>
+              {/* Top Accent Bar */}
+              <LinearGradient
+                colors={[colors.primary, colors.accent]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 4,
+                  opacity: 0.8
+                }}
+              />
+
+              <View style={{ marginBottom: 20, marginTop: 4 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                  <View style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 14,
+                    backgroundColor: `${colors.primary}12`,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderWidth: 1.5,
+                    borderColor: `${colors.primary}25`
+                  }}>
+                    <Feather name="shield" size={24} color={colors.primary} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.sectionTitle, { color: colors.text, fontSize: 20, fontWeight: '700', marginBottom: 2 }]}>Legalitas & Sertifikasi</Text>
+                    <Text style={[styles.sectionSubtitle, { color: colors.subtle, fontSize: 13 }]}>
+                      Dokumen yang telah diterbitkan dan aktif
+                    </Text>
+                  </View>
+                </View>
               </View>
 
               {submissions.filter(s => s.status === 'approved').length > 0 ? (
@@ -1227,71 +1273,147 @@ export default function UserDashboardScreen() {
                       style={{
                         flexDirection: 'row',
                         alignItems: 'center',
-                        gap: 12,
-                        padding: 12,
-                        backgroundColor: scheme === 'dark' ? 'rgba(34, 197, 94, 0.1)' : '#F0FDF4',
-                        borderRadius: 12,
-                        borderWidth: 1,
-                        borderColor: scheme === 'dark' ? 'rgba(34, 197, 94, 0.2)' : '#BBF7D0'
+                        gap: 14,
+                        padding: 16,
+                        backgroundColor: scheme === 'dark' ? 'rgba(34, 197, 94, 0.08)' : '#F0FDF4',
+                        borderRadius: 16,
+                        borderWidth: 1.5,
+                        borderColor: scheme === 'dark' ? 'rgba(34, 197, 94, 0.2)' : '#BBF7D0',
+                        shadowColor: '#22C55E',
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.1,
+                        shadowRadius: 8,
+                        elevation: 3
                       }}>
                       <View style={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: 10,
+                        width: 48,
+                        height: 48,
+                        borderRadius: 12,
                         backgroundColor: colors.surface,
                         alignItems: 'center',
-                        justifyContent: 'center'
+                        justifyContent: 'center',
+                        borderWidth: 1.5,
+                        borderColor: colors.success
                       }}>
                         <Feather name={
                           sub.type.toLowerCase() === 'nib' ? 'shield' :
                             sub.type.toLowerCase() === 'merek' ? 'tag' : 'award'
-                        } size={20} color={colors.success} />
+                        } size={22} color={colors.success} />
                       </View>
                       <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 15, fontWeight: '700', color: colors.text }}>
+                        <Text style={{ fontSize: 15, fontWeight: '700', color: colors.text, marginBottom: 4 }}>
                           {sub.type.toUpperCase() === 'NIB' ? 'Nomor Induk Berusaha (NIB)' :
                             sub.type.toUpperCase() === 'MEREK' ? 'Sertifikat Merek' : sub.type.toUpperCase()}
                         </Text>
                         <Text style={{ fontSize: 12, color: colors.subtle }}>
-                          Telah Terbit • {new Date(sub.created_at).toLocaleDateString()}
+                          Telah Terbit • {new Date(sub.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                         </Text>
                       </View>
-                      <View style={{ paddingHorizontal: 10, paddingVertical: 4, backgroundColor: colors.surface, borderRadius: 99 }}>
+                      <View style={{
+                        paddingHorizontal: 12,
+                        paddingVertical: 6,
+                        backgroundColor: colors.surface,
+                        borderRadius: 999,
+                        borderWidth: 1.5,
+                        borderColor: colors.success
+                      }}>
                         <Text style={{ fontSize: 11, fontWeight: '700', color: colors.success }}>AKTIF</Text>
                       </View>
                     </TouchableOpacity>
                   ))}
                 </View>
               ) : (
-                <View style={[styles.emptyState, { backgroundColor: scheme === 'dark' ? 'rgba(255,255,255,0.02)' : '#F8FAFC' }]}>
+                <View style={[styles.emptyState, {
+                  backgroundColor: scheme === 'dark' ? 'rgba(255,255,255,0.03)' : '#F8FAFC',
+                  borderRadius: 16,
+                  borderWidth: 1.5,
+                  borderStyle: 'dashed',
+                  borderColor: colors.border
+                }]}>
                   <View style={{
-                    width: 48, height: 48, borderRadius: 24,
-                    backgroundColor: `${colors.primary}15`,
-                    alignItems: 'center', justifyContent: 'center', marginBottom: 12
+                    width: 56, height: 56, borderRadius: 28,
+                    backgroundColor: `${colors.primary}12`,
+                    alignItems: 'center', justifyContent: 'center', marginBottom: 14,
+                    borderWidth: 2,
+                    borderColor: `${colors.primary}20`
                   }}>
-                    <Feather name="shield" size={24} color={colors.primary} />
+                    <Feather name="shield" size={28} color={colors.primary} />
                   </View>
-                  <Text style={[styles.emptyStateText, { color: colors.subtle }]}>
-                    Belum ada legalitas atau sertifikasi yang terbit.
+                  <Text style={[styles.emptyStateText, { color: colors.text, fontWeight: '600', marginBottom: 4 }]}>
+                    Belum Ada Legalitas
+                  </Text>
+                  <Text style={{ fontSize: 13, color: colors.subtle, textAlign: 'center' }}>
+                    Ajukan NIB atau sertifikasi untuk memulai
                   </Text>
                 </View>
               )}
             </View>
 
-            <View style={[styles.sectionCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Langkah Perkembangan</Text>
-              <Text style={[styles.sectionSubtitle, { color: colors.subtle }]}>
-                Ikuti alur berikut untuk memastikan usaha Anda berkembang maksimal.
-              </Text>
+            {/* Enhanced Langkah Perkembangan Card */}
+            <View style={[styles.sectionCard, {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              borderWidth: 1.5,
+              shadowColor: colors.accent,
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 0.08,
+              shadowRadius: 16,
+              elevation: 6,
+              overflow: 'hidden'
+            }]}>
+              {/* Top Accent Bar */}
+              <LinearGradient
+                colors={[colors.accent, colors.primary]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 4,
+                  opacity: 0.8
+                }}
+              />
+
+              <View style={{ marginBottom: 20, marginTop: 4 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                  <View style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 14,
+                    backgroundColor: `${colors.accent}12`,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderWidth: 1.5,
+                    borderColor: `${colors.accent}25`
+                  }}>
+                    <Feather name="trending-up" size={24} color={colors.accent} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.sectionTitle, { color: colors.text, fontSize: 20, fontWeight: '700', marginBottom: 2 }]}>Langkah Perkembangan</Text>
+                    <Text style={[styles.sectionSubtitle, { color: colors.subtle, fontSize: 13 }]}>
+                      Ikuti alur untuk memaksimalkan usaha Anda
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
               <View style={styles.timeline}>
-                {timeline.map(step => (
+                {timeline.map((step, index) => (
                   <View
                     key={step.id}
                     style={[
                       styles.timelineItem,
                       {
-                        borderColor: colors.border,
-                        backgroundColor: scheme === 'dark' ? '#1E293B' : '#F9FAFB',
+                        borderColor: step.status === 'completed' ? colors.success :
+                          step.status === 'in-progress' ? colors.primary : colors.border,
+                        backgroundColor: step.status === 'completed' ? (scheme === 'dark' ? 'rgba(34, 197, 94, 0.08)' : '#F0FDF4') :
+                          step.status === 'in-progress' ? (scheme === 'dark' ? 'rgba(37, 99, 235, 0.08)' : '#EFF6FF') :
+                            (scheme === 'dark' ? '#1E293B' : '#F9FAFB'),
+                        borderWidth: 1.5,
+                        borderRadius: 16,
+                        marginBottom: index < timeline.length - 1 ? 12 : 0
                       },
                     ]}
                   >
@@ -1302,7 +1424,9 @@ export default function UserDashboardScreen() {
                         step.status === 'in-progress' && styles.timelineIndicatorProgress,
                         step.status === 'upcoming' && {
                           backgroundColor:
-                            scheme === 'dark' ? 'rgba(148, 163, 184, 0.18)' : 'rgba(150, 163, 187, 0.18)',
+                            scheme === 'dark' ? 'rgba(148, 163, 184, 0.2)' : 'rgba(150, 163, 187, 0.2)',
+                          borderWidth: 2,
+                          borderColor: colors.border
                         },
                       ]}
                     >
@@ -1314,13 +1438,13 @@ export default function UserDashboardScreen() {
                               ? 'activity'
                               : 'circle'
                         }
-                        size={16}
+                        size={18}
                         color={step.status === 'upcoming' ? colors.subtle : '#FFFFFF'}
                       />
                     </View>
                     <View style={styles.timelineContent}>
-                      <Text style={[styles.timelineTitle, { color: colors.text }]}>{step.title}</Text>
-                      <Text style={[styles.timelineDescription, { color: colors.subtle }]}>
+                      <Text style={[styles.timelineTitle, { color: colors.text, fontSize: 15, fontWeight: '700' }]}>{step.title}</Text>
+                      <Text style={[styles.timelineDescription, { color: colors.subtle, fontSize: 13, lineHeight: 20 }]}>
                         {step.description}
                       </Text>
                     </View>
@@ -1533,27 +1657,53 @@ export default function UserDashboardScreen() {
 
         {activeTab === 'community' && (
           <View style={{ gap: 24 }}>
+            {/* Decorative Background Elements */}
+            <View style={{ position: 'absolute', top: -50, right: -60, width: 200, height: 200, borderRadius: 100, backgroundColor: `${colors.primary}05`, zIndex: 0 }} />
+            <View style={{ position: 'absolute', bottom: 150, left: -50, width: 160, height: 160, borderRadius: 80, backgroundColor: `${colors.accent}05`, zIndex: 0 }} />
+
             {/* Premium Gradient Header Card */}
             <View
               style={{
                 borderRadius: 28,
                 overflow: 'hidden',
                 marginBottom: 8,
-                elevation: 8,
+                elevation: 10,
                 shadowColor: colors.primary,
-                shadowOffset: { width: 0, height: 8 },
-                shadowOpacity: 0.15,
-                shadowRadius: 20,
+                shadowOffset: { width: 0, height: 12 },
+                shadowOpacity: 0.18,
+                shadowRadius: 24,
               }}
             >
-              <View
+              <LinearGradient
+                colors={scheme === 'dark'
+                  ? [colors.surface, colors.surface]
+                  : ['#FFFFFF', `${colors.primary}02`]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
                 style={{
-                  padding: 24,
-                  paddingBottom: 28,
+                  padding: 28,
+                  paddingBottom: 32,
                   position: 'relative',
-                  backgroundColor: scheme === 'dark' ? colors.surface : '#FFFFFF',
+                  borderWidth: 1.5,
+                  borderColor: colors.border,
+                  borderRadius: 28,
                 }}
               >
+                {/* Top Gradient Accent Bar */}
+                <LinearGradient
+                  colors={[colors.primary, colors.accent]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 5,
+                    opacity: 0.9
+                  }}
+                />
+
                 {/* Subtle Decorative Elements */}
                 <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, overflow: 'hidden' }}>
                   <View
@@ -1564,7 +1714,7 @@ export default function UserDashboardScreen() {
                       width: 180,
                       height: 180,
                       borderRadius: 999,
-                      backgroundColor: `${colors.primary}03`,
+                      backgroundColor: `${colors.primary}04`,
                     }}
                   />
                   <View
@@ -1575,7 +1725,7 @@ export default function UserDashboardScreen() {
                       width: 200,
                       height: 200,
                       borderRadius: 999,
-                      backgroundColor: `${colors.primary}02`,
+                      backgroundColor: `${colors.accent}03`,
                     }}
                   />
                 </View>
@@ -1583,106 +1733,148 @@ export default function UserDashboardScreen() {
                 {/* Header Content */}
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', zIndex: 2 }}>
                   <View style={{ flex: 1 }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 10 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10, gap: 12 }}>
                       <View
                         style={{
-                          width: 44,
-                          height: 44,
-                          borderRadius: 14,
-                          backgroundColor: `${colors.primary}12`,
+                          width: 52,
+                          height: 52,
+                          borderRadius: 16,
+                          backgroundColor: `${colors.primary}15`,
                           alignItems: 'center',
                           justifyContent: 'center',
-                          borderWidth: 1.5,
-                          borderColor: `${colors.primary}20`,
+                          borderWidth: 2,
+                          borderColor: `${colors.primary}30`,
+                          shadowColor: colors.primary,
+                          shadowOffset: { width: 0, height: 4 },
+                          shadowOpacity: 0.15,
+                          shadowRadius: 8,
+                          elevation: 4
                         }}
                       >
-                        <Feather name="users" size={22} color={colors.primary} />
+                        <Feather name="users" size={26} color={colors.primary} />
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text
                           style={{
-                            fontSize: 24,
+                            fontSize: 26,
+                            fontWeight: '700',
                             color: colors.text,
-                            letterSpacing: -0.5,
+                            letterSpacing: -0.6,
+                            marginBottom: 2
                           }}
                         >
                           Komunitas UMKM
                         </Text>
+                        <Text
+                          style={{
+                            fontSize: 13,
+                            color: colors.subtle,
+                            lineHeight: 18,
+                          }}
+                        >
+                          Diskusi dan berbagi pengalaman
+                        </Text>
                       </View>
                     </View>
-                    <Text
-                      style={{
-                        fontSize: 14,
-                        color: colors.subtle,
-                        lineHeight: 20,
-                      }}
-                    >
-                      Diskusi dan berbagi pengalaman dengan sesama pelaku usaha.
-                    </Text>
                   </View>
 
                   {/* Premium Create Post Button */}
                   <TouchableOpacity
                     onPress={() => setCreatePostModalVisible(true)}
-                    activeOpacity={0.8}
+                    activeOpacity={0.85}
                     style={{
-                      width: 52,
-                      height: 52,
-                      borderRadius: 16,
+                      width: 56,
+                      height: 56,
+                      borderRadius: 18,
                       backgroundColor: colors.primary,
                       alignItems: 'center',
                       justifyContent: 'center',
-                      elevation: 6,
+                      elevation: 8,
                       shadowColor: colors.primary,
-                      shadowOffset: { width: 0, height: 4 },
-                      shadowOpacity: 0.25,
-                      shadowRadius: 12,
+                      shadowOffset: { width: 0, height: 6 },
+                      shadowOpacity: 0.3,
+                      shadowRadius: 14,
                       marginLeft: 12,
+                      borderWidth: 2,
+                      borderColor: 'rgba(255,255,255,0.2)'
                     }}
                   >
-                    <Feather name="plus" size={26} color="#FFFFFF" />
+                    <Feather name="plus" size={28} color="#FFFFFF" strokeWidth={2.5} />
                   </TouchableOpacity>
                 </View>
 
-                {/* Stats Bar */}
+                {/* Enhanced Stats Bar */}
                 <View
                   style={{
                     flexDirection: 'row',
-                    gap: 12,
-                    marginTop: 20,
-                    paddingTop: 20,
-                    borderTopWidth: 1,
+                    gap: 14,
+                    marginTop: 24,
+                    paddingTop: 24,
+                    borderTopWidth: 1.5,
                     borderTopColor: colors.border,
                   }}
                 >
-                  <View style={{ flex: 1, alignItems: 'center' }}>
-                    <Text style={{ fontSize: 20, color: colors.text }}>
+                  <View style={{ flex: 1, alignItems: 'center', gap: 4 }}>
+                    <View style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 12,
+                      backgroundColor: `${colors.primary}12`,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: 4
+                    }}>
+                      <Feather name="message-square" size={18} color={colors.primary} />
+                    </View>
+                    <Text style={{ fontSize: 22, fontWeight: '700', color: colors.text }}>
                       {posts.length}
                     </Text>
-                    <Text style={{ fontSize: 12, color: colors.subtle }}>Diskusi</Text>
+                    <Text style={{ fontSize: 11, fontWeight: '600', color: colors.subtle, textTransform: 'uppercase', letterSpacing: 0.5 }}>Diskusi</Text>
                   </View>
                   <View
                     style={{
-                      width: 1,
+                      width: 1.5,
                       backgroundColor: colors.border,
                     }}
                   />
-                  <View style={{ flex: 1, alignItems: 'center' }}>
-                    <Text style={{ fontSize: 20, color: colors.text }}>24</Text>
-                    <Text style={{ fontSize: 12, color: colors.subtle }}>Anggota</Text>
+                  <View style={{ flex: 1, alignItems: 'center', gap: 4 }}>
+                    <View style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 12,
+                      backgroundColor: `${colors.accent}12`,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: 4
+                    }}>
+                      <Feather name="users" size={18} color={colors.accent} />
+                    </View>
+                    <Text style={{ fontSize: 22, fontWeight: '700', color: colors.text }}>24</Text>
+                    <Text style={{ fontSize: 11, fontWeight: '600', color: colors.subtle, textTransform: 'uppercase', letterSpacing: 0.5 }}>Anggota</Text>
                   </View>
                   <View
                     style={{
-                      width: 1,
+                      width: 1.5,
                       backgroundColor: colors.border,
                     }}
                   />
-                  <View style={{ flex: 1, alignItems: 'center' }}>
-                    <Text style={{ fontSize: 20, color: colors.text }}>48</Text>
-                    <Text style={{ fontSize: 12, color: colors.subtle }}>Aktif</Text>
+                  <View style={{ flex: 1, alignItems: 'center', gap: 4 }}>
+                    <View style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 12,
+                      backgroundColor: `${colors.success}12`,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: 4
+                    }}>
+                      <Feather name="activity" size={18} color={colors.success} />
+                    </View>
+                    <Text style={{ fontSize: 22, fontWeight: '700', color: colors.text }}>48</Text>
+                    <Text style={{ fontSize: 11, fontWeight: '600', color: colors.subtle, textTransform: 'uppercase', letterSpacing: 0.5 }}>Aktif</Text>
                   </View>
                 </View>
-              </View>
+              </LinearGradient>
             </View>
 
             {/* Posts Container */}
@@ -1749,48 +1941,88 @@ export default function UserDashboardScreen() {
                   style={styles.modalKeyboardAvoid}
                 >
                   <View style={[styles.createPostContainer, { backgroundColor: colors.background }]}>
-                    {/* Ultra-Premium Header */}
-                    <View
+                    {/* Ultra-Premium Header with Gradient */}
+                    <LinearGradient
+                      colors={scheme === 'dark'
+                        ? [colors.surface, colors.surface]
+                        : ['#FFFFFF', `${colors.primary}02`]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
                       style={{
                         flexDirection: 'row',
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         paddingHorizontal: 20,
-                        paddingVertical: 16,
-                        backgroundColor: colors.surface,
-                        borderBottomWidth: 1,
+                        paddingVertical: 18,
+                        borderBottomWidth: 1.5,
                         borderBottomColor: colors.border,
                       }}
                     >
+                      {/* Top Gradient Accent Bar */}
+                      <LinearGradient
+                        colors={[colors.primary, colors.accent]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: 4,
+                          opacity: 0.9
+                        }}
+                      />
+
                       <TouchableOpacity
                         onPress={() => setCreatePostModalVisible(false)}
                         style={{
                           paddingVertical: 8,
-                          paddingHorizontal: 4,
+                          paddingHorizontal: 8,
+                          marginLeft: -8
                         }}
                       >
-                        <Text style={{ fontSize: 15, color: colors.subtle }}>Batal</Text>
+                        <Feather name="x" size={22} color={colors.subtle} />
                       </TouchableOpacity>
 
-                      <Text
-                        style={{
-                          fontSize: 16,
-                          color: colors.text,
-                          letterSpacing: -0.2,
-                        }}
-                      >
-                        Buat Postingan
-                      </Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                        <View style={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: 10,
+                          backgroundColor: `${colors.primary}12`,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderWidth: 1.5,
+                          borderColor: `${colors.primary}25`
+                        }}>
+                          <Feather name="edit-3" size={16} color={colors.primary} />
+                        </View>
+                        <Text
+                          style={{
+                            fontSize: 18,
+                            fontWeight: '700',
+                            color: colors.text,
+                            letterSpacing: -0.3,
+                          }}
+                        >
+                          Buat Postingan
+                        </Text>
+                      </View>
 
                       <TouchableOpacity
                         onPress={handleCreatePost}
                         disabled={posting || !isPostValid}
-                        activeOpacity={0.7}
+                        activeOpacity={0.8}
                         style={{
-                          paddingVertical: 8,
-                          paddingHorizontal: 12,
-                          borderRadius: 10,
-                          backgroundColor: !isPostValid ? `${colors.primary}10` : colors.primary,
+                          paddingVertical: 10,
+                          paddingHorizontal: 16,
+                          borderRadius: 12,
+                          backgroundColor: !isPostValid ? `${colors.primary}15` : colors.primary,
+                          shadowColor: colors.primary,
+                          shadowOffset: { width: 0, height: 4 },
+                          shadowOpacity: isPostValid ? 0.2 : 0,
+                          shadowRadius: 8,
+                          elevation: isPostValid ? 4 : 0
                         }}
                       >
                         {posting ? (
@@ -1806,58 +2038,65 @@ export default function UserDashboardScreen() {
                               ],
                             }}
                           >
-                            <Feather name="loader" size={14} color={colors.surface} />
+                            <Feather name="loader" size={16} color="#FFFFFF" />
                           </Animated.View>
                         ) : (
                           <Text
                             style={{
-                              fontSize: 14,
-                              color: !isPostValid ? `${colors.primary}50` : '#FFFFFF',
-                              letterSpacing: -0.1,
+                              fontSize: 15,
+                              fontWeight: '600',
+                              color: !isPostValid ? `${colors.primary}60` : '#FFFFFF',
+                              letterSpacing: -0.2,
                             }}
                           >
                             Unggah
                           </Text>
                         )}
                       </TouchableOpacity>
-                    </View>
+                    </LinearGradient>
 
                     <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
-                      <View style={{ padding: 20, gap: 16 }}>
-                        {/* User Info Card */}
+                      <View style={{ padding: 20, gap: 18 }}>
+                        {/* Enhanced User Info Card */}
                         <View
                           style={{
                             flexDirection: 'row',
                             alignItems: 'center',
-                            gap: 12,
-                            padding: 16,
+                            gap: 14,
+                            padding: 18,
                             backgroundColor: colors.surface,
-                            borderRadius: 16,
-                            borderWidth: 1,
+                            borderRadius: 18,
+                            borderWidth: 1.5,
                             borderColor: colors.border,
+                            shadowColor: colors.primary,
+                            shadowOffset: { width: 0, height: 2 },
+                            shadowOpacity: 0.05,
+                            shadowRadius: 8,
+                            elevation: 2
                           }}
                         >
                           <View
                             style={{
-                              width: 48,
-                              height: 48,
-                              borderRadius: 14,
-                              backgroundColor: `${colors.primary}10`,
+                              width: 52,
+                              height: 52,
+                              borderRadius: 16,
+                              backgroundColor: `${colors.primary}12`,
                               alignItems: 'center',
                               justifyContent: 'center',
-                              borderWidth: 1,
-                              borderColor: `${colors.primary}20`,
+                              borderWidth: 2,
+                              borderColor: `${colors.primary}25`,
                             }}
                           >
-                            <Feather name="user" size={22} color={colors.primary} />
+                            <Feather name="user" size={24} color={colors.primary} />
                           </View>
                           <View style={{ flex: 1 }}>
                             <Text
                               style={{
-                                fontSize: 15,
+                                fontSize: 16,
+                                fontWeight: '600',
                                 color: colors.text,
-                                marginBottom: 4,
-                                letterSpacing: -0.2,
+                                marginBottom: 6,
+                                letterSpacing: -0.3,
                               }}
                             >
                               {user?.displayName || 'Budi Santoso'}
@@ -1866,35 +2105,54 @@ export default function UserDashboardScreen() {
                               style={{
                                 flexDirection: 'row',
                                 alignItems: 'center',
-                                gap: 4,
+                                gap: 6,
                                 alignSelf: 'flex-start',
-                                paddingVertical: 2,
+                                paddingVertical: 4,
+                                paddingHorizontal: 10,
+                                backgroundColor: `${colors.primary}10`,
+                                borderRadius: 8,
+                                borderWidth: 1,
+                                borderColor: `${colors.primary}20`
                               }}
                             >
-                              <Text style={{ fontSize: 13, color: colors.primary }}>{selectedCategory}</Text>
+                              <Text style={{ fontSize: 13, fontWeight: '600', color: colors.primary }}>{selectedCategory}</Text>
                               <Feather name="chevron-down" size={14} color={colors.primary} />
                             </TouchableOpacity>
                           </View>
                         </View>
 
-                        {/* Title Input Card */}
+                        {/* Enhanced Title Input Card */}
                         <View
                           style={{
                             backgroundColor: colors.surface,
-                            borderRadius: 0,
-                            borderBottomWidth: 1,
-                            borderBottomColor: `${colors.border}40`,
-                            paddingVertical: 16,
-                            paddingHorizontal: 4,
+                            borderRadius: 16,
+                            borderWidth: 1.5,
+                            borderColor: colors.border,
+                            paddingVertical: 18,
+                            paddingHorizontal: 18,
                           }}
                         >
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                            <View style={{
+                              width: 28,
+                              height: 28,
+                              borderRadius: 8,
+                              backgroundColor: `${colors.primary}10`,
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              <Feather name="type" size={14} color={colors.primary} />
+                            </View>
+                            <Text style={{ fontSize: 13, fontWeight: '600', color: colors.subtle, textTransform: 'uppercase', letterSpacing: 0.5 }}>Judul</Text>
+                          </View>
                           <TextInput
-                            placeholder="Judul Diskusi"
-                            placeholderTextColor={`${colors.subtle}50`}
+                            placeholder="Tulis judul diskusi yang menarik..."
+                            placeholderTextColor={`${colors.subtle}60`}
                             maxLength={100}
                             style={[
                               {
-                                fontSize: 18,
+                                fontSize: 17,
+                                fontWeight: '600',
                                 color: colors.text,
                                 letterSpacing: -0.3,
                                 padding: 0,
@@ -1906,21 +2164,34 @@ export default function UserDashboardScreen() {
                           />
                         </View>
 
-                        {/* Content Input Card */}
+                        {/* Enhanced Content Input Card */}
                         <View
                           style={{
                             backgroundColor: colors.surface,
                             borderRadius: 16,
-                            borderWidth: 1,
+                            borderWidth: 1.5,
                             borderColor: colors.border,
-                            padding: 16,
-                            minHeight: 200,
+                            padding: 18,
+                            minHeight: 220,
                           }}
                         >
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                            <View style={{
+                              width: 28,
+                              height: 28,
+                              borderRadius: 8,
+                              backgroundColor: `${colors.accent}10`,
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              <Feather name="message-circle" size={14} color={colors.accent} />
+                            </View>
+                            <Text style={{ fontSize: 13, fontWeight: '600', color: colors.subtle, textTransform: 'uppercase', letterSpacing: 0.5 }}>Konten</Text>
+                          </View>
                           <TextInput
                             multiline
                             placeholder="Apa yang ingin Anda bagikan atau tanyakan hari ini?"
-                            placeholderTextColor={`${colors.subtle}50`}
+                            placeholderTextColor={`${colors.subtle}60`}
                             maxLength={2000}
                             style={[
                               {
@@ -1930,6 +2201,7 @@ export default function UserDashboardScreen() {
                                 letterSpacing: -0.1,
                                 padding: 0,
                                 textAlignVertical: 'top',
+                                minHeight: 140
                               },
                               Platform.OS === 'web' && ({ outlineStyle: 'none' } as any)
                             ]}
@@ -1961,36 +2233,39 @@ export default function UserDashboardScreen() {
                           )}
                         </View>
 
-                        {/* Premium Media Toolbar */}
+                        {/* Enhanced Media Toolbar */}
                         <View
                           style={{
                             flexDirection: 'row',
-                            gap: 10,
-                            paddingVertical: 8,
+                            gap: 12,
+                            paddingVertical: 4,
                           }}
                         >
                           <TouchableOpacity
                             style={{
-                              width: 44,
-                              height: 44,
-                              borderRadius: 12,
-                              backgroundColor: `${colors.primary}08`,
-                              borderWidth: 1,
-                              borderColor: `${colors.primary}15`,
+                              flex: 1,
+                              height: 48,
+                              borderRadius: 14,
+                              backgroundColor: `${colors.primary}10`,
+                              borderWidth: 1.5,
+                              borderColor: `${colors.primary}20`,
                               alignItems: 'center',
                               justifyContent: 'center',
+                              flexDirection: 'row',
+                              gap: 8
                             }}
                           >
                             <Feather name="image" size={20} color={colors.primary} />
+                            <Text style={{ fontSize: 13, fontWeight: '600', color: colors.primary }}>Foto</Text>
                           </TouchableOpacity>
                           <TouchableOpacity
                             style={{
-                              width: 44,
-                              height: 44,
-                              borderRadius: 12,
-                              backgroundColor: '#F0FDF408',
-                              borderWidth: 1,
-                              borderColor: '#16A34A15',
+                              width: 48,
+                              height: 48,
+                              borderRadius: 14,
+                              backgroundColor: '#F0FDF410',
+                              borderWidth: 1.5,
+                              borderColor: '#16A34A20',
                               alignItems: 'center',
                               justifyContent: 'center',
                             }}
@@ -1999,12 +2274,12 @@ export default function UserDashboardScreen() {
                           </TouchableOpacity>
                           <TouchableOpacity
                             style={{
-                              width: 44,
-                              height: 44,
-                              borderRadius: 12,
-                              backgroundColor: '#FEF2F208',
-                              borderWidth: 1,
-                              borderColor: '#DC262615',
+                              width: 48,
+                              height: 48,
+                              borderRadius: 14,
+                              backgroundColor: '#FEF2F210',
+                              borderWidth: 1.5,
+                              borderColor: '#DC262620',
                               alignItems: 'center',
                               justifyContent: 'center',
                             }}
@@ -2013,12 +2288,12 @@ export default function UserDashboardScreen() {
                           </TouchableOpacity>
                           <TouchableOpacity
                             style={{
-                              width: 44,
-                              height: 44,
-                              borderRadius: 12,
-                              backgroundColor: '#F5F3FF08',
-                              borderWidth: 1,
-                              borderColor: '#7C3AED15',
+                              width: 48,
+                              height: 48,
+                              borderRadius: 14,
+                              backgroundColor: '#F5F3FF10',
+                              borderWidth: 1.5,
+                              borderColor: '#7C3AED20',
                               alignItems: 'center',
                               justifyContent: 'center',
                             }}
@@ -2060,18 +2335,24 @@ export default function UserDashboardScreen() {
                                 >
                                   <View
                                     style={{
-                                      paddingHorizontal: 16,
-                                      paddingVertical: 10,
-                                      borderRadius: 12,
-                                      backgroundColor: isSelected ? `${colors.primary}12` : colors.surface,
+                                      paddingHorizontal: 18,
+                                      paddingVertical: 12,
+                                      borderRadius: 14,
+                                      backgroundColor: isSelected ? colors.primary : colors.surface,
                                       borderWidth: 1.5,
-                                      borderColor: isSelected ? `${colors.primary}30` : colors.border,
+                                      borderColor: isSelected ? colors.primary : colors.border,
+                                      shadowColor: isSelected ? colors.primary : 'transparent',
+                                      shadowOffset: { width: 0, height: 2 },
+                                      shadowOpacity: isSelected ? 0.15 : 0,
+                                      shadowRadius: 6,
+                                      elevation: isSelected ? 3 : 0
                                     }}
                                   >
                                     <Text
                                       style={{
                                         fontSize: 14,
-                                        color: isSelected ? colors.primary : colors.subtle,
+                                        fontWeight: '600',
+                                        color: isSelected ? '#FFFFFF' : colors.subtle,
                                         letterSpacing: -0.1,
                                       }}
                                     >
@@ -2213,66 +2494,289 @@ export default function UserDashboardScreen() {
               visible={editModalVisible}
               onRequestClose={() => setEditModalVisible(false)}
             >
-              <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 }}>
+              <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 }}>
                 <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-                  <View style={{ backgroundColor: colors.surface, borderRadius: 20, padding: 24, gap: 16 }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Text style={{ fontSize: 18, fontWeight: '700', color: colors.text }}>Edit Profil</Text>
-                      <TouchableOpacity onPress={() => setEditModalVisible(false)}>
+                  <View style={{ backgroundColor: colors.surface, borderRadius: 24, overflow: 'hidden', maxHeight: '90%' }}>
+                    {/* Premium Header with Gradient */}
+                    <LinearGradient
+                      colors={scheme === 'dark'
+                        ? [colors.surface, colors.surface]
+                        : ['#FFFFFF', `${colors.primary}02`]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: 20,
+                        paddingBottom: 18,
+                        borderBottomWidth: 1.5,
+                        borderBottomColor: colors.border
+                      }}
+                    >
+                      {/* Top Gradient Accent Bar */}
+                      <LinearGradient
+                        colors={[colors.primary, colors.accent]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: 4,
+                          opacity: 0.9
+                        }}
+                      />
+
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                        <View style={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: 12,
+                          backgroundColor: `${colors.primary}12`,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderWidth: 1.5,
+                          borderColor: `${colors.primary}25`
+                        }}>
+                          <Feather name="user" size={20} color={colors.primary} />
+                        </View>
+                        <Text style={{ fontSize: 20, fontWeight: '700', color: colors.text, letterSpacing: -0.4 }}>Edit Profil</Text>
+                      </View>
+                      <TouchableOpacity
+                        onPress={() => setEditModalVisible(false)}
+                        style={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: 10,
+                          backgroundColor: `${colors.subtle}10`,
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
                         <Feather name="x" size={20} color={colors.subtle} />
                       </TouchableOpacity>
-                    </View>
+                    </LinearGradient>
 
-                    <View style={{ gap: 12 }}>
-                      <View>
-                        <Text style={{ fontSize: 12, color: colors.subtle, marginBottom: 4 }}>Nama Tampilan (Akun)</Text>
-                        <TextInput
-                          value={editForm.displayName}
-                          onChangeText={t => setEditForm(prev => ({ ...prev, displayName: t }))}
-                          style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 12, color: colors.text }}
-                        />
-                      </View>
-                      <View>
-                        <Text style={{ fontSize: 12, color: colors.subtle, marginBottom: 4 }}>Nama Pemilik</Text>
-                        <TextInput
-                          value={editForm.ownerName}
-                          onChangeText={t => setEditForm(prev => ({ ...prev, ownerName: t }))}
-                          style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 12, color: colors.text }}
-                        />
-                      </View>
-                      <View>
-                        <Text style={{ fontSize: 12, color: colors.subtle, marginBottom: 4 }}>Nama Usaha</Text>
-                        <TextInput
-                          value={editForm.businessName}
-                          onChangeText={t => setEditForm(prev => ({ ...prev, businessName: t }))}
-                          style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 12, color: colors.text }}
-                        />
-                      </View>
-                      <View>
-                        <Text style={{ fontSize: 12, color: colors.subtle, marginBottom: 4 }}>Nomor Telepon</Text>
-                        <TextInput
-                          value={editForm.phone}
-                          onChangeText={t => setEditForm(prev => ({ ...prev, phone: t }))}
-                          keyboardType="phone-pad"
-                          style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 12, color: colors.text }}
-                        />
-                      </View>
-                      <View>
-                        <Text style={{ fontSize: 12, color: colors.subtle, marginBottom: 4 }}>Alamat Usaha</Text>
-                        <TextInput
-                          value={editForm.businessAddress}
-                          onChangeText={t => setEditForm(prev => ({ ...prev, businessAddress: t }))}
-                          style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 12, color: colors.text }}
-                        />
-                      </View>
-                    </View>
+                    <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 500 }}>
+                      <View style={{ padding: 24, gap: 18 }}>
+                        {/* Display Name Input */}
+                        <View>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                            <View style={{
+                              width: 24,
+                              height: 24,
+                              borderRadius: 6,
+                              backgroundColor: `${colors.primary}10`,
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              <Feather name="at-sign" size={12} color={colors.primary} />
+                            </View>
+                            <Text style={{ fontSize: 13, fontWeight: '600', color: colors.subtle, textTransform: 'uppercase', letterSpacing: 0.5 }}>Nama Tampilan (Akun)</Text>
+                          </View>
+                          <TextInput
+                            value={editForm.displayName}
+                            onChangeText={t => setEditForm(prev => ({ ...prev, displayName: t }))}
+                            placeholder="Masukkan nama tampilan"
+                            placeholderTextColor={`${colors.subtle}60`}
+                            style={[
+                              {
+                                borderWidth: 1.5,
+                                borderColor: colors.border,
+                                borderRadius: 14,
+                                padding: 14,
+                                paddingLeft: 16,
+                                color: colors.text,
+                                fontSize: 15,
+                                fontWeight: '500'
+                              },
+                              Platform.OS === 'web' && ({ outlineStyle: 'none' } as any)
+                            ]}
+                          />
+                        </View>
 
-                    <TouchableOpacity
-                      onPress={handleUpdateProfile}
-                      disabled={updating}
-                      style={{ backgroundColor: colors.primary, padding: 14, borderRadius: 12, alignItems: 'center', marginTop: 8 }}>
-                      <Text style={{ color: '#FFF', fontWeight: '700' }}>{updating ? 'Menyimpan...' : 'Simpan Perubahan'}</Text>
-                    </TouchableOpacity>
+                        {/* Owner Name Input */}
+                        <View>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                            <View style={{
+                              width: 24,
+                              height: 24,
+                              borderRadius: 6,
+                              backgroundColor: `${colors.accent}10`,
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              <Feather name="user" size={12} color={colors.accent} />
+                            </View>
+                            <Text style={{ fontSize: 13, fontWeight: '600', color: colors.subtle, textTransform: 'uppercase', letterSpacing: 0.5 }}>Nama Pemilik</Text>
+                          </View>
+                          <TextInput
+                            value={editForm.ownerName}
+                            onChangeText={t => setEditForm(prev => ({ ...prev, ownerName: t }))}
+                            placeholder="Masukkan nama pemilik"
+                            placeholderTextColor={`${colors.subtle}60`}
+                            style={[
+                              {
+                                borderWidth: 1.5,
+                                borderColor: colors.border,
+                                borderRadius: 14,
+                                padding: 14,
+                                paddingLeft: 16,
+                                color: colors.text,
+                                fontSize: 15,
+                                fontWeight: '500'
+                              },
+                              Platform.OS === 'web' && ({ outlineStyle: 'none' } as any)
+                            ]}
+                          />
+                        </View>
+
+                        {/* Business Name Input */}
+                        <View>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                            <View style={{
+                              width: 24,
+                              height: 24,
+                              borderRadius: 6,
+                              backgroundColor: '#10B98110',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              <Feather name="briefcase" size={12} color="#10B981" />
+                            </View>
+                            <Text style={{ fontSize: 13, fontWeight: '600', color: colors.subtle, textTransform: 'uppercase', letterSpacing: 0.5 }}>Nama Usaha</Text>
+                          </View>
+                          <TextInput
+                            value={editForm.businessName}
+                            onChangeText={t => setEditForm(prev => ({ ...prev, businessName: t }))}
+                            placeholder="Masukkan nama usaha"
+                            placeholderTextColor={`${colors.subtle}60`}
+                            style={[
+                              {
+                                borderWidth: 1.5,
+                                borderColor: colors.border,
+                                borderRadius: 14,
+                                padding: 14,
+                                paddingLeft: 16,
+                                color: colors.text,
+                                fontSize: 15,
+                                fontWeight: '500'
+                              },
+                              Platform.OS === 'web' && ({ outlineStyle: 'none' } as any)
+                            ]}
+                          />
+                        </View>
+
+                        {/* Phone Input */}
+                        <View>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                            <View style={{
+                              width: 24,
+                              height: 24,
+                              borderRadius: 6,
+                              backgroundColor: '#8B5CF610',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              <Feather name="phone" size={12} color="#8B5CF6" />
+                            </View>
+                            <Text style={{ fontSize: 13, fontWeight: '600', color: colors.subtle, textTransform: 'uppercase', letterSpacing: 0.5 }}>Nomor Telepon</Text>
+                          </View>
+                          <TextInput
+                            value={editForm.phone}
+                            onChangeText={t => setEditForm(prev => ({ ...prev, phone: t }))}
+                            keyboardType="phone-pad"
+                            placeholder="Masukkan nomor telepon"
+                            placeholderTextColor={`${colors.subtle}60`}
+                            style={[
+                              {
+                                borderWidth: 1.5,
+                                borderColor: colors.border,
+                                borderRadius: 14,
+                                padding: 14,
+                                paddingLeft: 16,
+                                color: colors.text,
+                                fontSize: 15,
+                                fontWeight: '500'
+                              },
+                              Platform.OS === 'web' && ({ outlineStyle: 'none' } as any)
+                            ]}
+                          />
+                        </View>
+
+                        {/* Business Address Input */}
+                        <View>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                            <View style={{
+                              width: 24,
+                              height: 24,
+                              borderRadius: 6,
+                              backgroundColor: '#F5931810',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              <Feather name="map-pin" size={12} color="#F59318" />
+                            </View>
+                            <Text style={{ fontSize: 13, fontWeight: '600', color: colors.subtle, textTransform: 'uppercase', letterSpacing: 0.5 }}>Alamat Usaha</Text>
+                          </View>
+                          <TextInput
+                            value={editForm.businessAddress}
+                            onChangeText={t => setEditForm(prev => ({ ...prev, businessAddress: t }))}
+                            placeholder="Masukkan alamat usaha"
+                            placeholderTextColor={`${colors.subtle}60`}
+                            multiline
+                            numberOfLines={2}
+                            style={[
+                              {
+                                borderWidth: 1.5,
+                                borderColor: colors.border,
+                                borderRadius: 14,
+                                padding: 14,
+                                paddingLeft: 16,
+                                color: colors.text,
+                                fontSize: 15,
+                                fontWeight: '500',
+                                minHeight: 70,
+                                textAlignVertical: 'top'
+                              },
+                              Platform.OS === 'web' && ({ outlineStyle: 'none' } as any)
+                            ]}
+                          />
+                        </View>
+
+                        {/* Enhanced Save Button */}
+                        <TouchableOpacity
+                          onPress={handleUpdateProfile}
+                          disabled={updating}
+                          style={{
+                            backgroundColor: updating ? `${colors.primary}60` : colors.primary,
+                            padding: 16,
+                            borderRadius: 14,
+                            alignItems: 'center',
+                            marginTop: 8,
+                            flexDirection: 'row',
+                            justifyContent: 'center',
+                            gap: 10,
+                            shadowColor: colors.primary,
+                            shadowOffset: { width: 0, height: 4 },
+                            shadowOpacity: updating ? 0 : 0.2,
+                            shadowRadius: 8,
+                            elevation: updating ? 0 : 4
+                          }}
+                        >
+                          {updating ? (
+                            <Feather name="loader" size={18} color="#FFFFFF" />
+                          ) : (
+                            <Feather name="check" size={18} color="#FFFFFF" />
+                          )}
+                          <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 16, letterSpacing: -0.2 }}>
+                            {updating ? 'Menyimpan...' : 'Simpan Perubahan'}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    </ScrollView>
                   </View>
                 </KeyboardAvoidingView>
               </View>
